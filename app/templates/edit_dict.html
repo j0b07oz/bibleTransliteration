@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Strong's Dictionary</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        #search-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .hidden {
+            display: none;
+        }
+        .dict-entry {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 20px;
+        }
+        .dict-entry:last-child {
+            border-bottom: none;
+        }
+        .dict-entry input[type="text"] {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        .dict-entry button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Your list of Strong's words</h1>
+
+    <p>Add or remove the words to be transliterated by inputting their Strong's concordance value and their KJV translation(s). While there are many reference sites for searching Strong's, I like to use <a href="https://biblehub.com/strongs.htm" target="_blank">Biblehub</a>. If a certain word is sometimes translated as more than one word, like H1368, make sure to add those in the second column. You do not need to add every different one-word translation for the program to work.</p>
+
+    <p>
+        <a href="{{ url_for('home') }}" class="button">Return to Main Page</a>
+        <a href="{{ url_for('export_dict') }}" class="button">Export your list of words</a>
+    </p>
+
+    <input type="text" id="search-box" placeholder="Search Strong's numbers or translations...">
+
+    <div>
+        <h2>Add New Entry</h2>
+        <form id="add-form">
+            <input type="text" id="new-strong-number" placeholder="Strong's Number" required>
+            <input type="text" id="new-translations" placeholder="Translations (comma-separated)" required>
+            <input type="color" id="new-color" value="#000000">
+            <button type="submit" class="button">Add</button>
+        </form>
+    </div>
+
+    <h2>Current Entries</h2>
+    <div id="dict-entries">
+        {% for strong_number, data in strongs_dict.items() %}
+        <div class="dict-entry" data-strong="{{ strong_number }}" data-translations="{{ data.translations|join(',') }}">
+            <input type="text" value="{{ strong_number }}" readonly>
+            <input type="text" value="{{ data.translations|join(',') }}">
+            <button class="button" onclick="updateEntry('{{ strong_number }}')">Update</button>
+            <button class="button" onclick="deleteEntry('{{ strong_number }}')">Delete</button>
+            <input type="color" value="{{ data.color or '#000000' }}" onchange="updateColor('{{ strong_number }}', this)">
+            <button class="button" onclick="resetColor('{{ strong_number }}', this)">Reset highlight color</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+    
+    function resetColor(strongNumber, button) {
+    const colorInput = button.previousElementSibling;
+    colorInput.value = '#000000';
+    updateColor(strongNumber, colorInput, true);
+    }
+
+    function updateColor(strongNumber, colorInput, isReset = false) {
+        const color = isReset ? null : colorInput.value;
+        
+        fetch('/edit_dict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `strong_number=${strongNumber}&action=update&color=${encodeURIComponent(color)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Color updated successfully');
+            }
+        });
+    }
+
+    function updateEntry(strongNumber) {
+        const entryDiv = event.target.closest('.dict-entry');
+        const translations = entryDiv.querySelector('input[type="text"]:nth-child(2)').value;
+        const color = entryDiv.querySelector('input[type="color"]').value;
+        
+        fetch('/edit_dict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `strong_number=${strongNumber}&action=update&translations=${encodeURIComponent(translations)}&color=${encodeURIComponent(color)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Entry updated successfully');
+            }
+        });
+    }    
+
+    function deleteEntry(strongNumber) {
+        if (confirm('Are you sure you want to delete this entry?')) {
+            fetch('/edit_dict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `strong_number=${strongNumber}&action=delete`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Entry deleted successfully');
+                    location.reload();
+                }
+            });
+        }
+    }
+
+    document.getElementById('add-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const strongNumber = document.getElementById('new-strong-number').value;
+        const translations = document.getElementById('new-translations').value;
+        const color = document.getElementById('new-color').value;
+
+        fetch('/edit_dict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `strong_number=${encodeURIComponent(strongNumber)}&action=add&translations=${encodeURIComponent(translations)}&color=${encodeURIComponent(color)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('New entry added successfully');
+                location.reload();
+            }
+        });
+    });
+
+    document.getElementById('search-box').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const entries = document.getElementsByClassName('dict-entry');
+        
+        for (let entry of entries) {
+            const strongNumber = entry.getAttribute('data-strong').toLowerCase();
+            const translations = entry.getAttribute('data-translations').toLowerCase();
+            
+            if (strongNumber.includes(searchTerm) || translations.includes(searchTerm)) {
+                entry.classList.remove('hidden');
+            } else {
+                entry.classList.add('hidden');
+            }
+        }
+    });
+    </script>
+</body>
+</html>

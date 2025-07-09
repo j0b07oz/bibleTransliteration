@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The King James Bible</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-button {
+            padding: 5px 10px;
+            font-size: 14px;
+            text-decoration: none;
+            color: white;
+            background-color: #333;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .transliterated {
+            position: relative;
+            cursor: pointer;
+        }
+        .transliterated::after {
+            content: attr(data-original);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .transliterated:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <h1>The King James Bible</h1>
+    <h2>With select transliteration</h2>
+    <div class="button-container">
+        <div class="button-group">
+            <a href="{{ url_for('about') }}" class="nav-button">About</a>
+            <a href="{{ url_for('edit_dict') }}" class="nav-button">Edit transliterated word list</a>
+        </div>
+    </div>
+    
+    <form method="POST" class="bible-form">
+        <div class="form-group">
+            <label for="book">Book:</label>
+            <input type="text" id="book" name="book" value="{{ book }}">
+        </div>
+        <div class="form-group">
+            <label for="chapter">Chapter:</label>
+            <input type="number" id="chapter" name="chapter" value="{{ chapter if chapter is not none else '' }}">
+        </div>
+        <button type="submit" class="button" id="go-button">Go</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bookInput = document.getElementById('book');
+            const chapterInput = document.getElementById('chapter');
+            const goButton = document.getElementById('go-button');
+        
+            function updateButtonState() {
+                goButton.disabled = !bookInput.value || !chapterInput.value;
+            }
+        
+            bookInput.addEventListener('input', updateButtonState);
+            chapterInput.addEventListener('input', updateButtonState);
+        
+            // Initial state
+            updateButtonState();
+        });
+    </script>
+
+    {% if result %}
+        <h2 id="currentPassage">{{ book }} {{ chapter }}</h2>
+        <div class="result">
+            {{ result|safe }}
+        </div>
+        
+        <div class="navigation">
+            <form method="POST" action="{{ url_for('navigate') }}">
+                <input type="hidden" name="book" value="{{ book }}">
+                <input type="hidden" name="chapter" value="{{ chapter }}">
+                <button type="submit" name="direction" value="prev" class="button">Previous Chapter</button>
+                <button type="submit" name="direction" value="next" class="button">Next Chapter</button>
+            </form>
+        </div>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Bible Transliteration Project</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <h1>About the Bible Transliteration Project</h1>
+
+    <p>Welcome to the Bible Transliteration Project! Thank you for visiting. This tool allows you to explore the King James Bible with select Hebrew and Greek words transliterated. Pick out a few words you already know and add them to the list. You might be surprised what you uncover.</p>
+    
+    <p>This is a personal passion project by its creator. To date, I haven't found a site that does quite this same function, seamlessly blending languages and allowing readers to make new connections with familiar verses. As happy as I am with its function, I am not a web developer, and my hope is that the idea is picked up by another, fully-functional website. I've included some of my favorites below.</p>
+    
+    <h2>How to Use This Tool</h2>
+    <ol>
+        <li>Use the "Edit transliterated word list" link to customize which words are transliterated and a highlight color, if you want.</li>
+        <li>On the home page, enter a book name and chapter number.</li>
+        <li>Click "Go" to view the chapter with transliterations.</li>
+        <li>Hover over transliterated words to see the original English text.</li>
+    </ol>
+
+    <h2>External Resources</h2>
+    <ul>
+        <li><a href="https://biblehub.com/strongs.htm" target="_blank">BibleHub Strong's Concordance</a> - What I use to look up Strong's numbers and word meanings.</li>
+        <li><a href="https://www.stepbible.org/" target="_blank">STEP Bible</a> - Another excellent resource for Bible study and Strong's numbers.</li>
+        <li><a href="https://armorer.io/?ref=faith.tools" target="_blank">Armorer</a> - Hands down the most aesthetic way to read the KJV.</li>   
+        <li><a href="https://ebible.org/study/" target="_blank">EBible</a> - Another great resource for Bible study and Strong's numbers. I like the "find all occurences" feature, which also lets you see a histogram of use by book.</li>
+        <li><a href="https://ao.bot/?ab=homeBibleDemo2024&staticInst=underlying-cyan-starfish&gridPortal=home" target="_blank">ao.bot</a> - A beautiful visual way to explore the Bible.</li>
+        <li><a href="https://faith.tools/bible" target="_blank">Faith Tools</a> - An aggregator of Christian projects, both Bible-related and otherwise.</li>
+        <li>*Coming soon* - a link to the project on GitHub</li>
+    </ul>
+
+    <a href="{{ url_for('home') }}" class="button">Return to Home</a>
+</body>
+</html>
