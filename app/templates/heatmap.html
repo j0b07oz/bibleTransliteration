@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heatmap</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Word Heatmap</h1>
+    <form method="get">
+        <label for="strong">Strong's Number:</label>
+        <input type="text" id="strong" name="strong" value="{{ strong or '' }}">
+        <button type="submit" class="button">Show</button>
+    </form>
+
+    {% if data %}
+    <table>
+        <thead>
+            <tr>
+                <th>Book</th>
+                <th>Chapters</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for book in ordered_books %}
+            {% set chapters = data.get(book) %}
+            {% if chapters %}
+            <tr>
+                <th>{{ book }}</th>
+                <td>
+                    <table>
+                        <tr>
+                        {% for cell in chapters %}
+                            <td style="background-color: {{ cell.color }}">{{ cell.count if cell.count > 0 else '' }}</td>
+                        {% endfor %}
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <a href="{{ url_for('home') }}" class="button">Return Home</a>
+</body>
+</html>
