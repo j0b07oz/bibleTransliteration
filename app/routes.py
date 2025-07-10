@@ -1,5 +1,5 @@
 import os
-from flask import render_template, request, jsonify, session, send_file, url_for, redirect
+from flask import render_template, request, jsonify, session, send_file
 from app import app
 from .transliteration import transliterate_chapter
 import json
@@ -30,6 +30,17 @@ with open(strongs_path, 'r', encoding='utf-8') as f:
     strongs_data = json.load(f)
 with open(kjv_path, 'r', encoding='utf-8') as f:
     kjv_data = json.load(f)
+
+# Build mappings for book order and chapter counts
+book_order = {}
+book_chapter_count = {}
+for verse in kjv_data.get('verses', []):
+    name = verse['book_name']
+    if name not in book_order:
+        book_order[name] = verse['book']
+    chapter = int(verse['chapter'])
+    if name not in book_chapter_count or chapter > book_chapter_count[name]:
+        book_chapter_count[name] = chapter
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -125,3 +136,46 @@ def export_dict():
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+
+def generate_heatmap(strong_number):
+    counts = {}
+    max_count = 0
+    for verse in kjv_data.get('verses', []):
+        if f'{{{strong_number}}}' in verse['text']:
+            book = verse['book_name']
+            chapter = int(verse['chapter'])
+            counts.setdefault(book, {})
+            counts[book][chapter] = counts[book].get(chapter, 0) + 1
+            if counts[book][chapter] > max_count:
+                max_count = counts[book][chapter]
+
+    heatmap = {}
+    for book in book_order:
+        max_chapter = book_chapter_count.get(book, 0)
+        row = []
+        chapters = counts.get(book, {})
+        for ch in range(1, max_chapter + 1):
+            cnt = chapters.get(ch, 0)
+            if max_count:
+                alpha = cnt / max_count
+            else:
+                alpha = 0
+            r = 255
+            g = int(255 * (1 - alpha))
+            b = int(255 * (1 - alpha))
+            color = f'#{r:02x}{g:02x}{b:02x}'
+            row.append({'count': cnt, 'color': color})
+        heatmap[book] = row
+
+    return heatmap
+
+
+@app.route('/heatmap')
+def heatmap():
+    strong = request.args.get('strong', '').strip()
+    data = None
+    if strong:
+        data = generate_heatmap(strong)
+    ordered_books = [b for b, _ in sorted(book_order.items(), key=lambda x: x[1])]
+    return render_template('heatmap.html', strong=strong, data=data, ordered_books=ordered_books)
