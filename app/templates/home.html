@@ -36,7 +36,8 @@
             const chapterInput = document.getElementById('chapter');
             const goButton = document.getElementById('go-button');
             const overlayToggle = document.getElementById('overlay-toggle');
-            const contextBlock = document.getElementById('literary-context');
+
+            const activeUnits = {{ active_units|tojson|safe }};
 
             function updateButtonState() {
                 goButton.disabled = !bookInput.value || !chapterInput.value;
@@ -52,13 +53,48 @@
             chapterInput.addEventListener('input', updateButtonState);
 
             overlayToggle?.addEventListener('click', function() {
-                if (!contextBlock) return;
-                const isHidden = contextBlock.classList.toggle('is-hidden');
+                const isHidden = document.body.classList.toggle('literary-hidden');
                 updateToggleState(!isHidden);
+                renderOverlay();
             });
 
             updateButtonState();
-            updateToggleState(contextBlock && !contextBlock.classList.contains('is-hidden'));
+            const contextVisible = !document.body.classList.contains('literary-hidden');
+            updateToggleState(contextVisible);
+
+            function renderOverlay() {
+                const overlay = document.getElementById('bar-overlay');
+                const shell = document.querySelector('.reading-shell');
+                const rows = Array.from(document.querySelectorAll('.verse-row'));
+                if (!overlay || !shell || !rows.length || document.body.classList.contains('literary-hidden')) {
+                    if (overlay) overlay.innerHTML = '';
+                    return;
+                }
+                overlay.innerHTML = '';
+                const overlayWidth = Math.max(activeUnits.length * 8, 12);
+                shell.style.setProperty('--bar-offset', `${overlayWidth}px`);
+                overlay.style.width = `${overlayWidth}px`;
+
+                activeUnits.forEach((unit, idx) => {
+                    const startRow = rows.find(r => Number(r.dataset.verse) === unit.start_verse);
+                    const endRow = rows.find(r => Number(r.dataset.verse) === unit.end_verse);
+                    if (!startRow || !endRow) return;
+
+                    const top = startRow.offsetTop;
+                    const bottom = endRow.offsetTop + endRow.offsetHeight;
+                    const bar = document.createElement('span');
+                    bar.className = 'bar-overlay-segment';
+                    bar.style.left = `${idx * 8}px`;
+                    bar.style.top = `${top}px`;
+                    bar.style.height = `${bottom - top}px`;
+                    bar.style.setProperty('--bar-color', unit.color);
+                    bar.title = unit.label || '';
+                    overlay.appendChild(bar);
+                });
+            }
+
+            window.addEventListener('resize', renderOverlay);
+            renderOverlay();
         });
     </script>
 
@@ -105,8 +141,23 @@
             {% endif %}
         </div>
 
-        <div class="result">
-            {{ result|safe }}
+        <div class="reading-shell">
+            <div id="bar-overlay" class="bar-overlay literary-bars"></div>
+            {% if verses %}
+                <div class="verse-list">
+                    {% for verse in verses %}
+                    <div class="verse-row" data-verse="{{ verse.num }}">
+                        <div class="verse-text">
+                            <span class="verse-num">{{ verse.num }}</span> {{ verse.html|safe }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+            <div class="result">
+                {{ result|safe }}
+            </div>
+            {% endif %}
         </div>
         
         <div class="navigation">

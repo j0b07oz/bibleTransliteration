@@ -86,6 +86,22 @@ def _calculate_unit_progress(unit: dict, book: str, chapter: int) -> float:
     completed = _count_verses_in_range(book, start_ch, start_v, chapter, current_end)
     return min(100.0, (completed / total) * 100)
 
+def _unit_bounds_for_chapter(unit: dict, book: str, chapter: int):
+    """Return (start_verse, end_verse) for this unit within the current chapter."""
+    chapter_counts = chapter_verse_counts.get(book, {})
+    max_verse = chapter_counts.get(chapter, 0)
+
+    start = unit.get('range_start', {})
+    end = unit.get('range_end', {})
+    start_ch = int(start.get('chapter', 0) or 0)
+    end_ch = int(end.get('chapter', 0) or 0)
+    start_v = int(start.get('verse', 1) or 1)
+    end_v = int(end.get('verse', 0) or 0)
+
+    chapter_start = start_v if chapter == start_ch else 1
+    chapter_end = end_v if (chapter == end_ch and end_v) else max_verse
+    return max(1, chapter_start), max(chapter_start, chapter_end)
+
 
 def get_active_units(book: str, chapter: int):
     """Return all outline units that include the given chapter, with progress."""
@@ -102,11 +118,15 @@ def get_active_units(book: str, chapter: int):
 
         if start_ch and end_ch and start_ch <= chapter <= end_ch:
             label = f"{unit.get('marker', '').strip()} {unit.get('title', '').strip()}".strip()
+            start_v, end_v = _unit_bounds_for_chapter(unit, book, chapter)
             active.append({
                 'label': label or unit.get('title') or 'Unit',
                 'range': unit.get('range'),
                 'percent_complete': _calculate_unit_progress(unit, book, chapter),
                 'color': _get_unit_color(unit),
+                'start_verse': start_v,
+                'end_verse': end_v,
+                'marker': unit.get('marker', '').strip(),
             })
 
     return active
@@ -161,6 +181,7 @@ def home():
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
     active_units = get_active_units(book, chapter) if book and chapter else []
+    verses = build_verses_for_render(result, active_units) if result else []
 
     return render_template(
         'home.html',
@@ -171,6 +192,7 @@ def home():
         active_units=active_units,
         total_chapters=total_chapters,
         book_progress=book_progress,
+        verses=verses,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -196,6 +218,7 @@ def navigate():
     active_units = get_active_units(book, chapter)
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
+    verses = build_verses_for_render(result, active_units) if result else []
 
     return render_template(
         'home.html',
@@ -206,7 +229,40 @@ def navigate():
         active_units=active_units,
         total_chapters=total_chapters,
         book_progress=book_progress,
+        verses=verses,
     )
+
+
+def build_verses_for_render(result_html: str, active_units: list):
+    """Split transliterated HTML into per-verse chunks and attach matching unit colors."""
+    if not result_html:
+        return []
+
+    verses = []
+    for line in result_html.split('\n'):
+        if not line.strip():
+            continue
+        parts = line.split(' ', 1)
+        try:
+            num = int(parts[0])
+        except (ValueError, IndexError):
+            continue
+        text_html = parts[1] if len(parts) > 1 else ''
+        bars = [
+            {
+                'color': unit['color'],
+                'label': unit['label'],
+                'marker': unit.get('marker'),
+                'is_start': num == unit.get('start_verse', 1),
+                'is_end': num == unit.get('end_verse', 0),
+                'start_verse': unit.get('start_verse', 1),
+                'end_verse': unit.get('end_verse', 0),
+            }
+            for unit in active_units
+            if num >= unit.get('start_verse', 1) and num <= unit.get('end_verse', 0)
+        ]
+        verses.append({'num': num, 'html': text_html, 'bars': bars})
+    return verses
 
 # Route for handling the user's strongs_dict
 @app.route('/edit_dict', methods=['GET', 'POST'])

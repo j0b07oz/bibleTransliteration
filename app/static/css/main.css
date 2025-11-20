@@ -352,6 +352,49 @@ a:hover {
 .is-hidden {
     display: none;
 }
+.reading-shell {
+    position: relative;
+    padding-left: calc(var(--bar-offset, 16px) + 8px);
+    padding-right: 8px;
+}
+.bar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: block;
+    pointer-events: none;
+    z-index: 0;
+}
+.bar-overlay-segment {
+    position: absolute;
+    width: 6px;
+    border-radius: 6px;
+    background: var(--bar-color, #7d4b36);
+    box-shadow: 0 0 0 1px rgba(36, 23, 21, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.verse-list {
+    position: relative;
+    z-index: 1;
+}
+.verse-row {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    padding: 4px 0;
+}
+.verse-text {
+    flex: 1;
+}
+.verse-num {
+    font-weight: 600;
+    margin-right: 4px;
+}
+.literary-hidden #literary-context,
+.literary-hidden .literary-bars,
+.literary-hidden .bar-overlay {
+    display: none !important;
+}
 .chapter-bar {
     margin: 10px 0 20px;
     padding: 10px;
