@@ -117,7 +117,7 @@ def get_active_unit(book: str, chapter: int):
 def home():
     book = request.form.get('book', '') or request.args.get('book', '')
     chapter_str = request.form.get('chapter', '') or request.args.get('chapter', '')
-    
+
     chapter = None
     if chapter_str:
         try:
