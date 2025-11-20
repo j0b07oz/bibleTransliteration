@@ -14,7 +14,7 @@
             <a href="{{ url_for('about') }}" class="nav-button">About</a>
             <a href="{{ url_for('edit_dict') }}" class="nav-button">Edit transliterated word list</a>
             <a href="{{ url_for('heatmap') }}" class="nav-button">Heatmap</a>
-            <button type="button" class="nav-button toggle-button" id="overlay-toggle" aria-pressed="false">Show Unit Overlay</button>
+            <button type="button" class="nav-button toggle-button nav-button--active" id="overlay-toggle" aria-pressed="true">Hide Literary Context</button>
         </div>
     </div>
     
@@ -36,99 +36,75 @@
             const chapterInput = document.getElementById('chapter');
             const goButton = document.getElementById('go-button');
             const overlayToggle = document.getElementById('overlay-toggle');
-            const overlayWrapper = document.getElementById('unit-overlay');
-        
+            const contextBlock = document.getElementById('literary-context');
+
             function updateButtonState() {
                 goButton.disabled = !bookInput.value || !chapterInput.value;
             }
-        
+
+            function updateToggleState(isVisible) {
+                overlayToggle.classList.toggle('nav-button--active', isVisible);
+                overlayToggle.setAttribute('aria-pressed', isVisible);
+                overlayToggle.textContent = isVisible ? 'Hide Literary Context' : 'Show Literary Context';
+            }
+
             bookInput.addEventListener('input', updateButtonState);
             chapterInput.addEventListener('input', updateButtonState);
 
-            if (overlayToggle && overlayWrapper) {
-                overlayToggle.addEventListener('click', function() {
-                    const isActive = overlayWrapper.classList.toggle('overlay-enabled');
-                    overlayToggle.classList.toggle('nav-button--active', isActive);
-                    overlayToggle.setAttribute('aria-pressed', isActive);
-                    overlayToggle.textContent = isActive ? 'Hide Unit Overlay' : 'Show Unit Overlay';
-                });
-            }
+            overlayToggle?.addEventListener('click', function() {
+                if (!contextBlock) return;
+                const isHidden = contextBlock.classList.toggle('is-hidden');
+                updateToggleState(!isHidden);
+            });
 
-            // Initial state
             updateButtonState();
+            updateToggleState(contextBlock && !contextBlock.classList.contains('is-hidden'));
         });
     </script>
 
     {% if result %}
         <h2 id="currentPassage">{{ book }} {{ chapter }}</h2>
-        <div class="unit-progress" aria-live="polite">
-            <div class="progress-pill">
-                <div class="pill-header">
-                    <span class="pill-unit">{{ book if book else 'Unit' }}</span>
-                    <span class="pill-percent">{{ percent_complete }}% complete</span>
-                </div>
-                <div class="progress-bar" role="img" aria-label="{{ percent_complete }} percent of {{ book if book else 'unit' }} complete">
-                    <div class="progress-fill" style="width: {{ percent_complete }}%"></div>
-                </div>
-                {% if total_chapters and total_chapters > 1 %}
-                <div class="sparkline" aria-hidden="true">
-                    {% for ch in range(1, total_chapters + 1) %}
-                        <span class="spark-segment {{ 'is-complete' if chapter and ch <= chapter else '' }}" title="Chapter {{ ch }}"></span>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        <div class="unit-overlay-wrapper" id="unit-overlay">
-            <div class="unit-overlay-shell">
-                <div class="result">
-                    {{ result|safe }}
-                </div>
-            </div>
-        </div>
 
-        <div class="navigation">
-            <form method="POST" action="{{ url_for('navigate') }}">
-                <input type="hidden" name="book" value="{{ book }}">
-                <input type="hidden" name="chapter" value="{{ chapter }}">
-                <button type="submit" name="direction" value="prev" class="button">Previous Chapter</button>
-                <button type="submit" name="direction" value="next" class="button">Next Chapter</button>
-            </form>
-        </div>
-    {% endif %}
-
-        {% if unit_start and unit_end %}
-        <div class="chapter-bar" aria-label="Current outline unit">
-            <div class="chapter-range-label">Chapter {{ unit_start }}{% if unit_end != unit_start %}–{{ unit_end }}{% endif %}</div>
-            <div class="chapter-track">
-                <span class="chapter-endpoint">Ch {{ unit_start }}</span>
-                <div class="chapter-steps">
-                    {% if unit_start < chapter %}
-                    <form method="POST" action="{{ url_for('navigate') }}" class="chapter-step">
-                        <input type="hidden" name="book" value="{{ book }}">
-                        <input type="hidden" name="chapter" value="{{ chapter }}">
-                        <button type="submit" name="direction" value="prev" class="chapter-link">← {{ chapter - 1 }}</button>
-                    </form>
-                    {% else %}
-                    <button type="button" class="chapter-link" disabled>←</button>
-                    {% endif %}
-
-                    <div class="chapter-current">Chapter {{ chapter }}</div>
-
-                    {% if chapter < unit_end %}
-                    <form method="POST" action="{{ url_for('navigate') }}" class="chapter-step">
-                        <input type="hidden" name="book" value="{{ book }}">
-                        <input type="hidden" name="chapter" value="{{ chapter }}">
-                        <button type="submit" name="direction" value="next" class="chapter-link">{{ chapter + 1 }} →</button>
-                    </form>
-                    {% else %}
-                    <button type="button" class="chapter-link" disabled>→</button>
+        <div id="literary-context">
+            {% if total_chapters %}
+            <div class="unit-progress" aria-live="polite">
+                <div class="progress-pill">
+                    <div class="pill-header">
+                        <span class="pill-unit">{{ book }}</span>
+                        <span class="pill-percent">Book progress: {{ book_progress|round(1) }}%</span>
+                    </div>
+                    <div class="progress-bar" role="img" aria-label="Chapter {{ chapter }} of {{ total_chapters }}">
+                        <div class="progress-fill" style="width: {{ book_progress }}%"></div>
+                    </div>
+                    {% if total_chapters > 1 %}
+                    <div class="sparkline" aria-hidden="true">
+                        {% for ch in range(1, total_chapters + 1) %}
+                            <span class="spark-segment {{ 'is-complete' if chapter and ch <= chapter else '' }}" title="Chapter {{ ch }}"></span>
+                        {% endfor %}
+                    </div>
                     {% endif %}
                 </div>
-                <span class="chapter-endpoint">Ch {{ unit_end }}</span>
             </div>
+            {% endif %}
+
+            {% if active_units %}
+            <div class="unit-overlay-wrapper">
+                <div class="unit-overlay-shell">
+                    <div class="unit-overlay-meta">
+                        <ul class="unit-overlay-list">
+                        {% for unit in active_units %}
+                            <li>
+                                <span class="unit-chip" style="border-color: {{ unit.color }}; background-color: {{ unit.color }}22;">{{ unit.label }}</span>
+                                <span class="unit-chip-range">{{ unit.range }}</span>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
+
         <div class="result">
             {{ result|safe }}
         </div>

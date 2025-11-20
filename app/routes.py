@@ -87,6 +87,31 @@ def _calculate_unit_progress(unit: dict, book: str, chapter: int) -> float:
     return min(100.0, (completed / total) * 100)
 
 
+def get_active_units(book: str, chapter: int):
+    """Return all outline units that include the given chapter, with progress."""
+    if not book or not chapter:
+        return []
+
+    units = outline_data.get(book, [])
+    active = []
+    for unit in units:
+        start = unit.get('range_start', {})
+        end = unit.get('range_end', {})
+        start_ch = int(start.get('chapter', 0) or 0)
+        end_ch = int(end.get('chapter', 0) or 0)
+
+        if start_ch and end_ch and start_ch <= chapter <= end_ch:
+            label = f"{unit.get('marker', '').strip()} {unit.get('title', '').strip()}".strip()
+            active.append({
+                'label': label or unit.get('title') or 'Unit',
+                'range': unit.get('range'),
+                'percent_complete': _calculate_unit_progress(unit, book, chapter),
+                'color': _get_unit_color(unit),
+            })
+
+    return active
+
+
 def get_active_unit(book: str, chapter: int):
     if not book or not chapter:
         return None
@@ -133,7 +158,20 @@ def home():
             result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
             active_unit = get_active_unit(book, chapter)
 
-    return render_template('home.html', result=result, book=book, chapter=chapter, active_unit=active_unit)
+    total_chapters = book_chapter_count.get(book)
+    book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
+    active_units = get_active_units(book, chapter) if book and chapter else []
+
+    return render_template(
+        'home.html',
+        result=result,
+        book=book,
+        chapter=chapter,
+        active_unit=active_unit,
+        active_units=active_units,
+        total_chapters=total_chapters,
+        book_progress=book_progress,
+    )
 
 @app.route('/navigate', methods=['POST'])
 def navigate():
@@ -155,8 +193,20 @@ def navigate():
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
     result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
     active_unit = get_active_unit(book, chapter)
+    active_units = get_active_units(book, chapter)
+    total_chapters = book_chapter_count.get(book)
+    book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
 
-    return render_template('home.html', result=result, book=book, chapter=chapter, active_unit=active_unit)
+    return render_template(
+        'home.html',
+        result=result,
+        book=book,
+        chapter=chapter,
+        active_unit=active_unit,
+        active_units=active_units,
+        total_chapters=total_chapters,
+        book_progress=book_progress,
+    )
 
 # Route for handling the user's strongs_dict
 @app.route('/edit_dict', methods=['GET', 'POST'])

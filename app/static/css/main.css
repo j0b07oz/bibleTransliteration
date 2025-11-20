@@ -323,6 +323,35 @@ a:hover {
 .unit-overlay-wrapper.overlay-enabled .unit-overlay-shell::before {
     opacity: 1;
 }
+.unit-overlay-meta {
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+.unit-overlay-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 6px;
+}
+.unit-chip {
+    display: inline-block;
+    padding: 4px 8px;
+    border: 1px solid #7d4b36;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-right: 8px;
+}
+.unit-chip-range {
+    color: #4b3a34;
+    font-size: 13px;
+}
+.muted {
+    color: #6b5d58;
+}
+.is-hidden {
+    display: none;
+}
 .chapter-bar {
     margin: 10px 0 20px;
     padding: 10px;
