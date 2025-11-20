@@ -60,7 +60,19 @@ def home():
             user_strongs_dict = get_user_strongs_dict()
             result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
 
-    return render_template('home.html', result=result, book=book, chapter=chapter)
+    total_chapters = book_chapter_count.get(book, 0) if book else 0
+    percent_complete = 0
+    if total_chapters and chapter:
+        percent_complete = min(100, round((chapter / total_chapters) * 100))
+
+    return render_template(
+        'home.html',
+        result=result,
+        book=book,
+        chapter=chapter,
+        total_chapters=total_chapters,
+        percent_complete=percent_complete,
+    )
 
 @app.route('/navigate', methods=['POST'])
 def navigate():
@@ -82,7 +94,19 @@ def navigate():
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
     result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
 
-    return render_template('home.html', result=result, book=book, chapter=chapter)
+    total_chapters = book_chapter_count.get(book, 0) if book else 0
+    percent_complete = 0
+    if total_chapters and chapter:
+        percent_complete = min(100, round((chapter / total_chapters) * 100))
+
+    return render_template(
+        'home.html',
+        result=result,
+        book=book,
+        chapter=chapter,
+        total_chapters=total_chapters,
+        percent_complete=percent_complete,
+    )
 
 # Route for handling the user's strongs_dict
 @app.route('/edit_dict', methods=['GET', 'POST'])
