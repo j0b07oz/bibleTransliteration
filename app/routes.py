@@ -1,3 +1,4 @@
+import hashlib
 import os
 from flask import render_template, request, jsonify, session, send_file
 from app import app
@@ -23,6 +24,7 @@ STATIC_DATA_DIR = os.path.join(current_dir, 'static')
 strongs_dict_path = os.path.join(STATIC_DATA_DIR, 'strongs_dict.json')
 strongs_path = os.path.join(STATIC_DATA_DIR, 'Strongs.json')
 kjv_path = os.path.join(STATIC_DATA_DIR, 'kjv_strongs.json')
+outlines_path = os.path.abspath(os.path.join(current_dir, '..', 'bible_bsb_book_outlines_with_ranges.json'))
 
 with open(strongs_dict_path, 'r', encoding='utf-8') as f:
     default_strongs_dict = json.load(f)
@@ -30,14 +32,13 @@ with open(strongs_path, 'r', encoding='utf-8') as f:
     strongs_data = json.load(f)
 with open(kjv_path, 'r', encoding='utf-8') as f:
     kjv_data = json.load(f)
-
-outlines_path = os.path.abspath(os.path.join(current_dir, '..', 'bible_bsb_book_outlines_with_ranges.json'))
 with open(outlines_path, 'r', encoding='utf-8') as f:
-    outlines_data = json.load(f)
+    outline_data = json.load(f)
 
 # Build mappings for book order and chapter counts
 book_order = {}
 book_chapter_count = {}
+chapter_verse_counts = {}
 for verse in kjv_data.get('verses', []):
     name = verse['book_name']
     if name not in book_order:
@@ -45,33 +46,72 @@ for verse in kjv_data.get('verses', []):
     chapter = int(verse['chapter'])
     if name not in book_chapter_count or chapter > book_chapter_count[name]:
         book_chapter_count[name] = chapter
+    chapter_verse_counts.setdefault(name, {})
+    chapter_verse_counts[name][chapter] = max(int(verse['verse']), chapter_verse_counts[name].get(chapter, 0))
 
 
-def get_unit_range(book, chapter):
-    if not book or chapter is None:
-        return None, None
+def _get_unit_color(unit: dict) -> str:
+    seed = f"{unit.get('marker', '')}-{unit.get('title', '')}"
+    digest = hashlib.md5(seed.encode('utf-8')).hexdigest()
+    return f"#{digest[:6]}"
 
-    book_outlines = outlines_data.get(book, [])
-    best_match = None
 
-    for entry in book_outlines:
-        start_info = entry.get('range_start') or {}
-        end_info = entry.get('range_end') or {}
-        try:
-            start_chapter = int(start_info.get('chapter'))
-            end_chapter = int(end_info.get('chapter'))
-        except (TypeError, ValueError):
+def _count_verses_in_range(book: str, start_chapter: int, start_verse: int, end_chapter: int, end_verse: int) -> int:
+    total = 0
+    chapter_counts = chapter_verse_counts.get(book, {})
+    for ch in range(start_chapter, end_chapter + 1):
+        max_verse = chapter_counts.get(ch, 0)
+        if not max_verse:
             continue
+        range_start = start_verse if ch == start_chapter else 1
+        range_end = end_verse if ch == end_chapter else max_verse
+        total += max(0, range_end - range_start + 1)
+    return total
 
-        if start_chapter <= chapter <= end_chapter:
-            span = end_chapter - start_chapter
-            if best_match is None or span < best_match[0]:
-                best_match = (span, start_chapter, end_chapter)
 
-    if best_match:
-        return best_match[1], best_match[2]
+def _calculate_unit_progress(unit: dict, book: str, chapter: int) -> float:
+    start = unit.get('range_start', {})
+    end = unit.get('range_end', {})
+    start_ch = int(start.get('chapter', 0) or 0)
+    start_v = int(start.get('verse', 1) or 1)
+    end_ch = int(end.get('chapter', 0) or 0)
+    end_v = int(end.get('verse', 0) or 0)
 
-    return chapter, chapter
+    total = _count_verses_in_range(book, start_ch, start_v, end_ch, end_v)
+    if not total:
+        return 0.0
+
+    current_max_verse = chapter_verse_counts.get(book, {}).get(chapter, 0)
+    current_end = end_v if (chapter == end_ch and end_v) else current_max_verse
+    completed = _count_verses_in_range(book, start_ch, start_v, chapter, current_end)
+    return min(100.0, (completed / total) * 100)
+
+
+def get_active_unit(book: str, chapter: int):
+    if not book or not chapter:
+        return None
+
+    units = outline_data.get(book)
+    if not units:
+        return None
+
+    for unit in units:
+        start = unit.get('range_start', {})
+        end = unit.get('range_end', {})
+        start_ch = int(start.get('chapter', 0))
+        end_ch = int(end.get('chapter', 0))
+
+        if start_ch <= chapter <= end_ch:
+            label = f"{unit.get('marker', '').strip()} {unit.get('title', '').strip()}".strip()
+            percent = _calculate_unit_progress(unit, book, chapter)
+            return {
+                'label': label or unit.get('title'),
+                'range': unit.get('range'),
+                'percent_complete': percent,
+                'color': _get_unit_color(unit),
+            }
+
+    return None
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -86,24 +126,14 @@ def home():
             chapter = None
 
     result = ""
+    active_unit = None
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             user_strongs_dict = get_user_strongs_dict()
             result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+            active_unit = get_active_unit(book, chapter)
 
-    total_chapters = book_chapter_count.get(book, 0) if book else 0
-    percent_complete = 0
-    if total_chapters and chapter:
-        percent_complete = min(100, round((chapter / total_chapters) * 100))
-
-    return render_template(
-        'home.html',
-        result=result,
-        book=book,
-        chapter=chapter,
-        total_chapters=total_chapters,
-        percent_complete=percent_complete,
-    )
+    return render_template('home.html', result=result, book=book, chapter=chapter, active_unit=active_unit)
 
 @app.route('/navigate', methods=['POST'])
 def navigate():
@@ -124,20 +154,9 @@ def navigate():
 
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
     result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+    active_unit = get_active_unit(book, chapter)
 
-    total_chapters = book_chapter_count.get(book, 0) if book else 0
-    percent_complete = 0
-    if total_chapters and chapter:
-        percent_complete = min(100, round((chapter / total_chapters) * 100))
-
-    return render_template(
-        'home.html',
-        result=result,
-        book=book,
-        chapter=chapter,
-        total_chapters=total_chapters,
-        percent_complete=percent_complete,
-    )
+    return render_template('home.html', result=result, book=book, chapter=chapter, active_unit=active_unit)
 
 # Route for handling the user's strongs_dict
 @app.route('/edit_dict', methods=['GET', 'POST'])
