@@ -5,51 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The King James Bible</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <style>
-        .button-container {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .button-group {
-            display: flex;
-            gap: 10px;
-        }
-        .nav-button {
-            padding: 5px 10px;
-            font-size: 14px;
-            text-decoration: none;
-            color: white;
-            background-color: #333;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .transliterated {
-            position: relative;
-            cursor: pointer;
-        }
-        .transliterated::after {
-            content: attr(data-original);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #333;
-            color: white;
-            padding: 5px;
-            border-radius: 3px;
-            font-size: 14px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        .transliterated:hover::after {
-            opacity: 1;
-            visibility: visible;
-        }
-    </style>
 </head>
 <body>
     <h1>The King James Bible</h1>
@@ -59,6 +14,7 @@
             <a href="{{ url_for('about') }}" class="nav-button">About</a>
             <a href="{{ url_for('edit_dict') }}" class="nav-button">Edit transliterated word list</a>
             <a href="{{ url_for('heatmap') }}" class="nav-button">Heatmap</a>
+            <button type="button" class="nav-button toggle-button" id="overlay-toggle" aria-pressed="false">Show Unit Overlay</button>
         </div>
     </div>
     
@@ -79,6 +35,8 @@
             const bookInput = document.getElementById('book');
             const chapterInput = document.getElementById('chapter');
             const goButton = document.getElementById('go-button');
+            const overlayToggle = document.getElementById('overlay-toggle');
+            const overlayWrapper = document.getElementById('unit-overlay');
         
             function updateButtonState() {
                 goButton.disabled = !bookInput.value || !chapterInput.value;
@@ -86,7 +44,16 @@
         
             bookInput.addEventListener('input', updateButtonState);
             chapterInput.addEventListener('input', updateButtonState);
-        
+
+            if (overlayToggle && overlayWrapper) {
+                overlayToggle.addEventListener('click', function() {
+                    const isActive = overlayWrapper.classList.toggle('overlay-enabled');
+                    overlayToggle.classList.toggle('nav-button--active', isActive);
+                    overlayToggle.setAttribute('aria-pressed', isActive);
+                    overlayToggle.textContent = isActive ? 'Hide Unit Overlay' : 'Show Unit Overlay';
+                });
+            }
+
             // Initial state
             updateButtonState();
         });
@@ -94,6 +61,41 @@
 
     {% if result %}
         <h2 id="currentPassage">{{ book }} {{ chapter }}</h2>
+        <div class="unit-progress" aria-live="polite">
+            <div class="progress-pill">
+                <div class="pill-header">
+                    <span class="pill-unit">{{ book if book else 'Unit' }}</span>
+                    <span class="pill-percent">{{ percent_complete }}% complete</span>
+                </div>
+                <div class="progress-bar" role="img" aria-label="{{ percent_complete }} percent of {{ book if book else 'unit' }} complete">
+                    <div class="progress-fill" style="width: {{ percent_complete }}%"></div>
+                </div>
+                {% if total_chapters and total_chapters > 1 %}
+                <div class="sparkline" aria-hidden="true">
+                    {% for ch in range(1, total_chapters + 1) %}
+                        <span class="spark-segment {{ 'is-complete' if chapter and ch <= chapter else '' }}" title="Chapter {{ ch }}"></span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="unit-overlay-wrapper" id="unit-overlay">
+            <div class="unit-overlay-shell">
+                <div class="result">
+                    {{ result|safe }}
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <form method="POST" action="{{ url_for('navigate') }}">
+                <input type="hidden" name="book" value="{{ book }}">
+                <input type="hidden" name="chapter" value="{{ chapter }}">
+                <button type="submit" name="direction" value="prev" class="button">Previous Chapter</button>
+                <button type="submit" name="direction" value="next" class="button">Next Chapter</button>
+            </form>
+        </div>
+    {% endif %}
 
         {% if unit_start and unit_end %}
         <div class="chapter-bar" aria-label="Current outline unit">
