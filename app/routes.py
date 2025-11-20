@@ -31,6 +31,10 @@ with open(strongs_path, 'r', encoding='utf-8') as f:
 with open(kjv_path, 'r', encoding='utf-8') as f:
     kjv_data = json.load(f)
 
+outlines_path = os.path.abspath(os.path.join(current_dir, '..', 'bible_bsb_book_outlines_with_ranges.json'))
+with open(outlines_path, 'r', encoding='utf-8') as f:
+    outlines_data = json.load(f)
+
 # Build mappings for book order and chapter counts
 book_order = {}
 book_chapter_count = {}
@@ -42,11 +46,38 @@ for verse in kjv_data.get('verses', []):
     if name not in book_chapter_count or chapter > book_chapter_count[name]:
         book_chapter_count[name] = chapter
 
+
+def get_unit_range(book, chapter):
+    if not book or chapter is None:
+        return None, None
+
+    book_outlines = outlines_data.get(book, [])
+    best_match = None
+
+    for entry in book_outlines:
+        start_info = entry.get('range_start') or {}
+        end_info = entry.get('range_end') or {}
+        try:
+            start_chapter = int(start_info.get('chapter'))
+            end_chapter = int(end_info.get('chapter'))
+        except (TypeError, ValueError):
+            continue
+
+        if start_chapter <= chapter <= end_chapter:
+            span = end_chapter - start_chapter
+            if best_match is None or span < best_match[0]:
+                best_match = (span, start_chapter, end_chapter)
+
+    if best_match:
+        return best_match[1], best_match[2]
+
+    return chapter, chapter
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
     book = request.form.get('book', '') or request.args.get('book', '')
     chapter_str = request.form.get('chapter', '') or request.args.get('chapter', '')
-    
+
     chapter = None
     if chapter_str:
         try:
@@ -60,7 +91,9 @@ def home():
             user_strongs_dict = get_user_strongs_dict()
             result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
 
-    return render_template('home.html', result=result, book=book, chapter=chapter)
+    unit_start, unit_end = get_unit_range(book, chapter)
+
+    return render_template('home.html', result=result, book=book, chapter=chapter, unit_start=unit_start, unit_end=unit_end)
 
 @app.route('/navigate', methods=['POST'])
 def navigate():
@@ -81,8 +114,9 @@ def navigate():
 
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
     result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+    unit_start, unit_end = get_unit_range(book, chapter)
 
-    return render_template('home.html', result=result, book=book, chapter=chapter)
+    return render_template('home.html', result=result, book=book, chapter=chapter, unit_start=unit_start, unit_end=unit_end)
 
 # Route for handling the user's strongs_dict
 @app.route('/edit_dict', methods=['GET', 'POST'])
