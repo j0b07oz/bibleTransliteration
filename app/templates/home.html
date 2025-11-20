@@ -96,5 +96,51 @@
             </form>
         </div>
     {% endif %}
+
+        {% if unit_start and unit_end %}
+        <div class="chapter-bar" aria-label="Current outline unit">
+            <div class="chapter-range-label">Chapter {{ unit_start }}{% if unit_end != unit_start %}–{{ unit_end }}{% endif %}</div>
+            <div class="chapter-track">
+                <span class="chapter-endpoint">Ch {{ unit_start }}</span>
+                <div class="chapter-steps">
+                    {% if unit_start < chapter %}
+                    <form method="POST" action="{{ url_for('navigate') }}" class="chapter-step">
+                        <input type="hidden" name="book" value="{{ book }}">
+                        <input type="hidden" name="chapter" value="{{ chapter }}">
+                        <button type="submit" name="direction" value="prev" class="chapter-link">← {{ chapter - 1 }}</button>
+                    </form>
+                    {% else %}
+                    <button type="button" class="chapter-link" disabled>←</button>
+                    {% endif %}
+
+                    <div class="chapter-current">Chapter {{ chapter }}</div>
+
+                    {% if chapter < unit_end %}
+                    <form method="POST" action="{{ url_for('navigate') }}" class="chapter-step">
+                        <input type="hidden" name="book" value="{{ book }}">
+                        <input type="hidden" name="chapter" value="{{ chapter }}">
+                        <button type="submit" name="direction" value="next" class="chapter-link">{{ chapter + 1 }} →</button>
+                    </form>
+                    {% else %}
+                    <button type="button" class="chapter-link" disabled>→</button>
+                    {% endif %}
+                </div>
+                <span class="chapter-endpoint">Ch {{ unit_end }}</span>
+            </div>
+        </div>
+        {% endif %}
+        <div class="result">
+            {{ result|safe }}
+        </div>
+        
+        <div class="navigation">
+            <form method="POST" action="{{ url_for('navigate') }}">
+                <input type="hidden" name="book" value="{{ book }}">
+                <input type="hidden" name="chapter" value="{{ chapter }}">
+                <button type="submit" name="direction" value="prev" class="button">Previous Chapter</button>
+                <button type="submit" name="direction" value="next" class="button">Next Chapter</button>
+            </form>
+        </div>
+    {% endif %}
 </body>
 </html>
