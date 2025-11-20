@@ -1,25 +1,75 @@
 import hashlib
 import os
-from flask import render_template, request, jsonify, session, send_file
-from app import app
-from .transliteration import transliterate_chapter
 import json
 import uuid
 import tempfile
+from flask import render_template, request, jsonify, session, send_file, redirect, url_for
+from app import app
+from .transliteration import transliterate_chapter
+
+# Paths
+current_file_path = os.path.abspath(__file__)
+current_dir = os.path.dirname(current_file_path)
+STATIC_DATA_DIR = os.path.join(current_dir, 'static')
+UPLOAD_DATA_DIR = os.path.join(current_dir, 'uploads')
+os.makedirs(UPLOAD_DATA_DIR, exist_ok=True)
 
 def get_session_id():
     if 'user_id' not in session:
         session['user_id'] = str(uuid.uuid4())
     return session['user_id']
 
+def _validate_user_dict(data):
+    if not isinstance(data, dict):
+        return False, "Uploaded JSON must be an object mapping Strong's numbers to entries."
+
+    for key, val in data.items():
+        if not isinstance(key, str):
+            return False, "Strong's numbers must be string keys (e.g., \"H7225\")."
+        if not isinstance(val, dict):
+            return False, f"Entry for {key} must be an object."
+        translations = val.get("translations")
+        if translations is None or not isinstance(translations, list) or not all(isinstance(t, str) for t in translations):
+            return False, f"Entry for {key} must include a list of translations."
+        color = val.get("color", None)
+        if color is not None and not isinstance(color, str):
+            return False, f"Color for {key} must be a string (hex) or null."
+    return True, None
+
+
+def _user_dict_path():
+    return os.path.join(UPLOAD_DATA_DIR, f"{get_session_id()}.json")
+
+
+def save_user_dict(user_dict: dict):
+    session['user_strongs_dict'] = user_dict
+    try:
+        with open(_user_dict_path(), 'w', encoding='utf-8') as f:
+            json.dump(user_dict, f, ensure_ascii=False, indent=2)
+    except OSError:
+        # If persisting to disk fails, we still keep the session copy.
+        pass
+
+
 def get_user_strongs_dict():
     default_dict = {k: {"translations": v, "color": None} for k, v in default_strongs_dict.items()}
-    return session.get('user_strongs_dict', default_dict)
+    if 'user_strongs_dict' in session:
+        return session['user_strongs_dict']
 
-current_file_path = os.path.abspath(__file__)
-current_dir = os.path.dirname(current_file_path)
+    user_file = _user_dict_path()
+    if os.path.exists(user_file):
+        try:
+            with open(user_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            valid, _ = _validate_user_dict(data)
+            if valid:
+                session['user_strongs_dict'] = data
+                return data
+        except (OSError, json.JSONDecodeError):
+            pass
 
-STATIC_DATA_DIR = os.path.join(current_dir, 'static')
+    session['user_strongs_dict'] = default_dict
+    return default_dict
 
 strongs_dict_path = os.path.join(STATIC_DATA_DIR, 'strongs_dict.json')
 strongs_path = os.path.join(STATIC_DATA_DIR, 'Strongs.json')
@@ -293,13 +343,36 @@ def edit_dict():
             color = request.form.get('color')
             user_strongs_dict[strong_number] = {"translations": translations, "color": color}
         # Save the updated dictionary to the session
-        session['user_strongs_dict'] = user_strongs_dict
+        save_user_dict(user_strongs_dict)
         return jsonify({"success": True})
     
     sorted_dict = dict(sorted(user_strongs_dict.items(), key=lambda x: int(x[0][1:])))
 
     # For GET requests, render the edit page
-    return render_template('edit_dict.html', strongs_dict=sorted_dict)
+    return render_template(
+        'edit_dict.html',
+        strongs_dict=sorted_dict,
+        upload_error=request.args.get('upload_error'),
+        upload_success=request.args.get('upload_success'),
+    )
+
+
+@app.route('/upload_dict', methods=['POST'])
+def upload_dict():
+    file = request.files.get('dict_file')
+    if not file or not file.filename:
+        return redirect(url_for('edit_dict', upload_error="Please choose a JSON file to upload."))
+    try:
+        data = json.load(file.stream)
+    except json.JSONDecodeError:
+        return redirect(url_for('edit_dict', upload_error="Invalid JSON. Please upload a valid my_strongs_dict JSON file."))
+
+    valid, message = _validate_user_dict(data)
+    if not valid:
+        return redirect(url_for('edit_dict', upload_error=message))
+
+    save_user_dict(data)
+    return redirect(url_for('edit_dict', upload_success="Custom Strong's list uploaded and saved."))
 
 # Route for exporting your current list
 @app.route('/export_dict')

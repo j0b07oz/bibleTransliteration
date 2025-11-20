@@ -43,6 +43,23 @@
         <a href="{{ url_for('export_dict') }}" class="button">Export your list of words</a>
     </p>
 
+    {% if upload_error %}
+    <p style="color: #a94442; font-weight: 600;">{{ upload_error }}</p>
+    {% elif upload_success %}
+    <p style="color: #2d7a3e; font-weight: 600;">{{ upload_success }}</p>
+    {% endif %}
+
+    <div style="margin: 16px 0;">
+        <h2>Upload your my_strongs_dict.json</h2>
+        <form method="POST" action="{{ url_for('upload_dict') }}" enctype="multipart/form-data">
+            <input type="file" name="dict_file" accept="application/json" required>
+            <button type="submit" class="button">Upload</button>
+        </form>
+        <p style="font-size: 14px; color: #555; margin-top: 6px;">
+            Expected format: {"H7225": {"translations": ["beginning"], "color": "#ffaa00"}, ...}
+        </p>
+    </div>
+
     <input type="text" id="search-box" placeholder="Search Strong's numbers or translations...">
 
     <div>
