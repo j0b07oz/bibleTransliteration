@@ -197,6 +197,11 @@ a:hover {
     visibility: visible;
 }
 
+.transliterated.repeated {
+    box-shadow: 0 0 0 2px #c05a36, 0 0 0 4px #c05a361f;
+    border-radius: 6px;
+}
+
 .unit-progress {
     margin: 12px 0 16px;
 }
