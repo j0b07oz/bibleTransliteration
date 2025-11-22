@@ -197,6 +197,16 @@ a:hover {
     visibility: visible;
 }
 
+.transliterated.repeated {
+    font-weight: 700;
+}
+
+.literary-hidden .transliterated.repeated {
+    color: inherit !important;
+    text-shadow: none !important;
+    font-weight: inherit;
+}
+
 .unit-progress {
     margin: 12px 0 16px;
 }
