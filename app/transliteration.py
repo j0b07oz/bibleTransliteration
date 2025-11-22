@@ -98,47 +98,47 @@ def transliterate_chapter(book,chapter, strongs_dict_path, strongs_path, kjv_pat
     for verse in chapter_data:
         for strongs_number_braced in verse['strongs']:
             strongs_number = strongs_number_braced.strip('{}')
-            if strongs_number in replacement_mapping.keys():
-                match = re.search(r'\b([\w\']*)\{' + re.escape(strongs_number) + r'\}', verse['text'])
-                alt_match = re.search(r'{' + re.escape(strongs_number) + r'\}\'{[HG]\d+}', verse['text'])
-                if alt_match:
-                    strongs_group = alt_match.group(1)
-                    verse['text'] = verse['text'].replace(f"{{{strongs_number}}}", "")
-                    continue
-                if match:
-                    word = match.group(1)
-                    strongs_entry = strongs_dict_path.get(strongs_number, {})
-                    translations = strongs_entry.get("translations", [word])
-                    sorted_translations = sorted(translations, key=lambda x: len(x.split()), reverse=True)
+            match = re.search(r'\b([\w\']*)\{' + re.escape(strongs_number) + r'\}', verse['text'])
+            alt_match = re.search(r'{' + re.escape(strongs_number) + r'\}\'{[HG]\d+}', verse['text'])
+            if alt_match:
+                strongs_group = alt_match.group(1)
+                verse['text'] = verse['text'].replace(f"{{{strongs_number}}}", "")
+                continue
+            if match:
+                word = match.group(1)
+                strongs_entry = strongs_dict_path.get(strongs_number, {})
+                translations = strongs_entry.get("translations", [word])
+                sorted_translations = sorted(translations, key=lambda x: len(x.split()), reverse=True)
+                xlit_info = replacement_mapping.get(strongs_number)
 
-                    replaced = False
-                    for translation in sorted_translations:
-                        translation = translation.lower()
-                        num_words_translation = len(translation.split())
-                        
-                        # Look for the full phrase
-                        phrase_match = re.search(r'\b' + re.escape(translation) + r'\s*\{' + re.escape(strongs_number) + r'\}', verse['text'], re.IGNORECASE)
-                        
-                        if phrase_match:
-                            matched_text = phrase_match.group(0)
-                            xlit = html.escape(replacement_mapping[strongs_number]['xlit'])
-                            color = replacement_mapping[strongs_number]['color']
-                            replacement = build_span(
-                                strongs_number,
-                                xlit,
-                                matched_text.split("{")[0].strip(),
-                                color,
-                            )
-                            verse['text'] = verse['text'].replace(matched_text, replacement)
-                            replaced = True
-                            break
-                    
-                    # If no phrase match found, fall back to single word replacement
-                    if not replaced:
-                        xlit = html.escape(replacement_mapping[strongs_number]['xlit'])
-                        color = replacement_mapping[strongs_number]['color']
-                        replacement = build_span(strongs_number, xlit, word, color)
-                        verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
+                replaced = False
+                for translation in sorted_translations:
+                    translation = translation.lower()
+                    num_words_translation = len(translation.split())
+
+                    # Look for the full phrase
+                    phrase_match = re.search(r'\b' + re.escape(translation) + r'\s*\{' + re.escape(strongs_number) + r'\}', verse['text'], re.IGNORECASE)
+
+                    if phrase_match:
+                        matched_text = phrase_match.group(0)
+                        display_value = html.escape(xlit_info['xlit']) if xlit_info else html.escape(matched_text.split("{")[0].strip())
+                        color = xlit_info['color'] if xlit_info else None
+                        replacement = build_span(
+                            strongs_number,
+                            display_value,
+                            matched_text.split("{")[0].strip(),
+                            color,
+                        )
+                        verse['text'] = verse['text'].replace(matched_text, replacement)
+                        replaced = True
+                        break
+
+                # If no phrase match found, fall back to single word replacement
+                if not replaced:
+                    display_value = html.escape(xlit_info['xlit']) if xlit_info else html.escape(word)
+                    color = xlit_info['color'] if xlit_info else None
+                    replacement = build_span(strongs_number, display_value, word, color)
+                    verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])
         verse['text'] = re.sub(r'\{(\([HG]\d+\))\}', '', verse['text'])
         verse['text'] = re.sub(r'\{[HG]\d+\)\}', '', verse['text'])
