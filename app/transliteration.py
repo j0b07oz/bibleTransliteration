@@ -31,7 +31,9 @@ def generate_repeat_colors(strongs_number):
     shadow_color = hls_to_hex(hue, max(0, lightness - 0.18), min(0.95, saturation + 0.1))
     return base_color, shadow_color
 
-def transliterate_chapter(book,chapter, strongs_dict_path, strongs_path, kjv_path):
+def transliterate_chapter(
+    book, chapter, strongs_dict_path, strongs_path, kjv_path, max_repeated_highlights=10
+):
     replacement_mapping = {}
 
     stop_strongs = {
@@ -71,9 +73,14 @@ def transliterate_chapter(book,chapter, strongs_dict_path, strongs_path, kjv_pat
         for verse in chapter_data
         for sn in verse['strongs']
     )
-    repeated_strongs = {
-        num for num, count in strongs_counter.items()
+    repeated_candidates = [
+        (num, count)
+        for num, count in strongs_counter.items()
         if count >= min_repeat_count and num not in stop_strongs
+    ]
+    repeated_sorted = sorted(repeated_candidates, key=lambda item: (-item[1], item[0]))
+    repeated_strongs = {
+        num for num, _ in repeated_sorted[:max_repeated_highlights]
     }
     repeated_colors = {num: generate_repeat_colors(num) for num in repeated_strongs}
 
