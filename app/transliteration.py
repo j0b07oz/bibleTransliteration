@@ -25,11 +25,13 @@ def hls_to_hex(h, l, s):
 def generate_repeat_colors(strongs_number):
     digest = hashlib.sha256(strongs_number.encode('utf-8')).digest()
     hue = digest[0] / 255
-    saturation = 0.55 + (digest[1] / 255) * 0.25
-    lightness = 0.45 + (digest[2] / 255) * 0.15
+    saturation = 0.35 + (digest[1] / 255) * 0.2
+    lightness = 0.35 + (digest[2] / 255) * 0.15
     base_color = hls_to_hex(hue, lightness, saturation)
-    shadow_color = hls_to_hex(hue, max(0, lightness - 0.18), min(0.95, saturation + 0.1))
-    return base_color, shadow_color
+    accent_lightness = min(0.85, lightness + 0.22)
+    accent_saturation = min(0.45, saturation + 0.1)
+    accent_color = hls_to_hex(hue, accent_lightness, accent_saturation)
+    return base_color, accent_color
 
 def transliterate_chapter(
     book, chapter, strongs_dict_path, strongs_path, kjv_path, max_repeated_highlights=10
@@ -103,8 +105,15 @@ def transliterate_chapter(
             or normalized in english_stopwords
         )
 
-    def build_span(strongs_number, display_text, original_text, base_color):
-        classes = ["transliterated"]
+    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration):
+        classes = ["highlighted-word"]
+        data_original_attr = (
+            f' data-original="{html.escape(original_text)}"' if has_transliteration else ""
+        )
+
+        if has_transliteration:
+            classes.append("transliterated")
+
         style_parts = []
 
         if base_color:
@@ -114,10 +123,12 @@ def transliterate_chapter(
         if strongs_number in repeated_colors:
             classes.append("repeated")
             repeat_color, shadow_color = repeated_colors[strongs_number]
-            style_parts.append(f"color: {repeat_color}; text-shadow: 0 0 6px {shadow_color};")
+            style_parts.append(
+                f"color: #1f0f0b; background-color: {shadow_color}; border: 1px solid {repeat_color};"
+            )
 
         style_attr = f" style=\"{' '.join(style_parts)}\"" if style_parts else ""
-        return f'<span class="{" ".join(classes)}" data-original="{html.escape(original_text)}"{style_attr}>{display_text}</span>'
+        return f'<span class="{" ".join(classes)}"{data_original_attr}{style_attr}>{display_text}</span>'
 
     #----------------------------------------------------------------------
     result = []
@@ -159,6 +170,7 @@ def transliterate_chapter(
                             display_value,
                             matched_text.split("{")[0].strip(),
                             color,
+                            bool(xlit_info),
                         )
                         verse['text'] = verse['text'].replace(matched_text, replacement)
                         replaced = True
@@ -172,7 +184,9 @@ def transliterate_chapter(
                         verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", word)
                         continue
 
-                    replacement = build_span(strongs_number, display_value, word, color)
+                    replacement = build_span(
+                        strongs_number, display_value, word, color, bool(xlit_info)
+                    )
                     verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])
         verse['text'] = re.sub(r'\{(\([HG]\d+\))\}', '', verse['text'])

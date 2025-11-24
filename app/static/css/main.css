@@ -168,9 +168,17 @@ a:hover {
     box-shadow: 0 0 0 1px #2f1f1c;
 }
 
-.transliterated {
+
+.highlighted-word {
     position: relative;
     cursor: pointer;
+    padding: 0 4px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.transliterated {
+    position: relative;
 }
 
 .transliterated::after {
@@ -197,11 +205,12 @@ a:hover {
     visibility: visible;
 }
 
-.transliterated.repeated {
+
+.repeated {
     font-weight: 700;
 }
 
-.literary-hidden .transliterated.repeated {
+.literary-hidden .repeated {
     color: inherit !important;
     text-shadow: none !important;
     font-weight: inherit;
