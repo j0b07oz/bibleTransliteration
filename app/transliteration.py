@@ -36,10 +36,19 @@ def transliterate_chapter(book,chapter, strongs_dict_path, strongs_path, kjv_pat
 
     stop_strongs = {
         # Common articles, conjunctions, and pronouns that add noise when highlighted
-        "H1931", "H1933", "H3068", "H853", "H854", "H3588", "H834",
-        "G2532", "G1161", "G1510", "G3588", "G2532", "G3754", "G3777",
-        "G1063", "G1223",
+        "H1931", "H1933", "H3068", "H853", "H854", "H3588", "H834", "H4480",
+        "H413", "H5921", "H5973", "H1571", "H518", "H3808", "H1961", "H1992",
+        "G2532", "G1161", "G1510", "G3588", "G2532", "G3754", "G3777", "G1063",
+        "G1223", "G2531", "G1722", "G1519", "G1909", "G3326", "G3756", "G1163",
     }
+    english_stopwords = {
+        "a", "an", "and", "as", "at", "but", "by", "for", "from", "he", "her",
+        "his", "i", "in", "is", "it", "nor", "not", "of", "on", "or", "our",
+        "she", "so", "that", "the", "their", "them", "then", "they", "this",
+        "those", "to", "was", "we", "were", "when", "which", "who", "with",
+        "you", "your",
+    }
+    min_english_highlight_length = 4
     min_repeat_count = 3
 
     pattern = r'{[HG]\d+}'
@@ -76,6 +85,16 @@ def transliterate_chapter(book,chapter, strongs_dict_path, strongs_path, kjv_pat
         if count >= min_repeat_count and num not in stop_strongs
     }
     repeated_colors = {num: generate_repeat_colors(num) for num in repeated_strongs}
+
+    def should_skip_english_highlight(display_text, has_transliteration):
+        if has_transliteration:
+            return False
+
+        normalized = re.sub(r"[^A-Za-z']", "", display_text).lower()
+        return (
+            len(normalized) < min_english_highlight_length
+            or normalized in english_stopwords
+        )
 
     def build_span(strongs_number, display_text, original_text, base_color):
         classes = ["transliterated"]
@@ -123,6 +142,11 @@ def transliterate_chapter(book,chapter, strongs_dict_path, strongs_path, kjv_pat
                         matched_text = phrase_match.group(0)
                         display_value = html.escape(xlit_info['xlit']) if xlit_info else html.escape(matched_text.split("{")[0].strip())
                         color = xlit_info['color'] if xlit_info else None
+                        if should_skip_english_highlight(display_value, bool(xlit_info)) and strongs_number in repeated_strongs:
+                            verse['text'] = verse['text'].replace(matched_text, matched_text.split("{")[0].strip())
+                            replaced = True
+                            break
+
                         replacement = build_span(
                             strongs_number,
                             display_value,
@@ -137,6 +161,10 @@ def transliterate_chapter(book,chapter, strongs_dict_path, strongs_path, kjv_pat
                 if not replaced:
                     display_value = html.escape(xlit_info['xlit']) if xlit_info else html.escape(word)
                     color = xlit_info['color'] if xlit_info else None
+                    if should_skip_english_highlight(display_value, bool(xlit_info)) and strongs_number in repeated_strongs:
+                        verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", word)
+                        continue
+
                     replacement = build_span(strongs_number, display_value, word, color)
                     verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])
