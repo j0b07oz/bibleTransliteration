@@ -14,7 +14,27 @@
             <a href="{{ url_for('about') }}" class="nav-button">About</a>
             <a href="{{ url_for('edit_dict') }}" class="nav-button">Edit transliterated word list</a>
             <a href="{{ url_for('heatmap') }}" class="nav-button">Heatmap</a>
-            <button type="button" class="nav-button toggle-button nav-button--active" id="overlay-toggle" aria-pressed="true">Hide Literary Context</button>
+            <div class="context-dropdown" id="context-dropdown">
+                <button type="button" class="nav-button toggle-button nav-button--active" id="context-menu-button" aria-haspopup="true" aria-expanded="false">Literary Context ▾</button>
+                <div class="context-menu" id="context-menu" role="menu">
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="bolded" checked>
+                        <span>Bolded words</span>
+                    </label>
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="repeats" checked>
+                        <span>Highlighted repeated words</span>
+                    </label>
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="overview" checked>
+                        <span>Book overview</span>
+                    </label>
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="units" checked>
+                        <span>Active literary units and side lines</span>
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -35,39 +55,115 @@
             const bookInput = document.getElementById('book');
             const chapterInput = document.getElementById('chapter');
             const goButton = document.getElementById('go-button');
-            const overlayToggle = document.getElementById('overlay-toggle');
-
+            const contextMenuButton = document.getElementById('context-menu-button');
+            const contextDropdown = document.getElementById('context-dropdown');
+            const contextMenu = document.getElementById('context-menu');
+            const contextOptions = {
+                bolded: true,
+                repeats: true,
+                overview: true,
+                units: true,
+            };
             const activeUnits = {{ active_units|tojson|safe }};
+            const storageKey = 'literaryContextOptions';
+
+            function loadSavedOptions() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(storageKey));
+                    if (saved && typeof saved === 'object') {
+                        Object.assign(contextOptions, saved);
+                    }
+                } catch (err) {
+                    console.warn('Unable to read saved context options', err);
+                }
+            }
+
+            function persistOptions() {
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(contextOptions));
+                } catch (err) {
+                    console.warn('Unable to save context options', err);
+                }
+            }
 
             function updateButtonState() {
                 goButton.disabled = !bookInput.value || !chapterInput.value;
             }
 
-            function updateToggleState(isVisible) {
-                overlayToggle.classList.toggle('nav-button--active', isVisible);
-                overlayToggle.setAttribute('aria-pressed', isVisible);
-                overlayToggle.textContent = isVisible ? 'Hide Literary Context' : 'Show Literary Context';
+            function updateToggleState() {
+                const hasAny = Object.values(contextOptions).some(Boolean);
+                contextMenuButton.classList.toggle('nav-button--active', hasAny);
+                contextMenuButton.setAttribute('aria-pressed', hasAny);
             }
 
             bookInput.addEventListener('input', updateButtonState);
             chapterInput.addEventListener('input', updateButtonState);
 
-            overlayToggle?.addEventListener('click', function() {
-                const isHidden = document.body.classList.toggle('literary-hidden');
-                updateToggleState(!isHidden);
-                renderOverlay();
+            function applyOptionClasses() {
+                document.body.classList.toggle('hide-bolded', !contextOptions.bolded);
+                document.body.classList.toggle('hide-repeats', !contextOptions.repeats);
+                document.body.classList.toggle('hide-book-overview', !contextOptions.overview);
+                document.body.classList.toggle('hide-literary-units', !contextOptions.units);
+            }
+
+            function syncMenuState() {
+                const inputs = contextMenu.querySelectorAll('[data-context-option]');
+                inputs.forEach((input) => {
+                    const key = input.dataset.contextOption;
+                    input.checked = !!contextOptions[key];
+                    input.parentElement.setAttribute('aria-checked', input.checked);
+                });
+            }
+
+            function closeMenu() {
+                contextDropdown.classList.remove('is-open');
+                contextMenuButton.setAttribute('aria-expanded', 'false');
+            }
+
+            function toggleMenu() {
+                contextDropdown.classList.toggle('is-open');
+                const isOpen = contextDropdown.classList.contains('is-open');
+                contextMenuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            }
+
+            contextMenuButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleMenu();
             });
 
+            document.addEventListener('click', (event) => {
+                if (!contextDropdown.contains(event.target)) {
+                    closeMenu();
+                }
+            });
+
+            contextMenu.addEventListener('click', (event) => event.stopPropagation());
+
+            contextMenu.querySelectorAll('[data-context-option]').forEach((input) => {
+                const key = input.dataset.contextOption;
+                input.addEventListener('change', () => {
+                    contextOptions[key] = input.checked;
+                    persistOptions();
+                    applyOptionClasses();
+                    updateToggleState();
+                    syncMenuState();
+                    renderOverlay();
+                });
+            });
+
+            loadSavedOptions();
             updateButtonState();
-            const contextVisible = !document.body.classList.contains('literary-hidden');
-            updateToggleState(contextVisible);
+            applyOptionClasses();
+            syncMenuState();
+            updateToggleState();
 
             function renderOverlay() {
                 const overlay = document.getElementById('bar-overlay');
                 const shell = document.querySelector('.reading-shell');
                 const rows = Array.from(document.querySelectorAll('.verse-row'));
-                if (!overlay || !shell || !rows.length || document.body.classList.contains('literary-hidden')) {
+                if (!overlay || !shell || !rows.length || !contextOptions.units) {
                     if (overlay) overlay.innerHTML = '';
+                    shell.style.setProperty('--bar-offset', '16px');
                     return;
                 }
                 overlay.innerHTML = '';
