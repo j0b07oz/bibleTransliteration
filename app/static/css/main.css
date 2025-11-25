@@ -168,6 +168,59 @@ a:hover {
     box-shadow: 0 0 0 1px #2f1f1c;
 }
 
+.context-dropdown {
+    position: relative;
+}
+
+.context-dropdown .nav-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.context-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 220px;
+    background: #2f1f1c;
+    border: 1px solid #3d2a26;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    padding: 8px;
+    display: none;
+    z-index: 10;
+}
+
+.context-dropdown.is-open .context-menu {
+    display: grid;
+    gap: 6px;
+}
+
+.context-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(247, 240, 233, 0.04);
+    color: #f7f0e9;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.context-option:hover,
+.context-option:focus-within {
+    background: rgba(247, 240, 233, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(125, 75, 54, 0.35);
+}
+
+.context-option input[type="checkbox"] {
+    accent-color: #d9aa6f;
+    width: 16px;
+    height: 16px;
+}
+
 
 .highlighted-word {
     position: relative;
@@ -214,6 +267,43 @@ a:hover {
     color: inherit !important;
     text-shadow: none !important;
     font-weight: inherit;
+}
+
+.hide-bolded .highlighted-word:not(.repeated) {
+    font-weight: 400;
+    background: none !important;
+    color: inherit !important;
+    border: none !important;
+    padding: 0;
+}
+
+.hide-bolded .highlighted-word:not(.repeated)::after {
+    display: none;
+}
+
+.hide-repeats .repeated {
+    color: inherit !important;
+    background: none !important;
+    border: none !important;
+    text-shadow: none !important;
+}
+
+.hide-book-overview .unit-progress {
+    display: none;
+}
+
+.hide-literary-units .unit-overlay-wrapper,
+.hide-literary-units .bar-overlay,
+.hide-literary-units .literary-bars {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    .context-menu {
+        left: 0;
+        right: auto;
+        width: min(90vw, 260px);
+    }
 }
 
 .unit-progress {
