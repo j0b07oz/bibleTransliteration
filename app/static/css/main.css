@@ -269,7 +269,7 @@ a:hover {
     font-weight: inherit;
 }
 
-.hide-bolded .highlighted-word {
+.hide-bolded .highlighted-word:not(.repeated) {
     font-weight: 400;
     background: none !important;
     color: inherit !important;
@@ -277,7 +277,7 @@ a:hover {
     padding: 0;
 }
 
-.hide-bolded .highlighted-word::after {
+.hide-bolded .highlighted-word:not(.repeated)::after {
     display: none;
 }
 
@@ -296,6 +296,14 @@ a:hover {
 .hide-literary-units .bar-overlay,
 .hide-literary-units .literary-bars {
     display: none !important;
+}
+
+@media (max-width: 640px) {
+    .context-menu {
+        left: 0;
+        right: auto;
+        width: min(90vw, 260px);
+    }
 }
 
 .unit-progress {
