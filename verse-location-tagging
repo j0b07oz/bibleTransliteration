@@ -1,0 +1,60 @@
+{
+  "Jonah": {
+    "1": {
+      "1": { "book": "Jonah", "verse": "1:1", "location": "unspecified" },
+      "2": { "book": "Jonah", "verse": "1:2", "location": "unspecified" },
+      "3": { "book": "Jonah", "verse": "1:3", "location": "Joppa" },
+      "4": { "book": "Jonah", "verse": "1:4", "location": "sea" },
+      "5": { "book": "Jonah", "verse": "1:5", "location": "sea" },
+      "6": { "book": "Jonah", "verse": "1:6", "location": "sea" },
+      "7": { "book": "Jonah", "verse": "1:7", "location": "sea" },
+      "8": { "book": "Jonah", "verse": "1:8", "location": "sea" },
+      "9": { "book": "Jonah", "verse": "1:9", "location": "sea" },
+      "10": { "book": "Jonah", "verse": "1:10", "location": "sea" },
+      "11": { "book": "Jonah", "verse": "1:11", "location": "sea" },
+      "12": { "book": "Jonah", "verse": "1:12", "location": "sea" },
+      "13": { "book": "Jonah", "verse": "1:13", "location": "sea" },
+      "14": { "book": "Jonah", "verse": "1:14", "location": "sea" },
+      "15": { "book": "Jonah", "verse": "1:15", "location": "sea" },
+      "16": { "book": "Jonah", "verse": "1:16", "location": "sea" },
+      "17": { "book": "Jonah", "verse": "1:17", "location": "fish" }
+    },
+    "2": {
+      "1": { "book": "Jonah", "verse": "2:1", "location": "fish" },
+      "2": { "book": "Jonah", "verse": "2:2", "location": "fish" },
+      "3": { "book": "Jonah", "verse": "2:3", "location": "fish" },
+      "4": { "book": "Jonah", "verse": "2:4", "location": "fish" },
+      "5": { "book": "Jonah", "verse": "2:5", "location": "fish" },
+      "6": { "book": "Jonah", "verse": "2:6", "location": "fish" },
+      "7": { "book": "Jonah", "verse": "2:7", "location": "fish" },
+      "8": { "book": "Jonah", "verse": "2:8", "location": "fish" },
+      "9": { "book": "Jonah", "verse": "2:9", "location": "fish" },
+      "10": { "book": "Jonah", "verse": "2:10", "location": "shore" }
+    },
+    "3": {
+      "1": { "book": "Jonah", "verse": "3:1", "location": "unspecified" },
+      "2": { "book": "Jonah", "verse": "3:2", "location": "unspecified" },
+      "3": { "book": "Jonah", "verse": "3:3", "location": "Nineveh" },
+      "4": { "book": "Jonah", "verse": "3:4", "location": "Nineveh" },
+      "5": { "book": "Jonah", "verse": "3:5", "location": "Nineveh" },
+      "6": { "book": "Jonah", "verse": "3:6", "location": "palace" },
+      "7": { "book": "Jonah", "verse": "3:7", "location": "palace" },
+      "8": { "book": "Jonah", "verse": "3:8", "location": "Nineveh" },
+      "9": { "book": "Jonah", "verse": "3:9", "location": "Nineveh" },
+      "10": { "book": "Jonah", "verse": "3:10", "location": "Nineveh" }
+    },
+    "4": {
+      "1": { "book": "Jonah", "verse": "4:1", "location": "east of Nineveh" },
+      "2": { "book": "Jonah", "verse": "4:2", "location": "east of Nineveh" },
+      "3": { "book": "Jonah", "verse": "4:3", "location": "east of Nineveh" },
+      "4": { "book": "Jonah", "verse": "4:4", "location": "east of Nineveh" },
+      "5": { "book": "Jonah", "verse": "4:5", "location": "east of Nineveh" },
+      "6": { "book": "Jonah", "verse": "4:6", "location": "east of Nineveh" },
+      "7": { "book": "Jonah", "verse": "4:7", "location": "east of Nineveh" },
+      "8": { "book": "Jonah", "verse": "4:8", "location": "east of Nineveh" },
+      "9": { "book": "Jonah", "verse": "4:9", "location": "east of Nineveh" },
+      "10": { "book": "Jonah", "verse": "4:10", "location": "east of Nineveh" },
+      "11": { "book": "Jonah", "verse": "4:11", "location": "east of Nineveh" }
+    }
+  }
+}
