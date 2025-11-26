@@ -286,6 +286,7 @@ a:hover {
     background: none !important;
     border: none !important;
     text-shadow: none !important;
+    font-weight: inherit;
 }
 
 .hide-book-overview .unit-progress {
