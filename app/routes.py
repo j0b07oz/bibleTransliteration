@@ -252,7 +252,14 @@ def home():
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             user_strongs_dict = get_user_strongs_dict()
-            result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+            result = transliterate_chapter(
+                book,
+                chapter,
+                user_strongs_dict,
+                strongs_data,
+                kjv_data,
+                sound_annotations=sound_annotations,
+            )
             active_unit = get_active_unit(book, chapter)
 
     total_chapters = book_chapter_count.get(book)
@@ -292,7 +299,14 @@ def navigate():
     # Here you might want to add logic to handle book transitions
 
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
-    result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+    result = transliterate_chapter(
+        book,
+        chapter,
+        user_strongs_dict,
+        strongs_data,
+        kjv_data,
+        sound_annotations=sound_annotations,
+    )
     active_unit = get_active_unit(book, chapter)
     active_units = get_active_units(book, chapter)
     total_chapters = book_chapter_count.get(book)
