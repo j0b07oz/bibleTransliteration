@@ -26,6 +26,10 @@
                         <span>Highlighted repeated words</span>
                     </label>
                     <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="phonetics" checked>
+                        <span>Phonetic literary devices</span>
+                    </label>
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
                         <input type="checkbox" data-context-option="overview" checked>
                         <span>Book overview</span>
                     </label>
@@ -61,6 +65,7 @@
             const contextOptions = {
                 bolded: true,
                 repeats: true,
+                phonetics: true,
                 overview: true,
                 units: true,
             };
@@ -102,6 +107,7 @@
             function applyOptionClasses() {
                 document.body.classList.toggle('hide-bolded', !contextOptions.bolded);
                 document.body.classList.toggle('hide-repeats', !contextOptions.repeats);
+                document.body.classList.toggle('hide-phonetics', !contextOptions.phonetics);
                 document.body.classList.toggle('hide-book-overview', !contextOptions.overview);
                 document.body.classList.toggle('hide-literary-units', !contextOptions.units);
             }
@@ -189,8 +195,334 @@
                 });
             }
 
+            function consonantKey(text) {
+                return (text || '').replace(/[^a-z]/gi, '').replace(/[aeiou]/gi, '').toUpperCase();
+            }
+
+            function normalizeToken(el) {
+                const rawXlit = (el.dataset.xliteral || el.textContent || '').trim();
+                const cleaned = rawXlit.toLowerCase().replace(/[^a-z]/g, '');
+                const vowels = (cleaned.match(/[aeiou]+/g) || []).join('-');
+                const onsetMatch = cleaned.match(/^[^aeiou]+/);
+                const onset = onsetMatch ? onsetMatch[0].toUpperCase() : '';
+                const rootKey = (el.dataset.rootkey || consonantKey(rawXlit)).toUpperCase();
+                return {
+                    element: el,
+                    strongs: el.dataset.strongs || '',
+                    xlit: rawXlit,
+                    cleaned,
+                    vowels,
+                    onset,
+                    rootKey,
+                    gloss: el.dataset.gloss || '',
+                    lemma: el.dataset.lemma || '',
+                    pronounce: el.dataset.pronounce || '',
+                };
+            }
+
+            function tokenKey(tok) {
+                return `${tok.strongs || 'na'}-${tok.cleaned || tok.xlit || tok.element.textContent}`.toLowerCase();
+            }
+
+            function uniqueTokens(tokens) {
+                const seen = new Set();
+                return tokens.filter((tok) => {
+                    const key = tokenKey(tok);
+                    if (!key || seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            }
+
+            function groupBy(tokens, fn) {
+                return tokens.reduce((acc, token) => {
+                    const key = fn(token);
+                    if (!key) return acc;
+                    acc[key] = acc[key] || [];
+                    acc[key].push(token);
+                    return acc;
+                }, {});
+            }
+
+            function levenshtein(a, b) {
+                if (!a || !b) return Math.max(a.length, b.length);
+                const dp = Array.from({ length: b.length + 1 }, (_, i) => i);
+                for (let i = 1; i <= a.length; i++) {
+                    let prev = dp[0];
+                    dp[0] = i;
+                    for (let j = 1; j <= b.length; j++) {
+                        const temp = dp[j];
+                        dp[j] = Math.min(
+                            dp[j] + 1,
+                            dp[j - 1] + 1,
+                            prev + (a[i - 1] === b[j - 1] ? 0 : 1),
+                        );
+                        prev = temp;
+                    }
+                }
+                return dp[b.length];
+            }
+
+            function similarityScore(a, b) {
+                const maxLen = Math.max(a.length, b.length);
+                if (!maxLen) return 0;
+                const distance = levenshtein(a, b);
+                return 1 - distance / maxLen;
+            }
+
+            function detectPhoneticDevices(tokens) {
+                const matches = [];
+                const lexicalKeys = new Set();
+
+                const lexicalGroups = Object.entries(groupBy(tokens, (t) => t.strongs))
+                    .filter(([, list]) => list.length >= 2)
+                    .sort((a, b) => b[1].length - a[1].length)
+                    .slice(0, 3);
+                lexicalGroups.forEach(([key, list]) => {
+                    const unique = uniqueTokens(list);
+                    unique.forEach((tok) => lexicalKeys.add(tokenKey(tok)));
+                    matches.push({
+                        className: 'lexical',
+                        key,
+                        tokens: unique,
+                        displayTokens: list,
+                        meta: `Strong's ${key}`,
+                        note: 'Lexical repetition anchors the thought in the original tongue.',
+                    });
+                });
+
+                const rootGroups = Object.entries(groupBy(tokens, (t) => t.rootKey))
+                    .filter(([key, list]) => key.length >= 3 && list.length >= 2)
+                    .sort((a, b) => b[1].length - a[1].length)
+                    .slice(0, 2);
+                rootGroups.forEach(([key, list]) => {
+                    const filtered = list.filter((tok) => !lexicalKeys.has(tokenKey(tok)));
+                    const unique = uniqueTokens(filtered);
+                    if (unique.length < 2) return;
+                    matches.push({
+                        className: 'root',
+                        key,
+                        tokens: unique,
+                        displayTokens: filtered,
+                        meta: `Shared root ${key}`,
+                        note: 'Related roots weave a semantic thread through the verse.',
+                    });
+                });
+
+                const allitGroups = Object.entries(groupBy(tokens, (t) => t.onset))
+                    .filter(([key, list]) => key && list.length >= 2)
+                    .slice(0, 2);
+                allitGroups.forEach(([key, list]) => {
+                    const filtered = list.filter((tok) => !lexicalKeys.has(tokenKey(tok)));
+                    const unique = uniqueTokens(filtered);
+                    if (unique.length < 2) return;
+                    matches.push({
+                        className: 'alliteration',
+                        key,
+                        tokens: unique,
+                        displayTokens: filtered,
+                        meta: `Onset ${key}`,
+                        note: 'Repeated consonants create an aural hook (alliteration).',
+                    });
+                });
+
+                const assonanceGroups = Object.entries(groupBy(tokens, (t) => t.vowels))
+                    .filter(([key, list]) => key && list.length >= 2)
+                    .slice(0, 2);
+                assonanceGroups.forEach(([key, list]) => {
+                    const unique = uniqueTokens(list);
+                    matches.push({
+                        className: 'assonance',
+                        key,
+                        tokens: unique,
+                        displayTokens: list,
+                        meta: `Vowel tone ${key}`,
+                        note: 'Echoed vowels smooth the cadence (assonance).',
+                    });
+                });
+
+                const bigrams = {};
+                for (let i = 0; i < tokens.length - 1; i++) {
+                    const a = tokens[i];
+                    const b = tokens[i + 1];
+                    if (!a.strongs || !b.strongs) continue;
+                    const key = `${a.strongs}-${b.strongs}`;
+                    bigrams[key] = bigrams[key] || [];
+                    bigrams[key].push([a, b]);
+                }
+                Object.entries(bigrams)
+                    .filter(([, pairs]) => pairs.length >= 2)
+                    .slice(0, 2)
+                    .forEach(([key, pairs]) => {
+                        const unique = uniqueTokens(pairs.flat());
+                        matches.push({
+                            className: 'parallelism',
+                            key,
+                            tokens: unique,
+                            displayTokens: pairs.flat(),
+                            meta: 'Mirrored clause',
+                            note: 'Parallel syntax repeats thought with balance.',
+                        });
+                    });
+
+                for (let i = 1; i < tokens.length; i++) {
+                    if (tokens[i].strongs && tokens[i].strongs === tokens[i - 1].strongs) {
+                        const unique = uniqueTokens([tokens[i - 1], tokens[i]]);
+                        matches.push({
+                            className: 'climactic',
+                            key: tokens[i].strongs,
+                            tokens: unique,
+                            displayTokens: [tokens[i - 1], tokens[i]],
+                            meta: 'Chain echo',
+                            note: 'End-start repetition (anadiplosis) amplifies emphasis.',
+                        });
+                    }
+                }
+
+                const seenPairs = new Set();
+                for (let i = 0; i < tokens.length; i++) {
+                    for (let j = i + 1; j < tokens.length; j++) {
+                        const a = tokens[i];
+                        const b = tokens[j];
+                        if (!a.cleaned || !b.cleaned) continue;
+                        if (a.strongs && b.strongs && a.strongs === b.strongs) continue;
+                        const pairKey = `${a.strongs}-${b.strongs}`;
+                        if (seenPairs.has(pairKey)) continue;
+                        const score = similarityScore(a.cleaned, b.cleaned);
+                        if (score >= 0.72) {
+                            seenPairs.add(pairKey);
+                            const unique = uniqueTokens([a, b]);
+                            matches.push({
+                                className: 'paronomasia',
+                                key: `${a.xlit} / ${b.xlit}`,
+                                tokens: unique,
+                                displayTokens: [a, b],
+                                meta: `Sound overlap ${(score * 100).toFixed(0)}%`,
+                                note: 'Similar sounds, different senses (paronomasia).',
+                            });
+                        }
+                    }
+                }
+
+                return matches.slice(0, 8);
+            }
+
+            const deviceLabels = {
+                lexical: 'Lexical repetition',
+                root: 'Root repetition',
+                alliteration: 'Alliteration',
+                assonance: 'Assonance',
+                paronomasia: 'Paronomasia',
+                climactic: 'Climactic repetition',
+                parallelism: 'Syntactic parallelism',
+            };
+
+            function createDeviceCard(match, matchId) {
+                const card = document.createElement('div');
+                card.className = 'phonetic-card';
+                card.dataset.device = match.className;
+
+                const header = document.createElement('div');
+                header.className = 'phonetic-card__header';
+                const label = document.createElement('span');
+                label.className = 'device-label';
+                label.textContent = deviceLabels[match.className] || 'Device';
+                const meta = document.createElement('span');
+                meta.className = 'device-meta';
+                meta.textContent = match.meta || '';
+                header.append(label, meta);
+                card.appendChild(header);
+
+                const wordRow = document.createElement('div');
+                wordRow.className = 'phonetic-chip-row';
+                const displayTokens = match.displayTokens && match.displayTokens.length
+                    ? match.displayTokens
+                    : match.tokens;
+                displayTokens.forEach((tok) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'phonetic-chip';
+                    chip.textContent = `${tok.xlit || tok.element.textContent}${tok.gloss ? ` · ${tok.gloss}` : ''}`;
+                    chip.title = tok.lemma || tok.pronounce || tok.strongs;
+                    chip.addEventListener('mouseenter', () => tok.element.classList.add('phonetic-focus'));
+                    chip.addEventListener('mouseleave', () => tok.element.classList.remove('phonetic-focus'));
+                    chip.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        tok.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        tok.element.classList.add('phonetic-focus');
+                        setTimeout(() => tok.element.classList.remove('phonetic-focus'), 650);
+                    });
+                    wordRow.appendChild(chip);
+                });
+                card.appendChild(wordRow);
+
+                if (match.note) {
+                    const note = document.createElement('p');
+                    note.className = 'phonetic-note';
+                    note.textContent = match.note;
+                    card.appendChild(note);
+                }
+
+                return card;
+            }
+
+            function renderPhoneticDevices() {
+                const verseRows = document.querySelectorAll('.verse-row');
+                if (!verseRows.length) return;
+
+                verseRows.forEach((row) => {
+                    const verseText = row.querySelector('.verse-text');
+                    if (!verseText || verseText.querySelector('.phonetic-card-shell')) return;
+
+                    const tokens = Array.from(row.querySelectorAll('.highlighted-word[data-strongs]'))
+                        .map(normalizeToken)
+                        .filter((tok) => tok.strongs);
+                    if (!tokens.length) return;
+
+                    const matches = detectPhoneticDevices(tokens);
+                    if (!matches.length) return;
+
+                    const shell = document.createElement('div');
+                    shell.className = 'phonetic-card-shell';
+
+                    const toggle = document.createElement('button');
+                    toggle.type = 'button';
+                    toggle.className = 'phonetic-toggle';
+                    const verseNum = row.dataset.verse || '';
+                    const defaultOpen = verseNum === '1';
+                    const panel = document.createElement('div');
+                    panel.className = 'phonetic-card-panel';
+
+                    function setPanelState(open) {
+                        panel.classList.toggle('is-collapsed', !open);
+                        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                        toggle.textContent = open ? 'Hide phonetic devices' : 'Show phonetic devices';
+                    }
+
+                    matches.forEach((match, idx) => {
+                        const matchId = `${row.dataset.verse || 'v'}-${idx}`;
+                        const displayTokens = uniqueTokens(match.tokens);
+                        displayTokens.forEach((tok) => {
+                            tok.element.classList.add('phonetic-hit', `phonetic-hit--${match.className}`);
+                            tok.element.dataset.phoneticId = matchId;
+                        });
+                        panel.appendChild(createDeviceCard(match, matchId));
+                    });
+
+                    toggle.addEventListener('click', () => {
+                        const isOpen = !panel.classList.contains('is-collapsed');
+                        setPanelState(!isOpen);
+                    });
+
+                    setPanelState(defaultOpen);
+                    shell.appendChild(toggle);
+                    shell.appendChild(panel);
+                    verseText.appendChild(shell);
+                });
+            }
+
             window.addEventListener('resize', renderOverlay);
             renderOverlay();
+            renderPhoneticDevices();
         });
     </script>
 

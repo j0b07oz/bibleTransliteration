@@ -37,6 +37,9 @@ def transliterate_chapter(
     book, chapter, strongs_dict_path, strongs_path, kjv_path, max_repeated_highlights=10
 ):
     replacement_mapping = {}
+    strongs_lookup = {
+        entry.get('number'): entry for entry in strongs_path if isinstance(entry, dict)
+    } if isinstance(strongs_path, list) else {}
 
     stop_strongs = {
         # Common articles, conjunctions, and pronouns that add noise when highlighted
@@ -58,6 +61,23 @@ def transliterate_chapter(
     pattern = r'{[HG]\d+}'
     alt_pattern = r'{[HG]\d+}{'
 
+    def consonant_key(text: str) -> str:
+        cleaned = re.sub(r'[^A-Za-z]', '', text or '')
+        return re.sub(r'[AEIOUaeiou]', '', cleaned).upper()
+
+    def derive_root(entry: dict, fallback_xlit: str = '') -> str:
+        if not isinstance(entry, dict):
+            entry = {}
+        root = consonant_key(entry.get('lemma', '') or '')
+        if not root:
+            root = consonant_key(fallback_xlit or entry.get('xlit', ''))
+        return root[:6]
+
+    def safe_attr(val) -> str:
+        if val is None:
+            return ''
+        return html.escape(str(val), quote=True)
+
     def extract_strongs(text):
         return re.findall(pattern, text)
 
@@ -70,13 +90,17 @@ def transliterate_chapter(
     if verse['book_name'] == book and verse['chapter'] == int(chapter)] #and verse['verse'] == int(verse_num)]
 
     for strongs_number in strongs_dict_path:
-        search_string = f"[?number == '{strongs_number}'].xlit"
-        xlit_value = jmespath.search(search_string, strongs_path)
+        strong_entry = strongs_lookup.get(strongs_number, {})
+        xlit_value = strong_entry.get('xlit')
         # Adding the xlit value and color to the replacement_mapping dictionary
         if xlit_value:
             replacement_mapping[strongs_number] = {
-                'xlit': xlit_value[0],
-                'color': strongs_dict_path[strongs_number].get("color")
+                'xlit': xlit_value,
+                'color': strongs_dict_path[strongs_number].get("color"),
+                'lemma': strong_entry.get('lemma') or '',
+                'pronounce': strong_entry.get('pronounce') or '',
+                'description': strong_entry.get('description') or '',
+                'root': derive_root(strong_entry, xlit_value),
             }
 
     strongs_counter = Counter(
@@ -105,7 +129,7 @@ def transliterate_chapter(
             or normalized in english_stopwords
         )
 
-    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration):
+    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None):
         classes = ["highlighted-word"]
         data_original_attr = (
             f' data-original="{html.escape(original_text)}"' if has_transliteration else ""
@@ -114,6 +138,24 @@ def transliterate_chapter(
         if has_transliteration:
             classes.append("transliterated")
 
+        data_attrs = [f'data-strongs="{safe_attr(strongs_number)}"']
+
+        if metadata:
+            if metadata.get('xlit'):
+                data_attrs.append(f'data-xliteral="{safe_attr(metadata.get("xlit"))}"')
+            if metadata.get('lemma'):
+                data_attrs.append(f'data-lemma="{safe_attr(metadata.get("lemma"))}"')
+            if metadata.get('pronounce'):
+                data_attrs.append(f'data-pronounce="{safe_attr(metadata.get("pronounce"))}"')
+            if metadata.get('root'):
+                data_attrs.append(f'data-rootkey="{safe_attr(metadata.get("root"))}"')
+            if metadata.get('description'):
+                short_desc = metadata.get('description')[:180]
+                data_attrs.append(f'data-description="{safe_attr(short_desc)}"')
+            if metadata.get('gloss'):
+                data_attrs.append(f'data-gloss="{safe_attr(metadata.get("gloss"))}"')
+
+        data_attr_str = f" {' '.join(data_attrs)}" if data_attrs else ""
         style_parts = []
 
         if base_color:
@@ -128,7 +170,7 @@ def transliterate_chapter(
             )
 
         style_attr = f" style=\"{' '.join(style_parts)}\"" if style_parts else ""
-        return f'<span class="{" ".join(classes)}"{data_original_attr}{style_attr}>{display_text}</span>'
+        return f'<span class="{" ".join(classes)}"{data_original_attr}{data_attr_str}{style_attr}>{display_text}</span>'
 
     #----------------------------------------------------------------------
     result = []
@@ -144,6 +186,7 @@ def transliterate_chapter(
             if match:
                 word = match.group(1)
                 strongs_entry = strongs_dict_path.get(strongs_number, {})
+                strongs_meta = strongs_lookup.get(strongs_number, {}) or {}
                 translations = strongs_entry.get("translations", [word])
                 sorted_translations = sorted(translations, key=lambda x: len(x.split()), reverse=True)
                 xlit_info = replacement_mapping.get(strongs_number)
@@ -159,7 +202,15 @@ def transliterate_chapter(
                     if phrase_match:
                         matched_text = phrase_match.group(0)
                         display_value = html.escape(xlit_info['xlit']) if xlit_info else html.escape(matched_text.split("{")[0].strip())
-                        color = xlit_info['color'] if xlit_info else None
+                        color = xlit_info['color'] if xlit_info else strongs_entry.get("color")
+                        meta = {
+                            'xlit': (xlit_info.get('xlit') if xlit_info else '') or strongs_meta.get('xlit'),
+                            'lemma': (xlit_info.get('lemma') if xlit_info else '') or strongs_meta.get('lemma'),
+                            'pronounce': (xlit_info.get('pronounce') if xlit_info else '') or strongs_meta.get('pronounce'),
+                            'description': (xlit_info.get('description') if xlit_info else '') or strongs_meta.get('description'),
+                            'root': (xlit_info.get('root') if xlit_info else '') or derive_root(strongs_meta, display_value),
+                            'gloss': translations[0] if translations else matched_text.split("{")[0].strip(),
+                        }
                         if should_skip_english_highlight(display_value, bool(xlit_info)) and strongs_number in repeated_strongs:
                             verse['text'] = verse['text'].replace(matched_text, matched_text.split("{")[0].strip())
                             replaced = True
@@ -171,6 +222,7 @@ def transliterate_chapter(
                             matched_text.split("{")[0].strip(),
                             color,
                             bool(xlit_info),
+                            meta,
                         )
                         verse['text'] = verse['text'].replace(matched_text, replacement)
                         replaced = True
@@ -179,13 +231,21 @@ def transliterate_chapter(
                 # If no phrase match found, fall back to single word replacement
                 if not replaced:
                     display_value = html.escape(xlit_info['xlit']) if xlit_info else html.escape(word)
-                    color = xlit_info['color'] if xlit_info else None
+                    color = xlit_info['color'] if xlit_info else strongs_entry.get("color")
+                    meta = {
+                        'xlit': (xlit_info.get('xlit') if xlit_info else '') or strongs_meta.get('xlit'),
+                        'lemma': (xlit_info.get('lemma') if xlit_info else '') or strongs_meta.get('lemma'),
+                        'pronounce': (xlit_info.get('pronounce') if xlit_info else '') or strongs_meta.get('pronounce'),
+                        'description': (xlit_info.get('description') if xlit_info else '') or strongs_meta.get('description'),
+                        'root': (xlit_info.get('root') if xlit_info else '') or derive_root(strongs_meta, display_value),
+                        'gloss': translations[0] if translations else word,
+                    }
                     if should_skip_english_highlight(display_value, bool(xlit_info)) and strongs_number in repeated_strongs:
                         verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", word)
                         continue
 
                     replacement = build_span(
-                        strongs_number, display_value, word, color, bool(xlit_info)
+                        strongs_number, display_value, word, color, bool(xlit_info), meta
                     )
                     verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])

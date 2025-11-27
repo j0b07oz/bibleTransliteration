@@ -577,3 +577,153 @@ a:hover {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
     font-weight: 600;
 }
+
+.phonetic-card-panel {
+    margin-top: 6px;
+    display: grid;
+    gap: 8px;
+}
+
+.phonetic-card-panel.is-collapsed {
+    display: none;
+}
+
+.phonetic-card-shell {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.phonetic-toggle {
+    align-self: flex-start;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #d8d6ce;
+    background: #fffaf5;
+    color: #2f1f1c;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.phonetic-toggle:hover,
+.phonetic-toggle:focus-visible {
+    background: #f7f0e9;
+    border-color: #cbb9ac;
+}
+
+.phonetic-card {
+    background: #f7f0e9;
+    border: 1px solid #d8d6ce;
+    border-radius: 8px;
+    padding: 8px 10px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.phonetic-card__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    color: #2f1f1c;
+}
+
+.device-label {
+    font-weight: 700;
+}
+
+.device-meta {
+    font-size: 12px;
+    color: #5a4a44;
+}
+
+.phonetic-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.phonetic-chip {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(125, 75, 54, 0.12);
+    border: 1px solid rgba(125, 75, 54, 0.25);
+    color: #2f1f1c;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+}
+
+.phonetic-note {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: #4b3a34;
+}
+
+.phonetic-hit {
+    text-decoration: underline dotted #7d4b36;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    box-shadow: inset 0 -2px 0 rgba(125, 75, 54, 0.16);
+    border-radius: 2px;
+}
+
+.phonetic-hit--alliteration {
+    text-decoration-style: dotted;
+    text-decoration-color: #7d4b36;
+}
+
+.phonetic-hit--assonance {
+    text-decoration-style: wavy;
+    text-decoration-color: #4a342e;
+}
+
+.phonetic-hit--paronomasia {
+    box-shadow: inset 0 -2px 0 rgba(217, 170, 111, 0.6);
+}
+
+.phonetic-hit--parallelism {
+    border-bottom: 2px dashed #6b473c;
+}
+
+.phonetic-hit--climactic {
+    text-decoration-style: double;
+    text-decoration-color: #d9aa6f;
+}
+
+.phonetic-hit--root {
+    box-shadow: inset 0 -2px 0 rgba(36, 23, 21, 0.18);
+}
+
+.phonetic-chip:hover {
+    background: rgba(125, 75, 54, 0.2);
+}
+
+.highlighted-word.phonetic-focus {
+    background: rgba(217, 170, 111, 0.28) !important;
+    box-shadow: 0 0 0 1px rgba(125, 75, 54, 0.25);
+    border-radius: 4px;
+    padding: 0 2px;
+}
+
+.hide-bolded .highlighted-word.phonetic-focus {
+    background: rgba(217, 170, 111, 0.32) !important;
+    box-shadow: 0 0 0 1px rgba(125, 75, 54, 0.4);
+    padding: 0 2px;
+}
+
+.hide-phonetics .phonetic-card-panel {
+    display: none;
+}
+
+.hide-phonetics .phonetic-card-shell {
+    display: none;
+}
+
+.hide-phonetics .phonetic-hit {
+    text-decoration: none !important;
+    box-shadow: none !important;
+    border-bottom: none !important;
+}
