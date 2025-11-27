@@ -154,6 +154,9 @@
                     updateToggleState();
                     syncMenuState();
                     renderOverlay();
+                    if (key === 'phonetic' && !contextOptions.phonetic) {
+                        hidePhoneticCard();
+                    }
                 });
             });
 
@@ -162,6 +165,84 @@
             applyOptionClasses();
             syncMenuState();
             updateToggleState();
+
+            const phoneticTooltip = document.createElement('div');
+            phoneticTooltip.id = 'phonetic-tooltip';
+            document.body.appendChild(phoneticTooltip);
+
+            function hidePhoneticCard() {
+                phoneticTooltip.classList.remove('is-visible');
+            }
+
+            function renderPhoneticCard(target) {
+                if (!target || !contextOptions.phonetic) {
+                    hidePhoneticCard();
+                    return;
+                }
+
+                const raw = target.dataset.soundDetail;
+                if (!raw) {
+                    hidePhoneticCard();
+                    return;
+                }
+
+                let entries;
+                try {
+                    entries = JSON.parse(raw);
+                } catch (err) {
+                    hidePhoneticCard();
+                    return;
+                }
+
+                if (!Array.isArray(entries) || !entries.length) {
+                    hidePhoneticCard();
+                    return;
+                }
+
+                const listHtml = entries.map((entry) => {
+                    const verses = entry.verses && entry.verses.length
+                        ? `<div class="phonetic-verses">Unit echoes: ${entry.verses.join(', ')}</div>`
+                        : '';
+                    return `
+                        <li class="phonetic-item">
+                            <div class="phonetic-key">${entry.label || 'Repeated sound'}</div>
+                            <div class="phonetic-kind">${entry.kind || ''}</div>
+                            ${verses}
+                        </li>
+                    `;
+                }).join('');
+
+                phoneticTooltip.innerHTML = `
+                    <div class="phonetic-heading">Original language phonetics</div>
+                    <ul class="phonetic-list">${listHtml}</ul>
+                `;
+
+                const rect = target.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                phoneticTooltip.style.top = `${rect.top + scrollTop - phoneticTooltip.offsetHeight - 8}px`;
+                phoneticTooltip.style.left = `${rect.left + scrollLeft + rect.width / 2}px`;
+                phoneticTooltip.classList.add('is-visible');
+            }
+
+            document.addEventListener('mouseover', (event) => {
+                if (event.target.closest('#phonetic-tooltip')) {
+                    return;
+                }
+                const target = event.target.closest('[data-sound-detail]');
+                if (!target) {
+                    hidePhoneticCard();
+                    return;
+                }
+                renderPhoneticCard(target);
+            });
+
+            document.addEventListener('mouseout', (event) => {
+                if (event.relatedTarget && event.relatedTarget.closest('#phonetic-tooltip')) {
+                    return;
+                }
+                hidePhoneticCard();
+            });
 
             function renderOverlay() {
                 const overlay = document.getElementById('bar-overlay');

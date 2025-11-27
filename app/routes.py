@@ -75,6 +75,22 @@ strongs_dict_path = os.path.join(STATIC_DATA_DIR, 'strongs_dict.json')
 strongs_path = os.path.join(STATIC_DATA_DIR, 'Strongs.json')
 kjv_path = os.path.join(STATIC_DATA_DIR, 'kjv_strongs.json')
 outlines_path = os.path.abspath(os.path.join(current_dir, '..', 'bible_bsb_book_outlines_with_ranges.json'))
+sound_annotations_path = os.path.join(STATIC_DATA_DIR, 'sound_annotations.json')
+
+
+def _load_sound_annotations(path: str) -> dict:
+    """Load sound annotations without failing the app if the file is missing or invalid."""
+
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        app.logger.warning("Sound annotations file not found at %s; continuing without sound data", path)
+    except json.JSONDecodeError as exc:
+        app.logger.error("Sound annotations file at %s could not be parsed: %s", path, exc)
+    except OSError as exc:
+        app.logger.error("Unable to read sound annotations file at %s: %s", path, exc)
+    return {}
 
 with open(strongs_dict_path, 'r', encoding='utf-8') as f:
     default_strongs_dict = json.load(f)
@@ -84,6 +100,7 @@ with open(kjv_path, 'r', encoding='utf-8') as f:
     kjv_data = json.load(f)
 with open(outlines_path, 'r', encoding='utf-8') as f:
     outline_data = json.load(f)
+sound_annotations = _load_sound_annotations(sound_annotations_path)
 
 # Build mappings for book order and chapter counts
 book_order = {}
@@ -182,6 +199,16 @@ def get_active_units(book: str, chapter: int):
     return active
 
 
+def get_chapter_sound_annotations(book: str, chapter: int) -> dict:
+    """Return sound annotations for a specific chapter, if available."""
+
+    if not book or not chapter:
+        return {}
+
+    book_data = sound_annotations.get(book) or {}
+    return book_data.get(str(chapter)) or {}
+
+
 def get_active_unit(book: str, chapter: int):
     if not book or not chapter:
         return None
@@ -225,12 +252,20 @@ def home():
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             user_strongs_dict = get_user_strongs_dict()
-            result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+            result = transliterate_chapter(
+                book,
+                chapter,
+                user_strongs_dict,
+                strongs_data,
+                kjv_data,
+                sound_annotations=sound_annotations,
+            )
             active_unit = get_active_unit(book, chapter)
 
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
     active_units = get_active_units(book, chapter) if book and chapter else []
+    chapter_sound_annotations = get_chapter_sound_annotations(book, chapter)
     verses = build_verses_for_render(result, active_units) if result else []
 
     return render_template(
@@ -243,6 +278,7 @@ def home():
         total_chapters=total_chapters,
         book_progress=book_progress,
         verses=verses,
+        sound_annotations=chapter_sound_annotations,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -263,11 +299,19 @@ def navigate():
     # Here you might want to add logic to handle book transitions
 
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
-    result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+    result = transliterate_chapter(
+        book,
+        chapter,
+        user_strongs_dict,
+        strongs_data,
+        kjv_data,
+        sound_annotations=sound_annotations,
+    )
     active_unit = get_active_unit(book, chapter)
     active_units = get_active_units(book, chapter)
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
+    chapter_sound_annotations = get_chapter_sound_annotations(book, chapter)
     verses = build_verses_for_render(result, active_units) if result else []
 
     return render_template(
@@ -280,6 +324,7 @@ def navigate():
         total_chapters=total_chapters,
         book_progress=book_progress,
         verses=verses,
+        sound_annotations=chapter_sound_annotations,
     )
 
 
