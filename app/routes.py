@@ -75,6 +75,7 @@ strongs_dict_path = os.path.join(STATIC_DATA_DIR, 'strongs_dict.json')
 strongs_path = os.path.join(STATIC_DATA_DIR, 'Strongs.json')
 kjv_path = os.path.join(STATIC_DATA_DIR, 'kjv_strongs.json')
 outlines_path = os.path.abspath(os.path.join(current_dir, '..', 'bible_bsb_book_outlines_with_ranges.json'))
+sound_annotations_path = os.path.join(STATIC_DATA_DIR, 'sound_annotations.json')
 
 with open(strongs_dict_path, 'r', encoding='utf-8') as f:
     default_strongs_dict = json.load(f)
@@ -84,6 +85,11 @@ with open(kjv_path, 'r', encoding='utf-8') as f:
     kjv_data = json.load(f)
 with open(outlines_path, 'r', encoding='utf-8') as f:
     outline_data = json.load(f)
+try:
+    with open(sound_annotations_path, 'r', encoding='utf-8') as f:
+        sound_annotations = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    sound_annotations = {}
 
 # Build mappings for book order and chapter counts
 book_order = {}
@@ -225,7 +231,14 @@ def home():
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             user_strongs_dict = get_user_strongs_dict()
-            result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+            result = transliterate_chapter(
+                book,
+                chapter,
+                user_strongs_dict,
+                strongs_data,
+                kjv_data,
+                sound_annotations=sound_annotations,
+            )
             active_unit = get_active_unit(book, chapter)
 
     total_chapters = book_chapter_count.get(book)
@@ -263,7 +276,14 @@ def navigate():
     # Here you might want to add logic to handle book transitions
 
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
-    result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+    result = transliterate_chapter(
+        book,
+        chapter,
+        user_strongs_dict,
+        strongs_data,
+        kjv_data,
+        sound_annotations=sound_annotations,
+    )
     active_unit = get_active_unit(book, chapter)
     active_units = get_active_units(book, chapter)
     total_chapters = book_chapter_count.get(book)
