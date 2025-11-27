@@ -74,6 +74,7 @@ def get_user_strongs_dict():
 strongs_dict_path = os.path.join(STATIC_DATA_DIR, 'strongs_dict.json')
 strongs_path = os.path.join(STATIC_DATA_DIR, 'Strongs.json')
 kjv_path = os.path.join(STATIC_DATA_DIR, 'kjv_strongs.json')
+sound_annotations_path = os.path.join(STATIC_DATA_DIR, 'sound_annotations.json')
 outlines_path = os.path.abspath(os.path.join(current_dir, '..', 'bible_bsb_book_outlines_with_ranges.json'))
 
 with open(strongs_dict_path, 'r', encoding='utf-8') as f:
@@ -82,6 +83,11 @@ with open(strongs_path, 'r', encoding='utf-8') as f:
     strongs_data = json.load(f)
 with open(kjv_path, 'r', encoding='utf-8') as f:
     kjv_data = json.load(f)
+try:
+    with open(sound_annotations_path, 'r', encoding='utf-8') as f:
+        sound_annotations = json.load(f)
+except (OSError, json.JSONDecodeError):
+    sound_annotations = {}
 with open(outlines_path, 'r', encoding='utf-8') as f:
     outline_data = json.load(f)
 
@@ -222,10 +228,14 @@ def home():
 
     result = ""
     active_unit = None
+    sound_slice = {}
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             user_strongs_dict = get_user_strongs_dict()
-            result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+            sound_slice = sound_annotations.get(book, {}).get(str(chapter), {})
+            result = transliterate_chapter(
+                book, chapter, user_strongs_dict, strongs_data, kjv_data, sound_slice
+            )
             active_unit = get_active_unit(book, chapter)
 
     total_chapters = book_chapter_count.get(book)
@@ -243,6 +253,7 @@ def home():
         total_chapters=total_chapters,
         book_progress=book_progress,
         verses=verses,
+        sound_annotations=sound_slice,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -263,7 +274,10 @@ def navigate():
     # Here you might want to add logic to handle book transitions
 
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
-    result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+    sound_slice = sound_annotations.get(book, {}).get(str(chapter), {})
+    result = transliterate_chapter(
+        book, chapter, user_strongs_dict, strongs_data, kjv_data, sound_slice
+    )
     active_unit = get_active_unit(book, chapter)
     active_units = get_active_units(book, chapter)
     total_chapters = book_chapter_count.get(book)
@@ -280,6 +294,7 @@ def navigate():
         total_chapters=total_chapters,
         book_progress=book_progress,
         verses=verses,
+        sound_annotations=sound_slice,
     )
 
 
