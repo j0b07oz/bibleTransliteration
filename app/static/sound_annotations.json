@@ -1,1 +1,38 @@
-{}
+{
+  "Genesis": {
+    "1": {
+      "1": {
+        "local_roots": {
+          "BR": [0, 3],
+          "ALH": [1]
+        },
+        "local_initials": {
+          "B": [0, 3],
+          "A": [1]
+        },
+        "unit_clusters": {
+          "BR": ["Gen 1:1", "Gen 1:2"],
+          "ALH": ["Gen 1:1"],
+          "B": ["Gen 1:1"],
+          "A": ["Gen 1:1"]
+        }
+      },
+      "2": {
+        "local_roots": {
+          "BR": [2],
+          "ALH": [4]
+        },
+        "local_initials": {
+          "B": [2],
+          "A": [4]
+        },
+        "unit_clusters": {
+          "BR": ["Gen 1:1", "Gen 1:2"],
+          "ALH": ["Gen 1:1", "Gen 1:2"],
+          "B": ["Gen 1:2"],
+          "A": ["Gen 1:2"]
+        }
+      }
+    }
+  }
+}
