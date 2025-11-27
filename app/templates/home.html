@@ -14,6 +14,16 @@
             <a href="{{ url_for('about') }}" class="nav-button">About</a>
             <a href="{{ url_for('edit_dict') }}" class="nav-button">Edit transliterated word list</a>
             <a href="{{ url_for('heatmap') }}" class="nav-button">Heatmap</a>
+            <button type="button" class="nav-button toggle-button" id="phonetic-toggle" aria-pressed="false">Phonetic mode: Off</button>
+            <div id="sound-presence" class="sound-presence" data-has-sound="{{ 'true' if sound_summary.has_annotations else 'false' }}">
+                {% if sound_summary.has_annotations %}
+                <div class="sound-presence__pill">Phonetic signals detected</div>
+                <div class="sound-presence__meta">{{ sound_summary.token_count }} annotated token{{ '' if sound_summary.token_count == 1 else 's' }} across {{ sound_summary.verse_count }} verse{{ '' if sound_summary.verse_count == 1 else 's' }}</div>
+                {% else %}
+                <div class="sound-presence__pill sound-presence__pill--muted">No phonetic annotations in this chapter</div>
+                <div class="sound-presence__meta">Toggle phonetic mode for chapters with sound data.</div>
+                {% endif %}
+            </div>
             <div class="context-dropdown" id="context-dropdown">
                 <button type="button" class="nav-button toggle-button nav-button--active" id="context-menu-button" aria-haspopup="true" aria-expanded="false">Literary Context ▾</button>
                 <div class="context-menu" id="context-menu" role="menu">
@@ -65,7 +75,15 @@
                 units: true,
             };
             const activeUnits = {{ active_units|tojson|safe }};
+            const soundAnnotations = {{ sound_annotations|tojson|safe }} || {};
+            const soundSummary = {{ sound_summary|tojson|safe }} || {};
+            const phoneticToggle = document.getElementById('phonetic-toggle');
+            const soundCard = document.getElementById('sound-card');
+            const soundPresence = document.getElementById('sound-presence');
             const storageKey = 'literaryContextOptions';
+            const phoneticStorageKey = 'phoneticModeEnabled';
+            let phoneticMode = false;
+            let hideCardTimeout;
 
             function loadSavedOptions() {
                 try {
@@ -86,6 +104,26 @@
                 }
             }
 
+            function loadPhoneticMode() {
+                try {
+                    const saved = localStorage.getItem(phoneticStorageKey);
+                    if (saved !== null) {
+                        return JSON.parse(saved) === true;
+                    }
+                } catch (err) {
+                    console.warn('Unable to read saved phonetic mode', err);
+                }
+                return false;
+            }
+
+            function persistPhoneticMode(enabled) {
+                try {
+                    localStorage.setItem(phoneticStorageKey, JSON.stringify(enabled));
+                } catch (err) {
+                    console.warn('Unable to save phonetic mode', err);
+                }
+            }
+
             function updateButtonState() {
                 goButton.disabled = !bookInput.value || !chapterInput.value;
             }
@@ -96,8 +134,146 @@
                 contextMenuButton.setAttribute('aria-pressed', hasAny);
             }
 
+            function hideSoundCard() {
+                if (!soundCard) return;
+                soundCard.classList.add('is-hidden');
+                soundCard.setAttribute('aria-hidden', 'true');
+            }
+
+            function setPhoneticMode(enabled) {
+                phoneticMode = !!enabled;
+                document.body.classList.toggle('phonetic-mode', phoneticMode);
+                if (phoneticToggle) {
+                    phoneticToggle.textContent = phoneticMode ? 'Phonetic mode: On' : 'Phonetic mode: Off';
+                    phoneticToggle.setAttribute('aria-pressed', phoneticMode ? 'true' : 'false');
+                }
+                persistPhoneticMode(phoneticMode);
+                if (!phoneticMode) {
+                    hideSoundCard();
+                }
+                updateSoundPresence();
+            }
+
+            function buildSoundCardContent(verseData, roots, initials) {
+                if (!verseData || (!roots.length && !initials.length)) {
+                    return '';
+                }
+
+                const sections = [];
+                if (roots.length) {
+                    sections.push(`
+                        <div class="sound-card-row">
+                            <span class="sound-card-label">Root</span>
+                            <span class="sound-card-value">${roots.join(', ')}</span>
+                        </div>
+                    `);
+                }
+
+                if (initials.length) {
+                    sections.push(`
+                        <div class="sound-card-row">
+                            <span class="sound-card-label">Initial</span>
+                            <span class="sound-card-value">${initials.join(', ')}</span>
+                        </div>
+                    `);
+                }
+
+                const unitClusters = verseData.unit_clusters || {};
+                const keys = Array.from(new Set([...roots, ...initials]));
+                const clusterItems = keys
+                    .map((key) => {
+                        const verses = unitClusters[key];
+                        if (!verses || !verses.length) return '';
+                        return `<li><strong>${key}</strong>: ${verses.join(', ')}</li>`;
+                    })
+                    .filter(Boolean);
+
+                const clusterSection = clusterItems.length
+                    ? `<div class="sound-card-section"><div class="sound-card-label">Unit verses</div><ul class="sound-card-list">${clusterItems.join('')}</ul></div>`
+                    : '<div class="sound-card-empty">No unit verse links for this word.</div>';
+
+                sections.push(clusterSection);
+                return sections.join('');
+            }
+
+            function showSoundCard(target) {
+                if (!phoneticMode || !target || !soundCard) return;
+
+                const verseRow = target.closest('.verse-row');
+                const verseNum = verseRow ? verseRow.dataset.verse : null;
+                const verseData = verseNum ? soundAnnotations[verseNum] : null;
+                const roots = (target.dataset.soundRoots || '').split(',').filter(Boolean);
+                const initials = (target.dataset.soundInitials || '').split(',').filter(Boolean);
+
+                if (!verseData || (!roots.length && !initials.length)) {
+                    hideSoundCard();
+                    return;
+                }
+
+                const content = buildSoundCardContent(verseData, roots, initials);
+                if (!content.trim()) {
+                    hideSoundCard();
+                    return;
+                }
+
+                soundCard.innerHTML = content;
+                const rect = target.getBoundingClientRect();
+                const top = window.scrollY + rect.bottom + 8;
+                const left = window.scrollX + rect.left;
+                soundCard.style.top = `${top}px`;
+                soundCard.style.left = `${left}px`;
+                soundCard.classList.remove('is-hidden');
+                soundCard.setAttribute('aria-hidden', 'false');
+            }
+
+            function attachSoundHandlers() {
+                const annotatedWords = document.querySelectorAll('.highlighted-word[data-sound-annotated="true"]');
+                annotatedWords.forEach((word) => {
+                    word.addEventListener('mouseenter', () => {
+                        clearTimeout(hideCardTimeout);
+                        showSoundCard(word);
+                    });
+                    word.addEventListener('focus', () => {
+                        clearTimeout(hideCardTimeout);
+                        showSoundCard(word);
+                    });
+                    word.addEventListener('mouseleave', () => {
+                        hideCardTimeout = setTimeout(hideSoundCard, 150);
+                    });
+                    word.addEventListener('blur', hideSoundCard);
+                });
+
+                if (soundCard) {
+                    soundCard.addEventListener('mouseenter', () => clearTimeout(hideCardTimeout));
+                    soundCard.addEventListener('mouseleave', hideSoundCard);
+                }
+            }
+
             bookInput.addEventListener('input', updateButtonState);
             chapterInput.addEventListener('input', updateButtonState);
+
+            function updateSoundPresence() {
+                if (!soundPresence) return;
+
+                const hasSound = soundPresence.dataset.hasSound === 'true';
+                soundPresence.classList.toggle('is-available', hasSound);
+                soundPresence.classList.toggle('is-active', hasSound && phoneticMode);
+
+                if (!hasSound) {
+                    soundPresence.setAttribute('aria-label', 'No phonetic sound patterns detected in this chapter');
+                    return;
+                }
+
+                const verseCount = soundSummary.verse_count || 0;
+                const tokenCount = soundSummary.token_count || 0;
+                const verseLabel = verseCount === 1 ? 'verse' : 'verses';
+                const tokenLabel = tokenCount === 1 ? 'token' : 'tokens';
+                const status = phoneticMode ? 'active' : 'available; enable phonetic mode to view details';
+                soundPresence.setAttribute(
+                    'aria-label',
+                    `${tokenCount} ${tokenLabel} across ${verseCount} ${verseLabel} (${status})`
+                );
+            }
 
             function applyOptionClasses() {
                 document.body.classList.toggle('hide-bolded', !contextOptions.bolded);
@@ -156,6 +332,15 @@
             applyOptionClasses();
             syncMenuState();
             updateToggleState();
+            phoneticMode = loadPhoneticMode();
+            setPhoneticMode(phoneticMode);
+            updateSoundPresence();
+
+            if (phoneticToggle) {
+                phoneticToggle.addEventListener('click', () => {
+                    setPhoneticMode(!phoneticMode);
+                });
+            }
 
             function renderOverlay() {
                 const overlay = document.getElementById('bar-overlay');
@@ -191,6 +376,7 @@
 
             window.addEventListener('resize', renderOverlay);
             renderOverlay();
+            attachSoundHandlers();
         });
     </script>
 
@@ -255,7 +441,9 @@
             </div>
             {% endif %}
         </div>
-        
+
+        <div id="sound-card" class="sound-card is-hidden" role="dialog" aria-live="polite" aria-hidden="true"></div>
+
         <div class="navigation">
             <form method="POST" action="{{ url_for('navigate') }}">
                 <input type="hidden" name="book" value="{{ book }}">
