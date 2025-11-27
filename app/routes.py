@@ -239,10 +239,33 @@ def home():
     result = ""
     active_unit = None
     sound_slice = {}
+    sound_summary = {
+        'has_annotations': False,
+        'verse_count': 0,
+        'token_count': 0,
+    }
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             user_strongs_dict = get_user_strongs_dict()
             sound_slice = sound_annotations.get(book, {}).get(str(chapter), {})
+            if sound_slice:
+                verse_count = 0
+                token_count = 0
+                for verse_data in sound_slice.values():
+                    positions = set()
+                    for positions_list in verse_data.get('local_roots', {}).values():
+                        positions.update(positions_list)
+                    for positions_list in verse_data.get('local_initials', {}).values():
+                        positions.update(positions_list)
+                    if positions:
+                        verse_count += 1
+                        token_count += len(positions)
+
+                sound_summary = {
+                    'has_annotations': verse_count > 0,
+                    'verse_count': verse_count,
+                    'token_count': token_count,
+                }
             result = transliterate_chapter(
                 book, chapter, user_strongs_dict, strongs_data, kjv_data, sound_slice
             )
@@ -264,6 +287,7 @@ def home():
         book_progress=book_progress,
         verses=verses,
         sound_annotations=sound_slice,
+        sound_summary=sound_summary,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -285,6 +309,29 @@ def navigate():
 
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
     sound_slice = sound_annotations.get(book, {}).get(str(chapter), {})
+    sound_summary = {
+        'has_annotations': False,
+        'verse_count': 0,
+        'token_count': 0,
+    }
+    if sound_slice:
+        verse_count = 0
+        token_count = 0
+        for verse_data in sound_slice.values():
+            positions = set()
+            for positions_list in verse_data.get('local_roots', {}).values():
+                positions.update(positions_list)
+            for positions_list in verse_data.get('local_initials', {}).values():
+                positions.update(positions_list)
+            if positions:
+                verse_count += 1
+                token_count += len(positions)
+
+        sound_summary = {
+            'has_annotations': verse_count > 0,
+            'verse_count': verse_count,
+            'token_count': token_count,
+        }
     result = transliterate_chapter(
         book, chapter, user_strongs_dict, strongs_data, kjv_data, sound_slice
     )
@@ -305,6 +352,7 @@ def navigate():
         book_progress=book_progress,
         verses=verses,
         sound_annotations=sound_slice,
+        sound_summary=sound_summary,
     )
 
 
