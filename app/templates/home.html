@@ -33,6 +33,10 @@
                         <input type="checkbox" data-context-option="units" checked>
                         <span>Active literary units and side lines</span>
                     </label>
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="false">
+                        <input type="checkbox" data-context-option="phoneticMode">
+                        <span>Original language phonetic mode</span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -63,6 +67,7 @@
                 repeats: true,
                 overview: true,
                 units: true,
+                phoneticMode: false,
             };
             const activeUnits = {{ active_units|tojson|safe }};
             const storageKey = 'literaryContextOptions';
@@ -104,6 +109,7 @@
                 document.body.classList.toggle('hide-repeats', !contextOptions.repeats);
                 document.body.classList.toggle('hide-book-overview', !contextOptions.overview);
                 document.body.classList.toggle('hide-literary-units', !contextOptions.units);
+                document.body.classList.toggle('phonetic-mode-on', !!contextOptions.phoneticMode);
             }
 
             function syncMenuState() {
