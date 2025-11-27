@@ -188,6 +188,16 @@ def get_active_units(book: str, chapter: int):
     return active
 
 
+def get_chapter_sound_annotations(book: str, chapter: int) -> dict:
+    """Return sound annotations for a specific chapter, if available."""
+
+    if not book or not chapter:
+        return {}
+
+    book_data = sound_annotations.get(book) or {}
+    return book_data.get(str(chapter)) or {}
+
+
 def get_active_unit(book: str, chapter: int):
     if not book or not chapter:
         return None

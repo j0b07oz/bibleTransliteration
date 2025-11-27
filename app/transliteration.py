@@ -75,6 +75,8 @@ def transliterate_chapter(
     for verse in kjv_path['verses']
     if verse['book_name'] == book and verse['chapter'] == int(chapter)] #and verse['verse'] == int(verse_num)]
 
+    active_annotations = (sound_annotations or {}).get(book, {}).get(str(chapter), {})
+
     for strongs_number in strongs_dict_path:
         search_string = f"[?number == '{strongs_number}'].xlit"
         xlit_value = jmespath.search(search_string, strongs_path)
@@ -124,6 +126,15 @@ def transliterate_chapter(
         data_original_attr = (
             f' data-original="{html.escape(original_text)}"' if has_transliteration else ""
         )
+        data_sound_attr = ""
+
+        if sound_detail:
+            classes.append("sound-annotated")
+            try:
+                encoded = html.escape(json.dumps(sound_detail))
+                data_sound_attr = f' data-sound-detail="{encoded}"'
+            except (TypeError, ValueError):
+                data_sound_attr = ""
 
         sound_attrs = []
         if token_index is not None:
@@ -238,6 +249,7 @@ def transliterate_chapter(
                     color = xlit_info['color'] if xlit_info else None
                     if should_skip_english_highlight(display_value, bool(xlit_info)) and strongs_number in repeated_strongs:
                         verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", word)
+                        token_index += 1
                         continue
 
                     replacement = build_span(
@@ -250,6 +262,7 @@ def transliterate_chapter(
                         sound_map,
                     )
                     verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
+            token_index += 1
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])
         verse['text'] = re.sub(r'\{(\([HG]\d+\))\}', '', verse['text'])
         verse['text'] = re.sub(r'\{[HG]\d+\)\}', '', verse['text'])
