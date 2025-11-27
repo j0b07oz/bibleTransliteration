@@ -34,7 +34,13 @@ def generate_repeat_colors(strongs_number):
     return base_color, accent_color
 
 def transliterate_chapter(
-    book, chapter, strongs_dict_path, strongs_path, kjv_path, max_repeated_highlights=10
+    book,
+    chapter,
+    strongs_dict_path,
+    strongs_path,
+    kjv_path,
+    sound_annotations=None,
+    max_repeated_highlights=10,
 ):
     replacement_mapping = {}
 
@@ -105,11 +111,36 @@ def transliterate_chapter(
             or normalized in english_stopwords
         )
 
-    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration):
+    def build_span(
+        strongs_number,
+        display_text,
+        original_text,
+        base_color,
+        has_transliteration,
+        token_index,
+        sound_map,
+    ):
         classes = ["highlighted-word"]
         data_original_attr = (
             f' data-original="{html.escape(original_text)}"' if has_transliteration else ""
         )
+
+        sound_attrs = []
+        if token_index is not None:
+            sound_attrs.append(f' data-sound-index="{token_index}"')
+        if sound_map:
+            roots = sound_map.get(token_index, {}).get('roots', [])
+            initials = sound_map.get(token_index, {}).get('initials', [])
+            if roots:
+                sound_attrs.append(
+                    f' data-sound-roots="{html.escape(",".join(roots))}"'
+                )
+            if initials:
+                sound_attrs.append(
+                    f' data-sound-initials="{html.escape(",".join(initials))}"'
+                )
+            if roots or initials:
+                sound_attrs.append(' data-sound-annotated="true"')
 
         if has_transliteration:
             classes.append("transliterated")
@@ -128,12 +159,35 @@ def transliterate_chapter(
             )
 
         style_attr = f" style=\"{' '.join(style_parts)}\"" if style_parts else ""
-        return f'<span class="{" ".join(classes)}"{data_original_attr}{style_attr}>{display_text}</span>'
+        return (
+            f'<span class="{" ".join(classes)}"{data_original_attr}{style_attr}'
+            f'{"".join(sound_attrs)}>{display_text}</span>'
+        )
 
     #----------------------------------------------------------------------
     result = []
     for verse in chapter_data:
-        for strongs_number_braced in verse['strongs']:
+        verse_annotations = {}
+        if sound_annotations:
+            verse_annotations = sound_annotations.get(str(verse['verse']), {})
+
+        sound_map = {}
+        for root, positions in verse_annotations.get("local_roots", {}).items():
+            for idx in positions:
+                sound_map.setdefault(idx, {'roots': set(), 'initials': set()})['roots'].add(root)
+        for initial, positions in verse_annotations.get("local_initials", {}).items():
+            for idx in positions:
+                sound_map.setdefault(idx, {'roots': set(), 'initials': set()})['initials'].add(initial)
+
+        sound_map = {
+            idx: {
+                'roots': sorted(list(info.get('roots', []))),
+                'initials': sorted(list(info.get('initials', []))),
+            }
+            for idx, info in sound_map.items()
+        }
+
+        for token_index, strongs_number_braced in enumerate(verse['strongs']):
             strongs_number = strongs_number_braced.strip('{}')
             match = re.search(r'\b([\w\']*)\{' + re.escape(strongs_number) + r'\}', verse['text'])
             alt_match = re.search(r'{' + re.escape(strongs_number) + r'\}\'{[HG]\d+}', verse['text'])
@@ -171,6 +225,8 @@ def transliterate_chapter(
                             matched_text.split("{")[0].strip(),
                             color,
                             bool(xlit_info),
+                            token_index,
+                            sound_map,
                         )
                         verse['text'] = verse['text'].replace(matched_text, replacement)
                         replaced = True
@@ -185,7 +241,13 @@ def transliterate_chapter(
                         continue
 
                     replacement = build_span(
-                        strongs_number, display_value, word, color, bool(xlit_info)
+                        strongs_number,
+                        display_value,
+                        word,
+                        color,
+                        bool(xlit_info),
+                        token_index,
+                        sound_map,
                     )
                     verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])

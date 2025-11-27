@@ -14,6 +14,28 @@ This repository contains a Flask application for transliterating Bible content.
    pip install -r requirements.txt
    ```
 
+## Precomputing sound annotations
+
+The UI can highlight repeated sounds when `app/static/sound_annotations.json` is
+populated. If that file is missing or empty and you have the source datasets
+available, the app will attempt to auto-build annotations at startup when the
+following environment variables are set:
+
+* `SOUND_ANNOTATIONS_BIBLE_PATH` – tokenized Bible JSON input
+* `SOUND_ANNOTATIONS_LEXICON_PATH` – lexicon JSON that provides roots/initials
+* `SOUND_ANNOTATIONS_UNITS_PATH` (optional) – literary unit ranges; defaults to
+  `bible_bsb_book_outlines_with_ranges.json`
+
+You can also run the builder directly:
+
+```bash
+python build_sound_annotations.py \
+  --bible "$SOUND_ANNOTATIONS_BIBLE_PATH" \
+  --lexicon "$SOUND_ANNOTATIONS_LEXICON_PATH" \
+  --units "$SOUND_ANNOTATIONS_UNITS_PATH" \
+  --out app/static/sound_annotations.json
+```
+
 ### Windows note: Microsoft Visual C++ build tools
 Some dependencies (for example, `cryptography` and `cffi`) compile C extensions when
 prebuilt wheels are unavailable. On Windows, pip may emit an error like:

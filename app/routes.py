@@ -74,7 +74,75 @@ def get_user_strongs_dict():
 strongs_dict_path = os.path.join(STATIC_DATA_DIR, 'strongs_dict.json')
 strongs_path = os.path.join(STATIC_DATA_DIR, 'Strongs.json')
 kjv_path = os.path.join(STATIC_DATA_DIR, 'kjv_strongs.json')
+sound_annotations_path = os.path.join(STATIC_DATA_DIR, 'sound_annotations.json')
 outlines_path = os.path.abspath(os.path.join(current_dir, '..', 'bible_bsb_book_outlines_with_ranges.json'))
+
+
+def _load_sound_annotations_from_disk(path: str) -> dict:
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if isinstance(data, dict) and data:
+            return data
+    except (OSError, json.JSONDecodeError):
+        pass
+    return {}
+
+
+def _build_sound_annotations_if_configured(target_path: str) -> dict:
+    """Attempt to build sound annotations when source data is provided.
+
+    The builder runs once at startup when the packaged file is empty and the
+    environment exposes the required assets for `build_sound_annotations.py`.
+    """
+
+    bible_source = os.environ.get('SOUND_ANNOTATIONS_BIBLE_PATH')
+    lexicon_source = os.environ.get('SOUND_ANNOTATIONS_LEXICON_PATH')
+    units_source = os.environ.get('SOUND_ANNOTATIONS_UNITS_PATH', outlines_path)
+
+    if not (bible_source and lexicon_source):
+        app.logger.info(
+            'Sound annotations unavailable; set SOUND_ANNOTATIONS_BIBLE_PATH and '
+            'SOUND_ANNOTATIONS_LEXICON_PATH to auto-build.'
+        )
+        return {}
+
+    if not (os.path.exists(bible_source) and os.path.exists(lexicon_source) and os.path.exists(units_source)):
+        app.logger.warning('Sound annotation inputs are missing; skipping build step.')
+        return {}
+
+    try:
+        from build_sound_annotations import (
+            load_bible_tokens,
+            load_literary_units,
+            load_lexicon_roots,
+            build_index_by_book_chapter_verse,
+            build_sound_annotations as compute_sound_annotations,
+        )
+
+        bible_tokens = load_bible_tokens(bible_source)
+        lexicon = load_lexicon_roots(lexicon_source)
+        units = load_literary_units(units_source)
+        bible_index = build_index_by_book_chapter_verse(bible_tokens)
+        annotations = compute_sound_annotations(bible_index, units, lexicon)
+
+        with open(target_path, 'w', encoding='utf-8') as handle:
+            json.dump(annotations, handle, ensure_ascii=False, indent=2)
+            handle.write('\n')
+
+        app.logger.info('Built sound_annotations.json from configured sources.')
+        return annotations
+    except Exception as exc:  # noqa: BLE001
+        app.logger.warning('Failed to build sound annotations: %s', exc)
+        return {}
+
+
+def _load_sound_annotations():
+    annotations = _load_sound_annotations_from_disk(sound_annotations_path)
+    if annotations:
+        return annotations
+    return _build_sound_annotations_if_configured(sound_annotations_path)
+
 
 with open(strongs_dict_path, 'r', encoding='utf-8') as f:
     default_strongs_dict = json.load(f)
@@ -82,6 +150,7 @@ with open(strongs_path, 'r', encoding='utf-8') as f:
     strongs_data = json.load(f)
 with open(kjv_path, 'r', encoding='utf-8') as f:
     kjv_data = json.load(f)
+sound_annotations = _load_sound_annotations()
 with open(outlines_path, 'r', encoding='utf-8') as f:
     outline_data = json.load(f)
 
@@ -222,10 +291,37 @@ def home():
 
     result = ""
     active_unit = None
+    sound_slice = {}
+    sound_summary = {
+        'has_annotations': False,
+        'verse_count': 0,
+        'token_count': 0,
+    }
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             user_strongs_dict = get_user_strongs_dict()
-            result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+            sound_slice = sound_annotations.get(book, {}).get(str(chapter), {})
+            if sound_slice:
+                verse_count = 0
+                token_count = 0
+                for verse_data in sound_slice.values():
+                    positions = set()
+                    for positions_list in verse_data.get('local_roots', {}).values():
+                        positions.update(positions_list)
+                    for positions_list in verse_data.get('local_initials', {}).values():
+                        positions.update(positions_list)
+                    if positions:
+                        verse_count += 1
+                        token_count += len(positions)
+
+                sound_summary = {
+                    'has_annotations': verse_count > 0,
+                    'verse_count': verse_count,
+                    'token_count': token_count,
+                }
+            result = transliterate_chapter(
+                book, chapter, user_strongs_dict, strongs_data, kjv_data, sound_slice
+            )
             active_unit = get_active_unit(book, chapter)
 
     total_chapters = book_chapter_count.get(book)
@@ -243,6 +339,8 @@ def home():
         total_chapters=total_chapters,
         book_progress=book_progress,
         verses=verses,
+        sound_annotations=sound_slice,
+        sound_summary=sound_summary,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -263,7 +361,33 @@ def navigate():
     # Here you might want to add logic to handle book transitions
 
     user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
-    result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+    sound_slice = sound_annotations.get(book, {}).get(str(chapter), {})
+    sound_summary = {
+        'has_annotations': False,
+        'verse_count': 0,
+        'token_count': 0,
+    }
+    if sound_slice:
+        verse_count = 0
+        token_count = 0
+        for verse_data in sound_slice.values():
+            positions = set()
+            for positions_list in verse_data.get('local_roots', {}).values():
+                positions.update(positions_list)
+            for positions_list in verse_data.get('local_initials', {}).values():
+                positions.update(positions_list)
+            if positions:
+                verse_count += 1
+                token_count += len(positions)
+
+        sound_summary = {
+            'has_annotations': verse_count > 0,
+            'verse_count': verse_count,
+            'token_count': token_count,
+        }
+    result = transliterate_chapter(
+        book, chapter, user_strongs_dict, strongs_data, kjv_data, sound_slice
+    )
     active_unit = get_active_unit(book, chapter)
     active_units = get_active_units(book, chapter)
     total_chapters = book_chapter_count.get(book)
@@ -280,6 +404,8 @@ def navigate():
         total_chapters=total_chapters,
         book_progress=book_progress,
         verses=verses,
+        sound_annotations=sound_slice,
+        sound_summary=sound_summary,
     )
 
 
