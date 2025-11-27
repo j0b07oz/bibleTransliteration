@@ -75,6 +75,8 @@ def transliterate_chapter(
     for verse in kjv_path['verses']
     if verse['book_name'] == book and verse['chapter'] == int(chapter)] #and verse['verse'] == int(verse_num)]
 
+    active_annotations = (sound_annotations or {}).get(book, {}).get(str(chapter), {})
+
     for strongs_number in strongs_dict_path:
         search_string = f"[?number == '{strongs_number}'].xlit"
         xlit_value = jmespath.search(search_string, strongs_path)
