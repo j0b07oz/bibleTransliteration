@@ -277,7 +277,7 @@ a:hover {
     padding: 0;
 }
 
-.hide-bolded .highlighted-word:not(.repeated)::after {
+.hide-bolded .highlighted-word:not(.repeated):not(.transliterated)::after {
     display: none;
 }
 
