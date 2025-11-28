@@ -201,7 +201,8 @@ def transliterate_chapter(
 
                     if phrase_match:
                         matched_text = phrase_match.group(0)
-                        display_value = html.escape(xlit_info['xlit']) if xlit_info else html.escape(matched_text.split("{")[0].strip())
+                        matched_phrase = matched_text.split("{")[0].strip()
+                        display_value = html.escape(xlit_info['xlit']) if xlit_info else html.escape(matched_phrase)
                         color = xlit_info['color'] if xlit_info else strongs_entry.get("color")
                         meta = {
                             'xlit': (xlit_info.get('xlit') if xlit_info else '') or strongs_meta.get('xlit'),
@@ -209,7 +210,7 @@ def transliterate_chapter(
                             'pronounce': (xlit_info.get('pronounce') if xlit_info else '') or strongs_meta.get('pronounce'),
                             'description': (xlit_info.get('description') if xlit_info else '') or strongs_meta.get('description'),
                             'root': (xlit_info.get('root') if xlit_info else '') or derive_root(strongs_meta, display_value),
-                            'gloss': translations[0] if translations else matched_text.split("{")[0].strip(),
+                            'gloss': matched_phrase,
                         }
                         if should_skip_english_highlight(display_value, bool(xlit_info)) and strongs_number in repeated_strongs:
                             verse['text'] = verse['text'].replace(matched_text, matched_text.split("{")[0].strip())
@@ -219,7 +220,7 @@ def transliterate_chapter(
                         replacement = build_span(
                             strongs_number,
                             display_value,
-                            matched_text.split("{")[0].strip(),
+                            matched_phrase,
                             color,
                             bool(xlit_info),
                             meta,
@@ -238,7 +239,7 @@ def transliterate_chapter(
                         'pronounce': (xlit_info.get('pronounce') if xlit_info else '') or strongs_meta.get('pronounce'),
                         'description': (xlit_info.get('description') if xlit_info else '') or strongs_meta.get('description'),
                         'root': (xlit_info.get('root') if xlit_info else '') or derive_root(strongs_meta, display_value),
-                        'gloss': translations[0] if translations else word,
+                        'gloss': word,
                     }
                     if should_skip_english_highlight(display_value, bool(xlit_info)) and strongs_number in repeated_strongs:
                         verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", word)
