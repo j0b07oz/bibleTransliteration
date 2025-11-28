@@ -71,6 +71,19 @@
             };
             const activeUnits = {{ active_units|tojson|safe }};
             const storageKey = 'literaryContextOptions';
+            let overlayResizeObserver = null;
+
+            function scheduleOverlayRender() {
+                window.requestAnimationFrame(renderOverlay);
+            }
+
+            function ensureOverlayObserver() {
+                if (!window.ResizeObserver || overlayResizeObserver) return;
+                const verseList = document.querySelector('.verse-list');
+                if (!verseList) return;
+                overlayResizeObserver = new ResizeObserver(() => scheduleOverlayRender());
+                overlayResizeObserver.observe(verseList);
+            }
 
             function loadSavedOptions() {
                 try {
@@ -475,6 +488,8 @@
                 const verseRows = document.querySelectorAll('.verse-row');
                 if (!verseRows.length) return;
 
+                ensureOverlayObserver();
+
                 verseRows.forEach((row) => {
                     const verseText = row.querySelector('.verse-text');
                     if (!verseText || verseText.querySelector('.phonetic-card-shell')) return;
@@ -517,6 +532,7 @@
                     toggle.addEventListener('click', () => {
                         const isOpen = !panel.classList.contains('is-collapsed');
                         setPanelState(!isOpen);
+                        scheduleOverlayRender();
                     });
 
                     setPanelState(defaultOpen);
@@ -524,11 +540,13 @@
                     shell.appendChild(panel);
                     verseText.appendChild(shell);
                 });
+
+                scheduleOverlayRender();
             }
 
             window.addEventListener('resize', renderOverlay);
-            renderOverlay();
             renderPhoneticDevices();
+            renderOverlay();
         });
     </script>
 
