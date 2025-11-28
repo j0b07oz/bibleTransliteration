@@ -274,6 +274,43 @@ a:hover {
     text-underline-offset: 0.16em;
     box-shadow: inset 0 -2px 0 rgba(178, 27, 18, 0.18);
     border-radius: 2px;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.uncommon-word::after {
+    content: attr(data-uncommon-info);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: #2f1f1c;
+    color: #f7f0e9;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
+    z-index: 4;
+}
+
+.uncommon-word:hover::after,
+.uncommon-word:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -2px);
+}
+
+.uncommon-word:focus-visible {
+    outline: 2px solid rgba(178, 27, 18, 0.6);
+    outline-offset: 3px;
 }
 
 .literary-hidden .repeated {

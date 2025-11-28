@@ -231,6 +231,7 @@ def transliterate_chapter(
         )
 
     def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None, is_uncommon=False):
+        tag_name = "button" if is_uncommon else "span"
         classes = ["highlighted-word"]
         data_original_attr = (
             f' data-original="{html.escape(original_text)}"' if has_transliteration else ""
@@ -244,6 +245,8 @@ def transliterate_chapter(
         data_attrs = [f'data-strongs="{safe_attr(strongs_number)}"']
         if is_uncommon:
             data_attrs.append('data-uncommon="true"')
+            uncommon_label = f"Strong's {strongs_number} \u00b7 {(metadata or {}).get('xlit') or original_text or display_text}"
+            data_attrs.append(f'data-uncommon-info="{safe_attr(uncommon_label)}"')
 
         if metadata:
             if metadata.get('xlit'):
@@ -275,7 +278,8 @@ def transliterate_chapter(
             )
 
         style_attr = f" style=\"{' '.join(style_parts)}\"" if style_parts else ""
-        return f'<span class="{" ".join(classes)}"{data_original_attr}{data_attr_str}{style_attr}>{display_text}</span>'
+        type_attr = ' type="button"' if tag_name == "button" else ""
+        return f'<{tag_name} class="{" ".join(classes)}"{data_original_attr}{data_attr_str}{style_attr}{type_attr}>{display_text}</{tag_name}>'
 
     #----------------------------------------------------------------------
     result = []

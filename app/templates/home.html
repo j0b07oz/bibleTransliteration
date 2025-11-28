@@ -72,6 +72,7 @@
             const contextMenu = document.getElementById('context-menu');
             const activeUnits = {{ active_units|tojson|safe }};
             const storageKey = 'literaryContextOptions';
+            const heatmapBase = "{{ url_for('heatmap') }}";
             let overlayResizeObserver = null;
 
             function scheduleOverlayRender() {
@@ -563,7 +564,23 @@
                 });
             }
 
+            function bindUncommonWordLinks() {
+                const nodes = document.querySelectorAll('.uncommon-word[data-strongs]');
+                nodes.forEach((node) => {
+                    if (node.dataset.uncommonBound) return;
+                    node.dataset.uncommonBound = '1';
+                    node.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const strong = node.dataset.strongs;
+                        if (!strong) return;
+                        const targetUrl = `${heatmapBase}?strong=${encodeURIComponent(strong)}`;
+                        window.location.href = targetUrl;
+                    });
+                });
+            }
+
             applyHeatmapFocus();
+            bindUncommonWordLinks();
         });
     </script>
 
