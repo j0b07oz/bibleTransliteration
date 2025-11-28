@@ -199,18 +199,24 @@
                 return (text || '').replace(/[^a-z]/gi, '').replace(/[aeiou]/gi, '').toUpperCase();
             }
 
+            const vowelRegex = /[aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/giu;
+
             function normalizeToken(el) {
                 const rawXlit = (el.dataset.xliteral || el.textContent || '').trim();
-                const cleaned = rawXlit.toLowerCase().replace(/[^a-z]/g, '');
-                const vowels = (cleaned.match(/[aeiou]+/g) || []).join('-');
-                const onsetMatch = cleaned.match(/^[^aeiou]+/);
+                const normalized = rawXlit.normalize('NFKD');
+                const lettersOnly = (normalized.match(/\p{L}+/gu) || []).join('');
+                const cleanedWithMarks = lettersOnly.toLowerCase();
+                const baseLetters = cleanedWithMarks.replace(/\p{M}+/gu, '');
+                const vowels = (cleanedWithMarks.match(vowelRegex) || []).join('-');
+                const onsetMatch = baseLetters.match(/^[^aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/i);
                 const onset = onsetMatch ? onsetMatch[0].toUpperCase() : '';
                 const rootKey = (el.dataset.rootkey || consonantKey(rawXlit)).toUpperCase();
                 return {
                     element: el,
                     strongs: el.dataset.strongs || '',
                     xlit: rawXlit,
-                    cleaned,
+                    cleaned: baseLetters,
+                    cleanedWithMarks,
                     vowels,
                     onset,
                     rootKey,
@@ -407,15 +413,15 @@
                 return matches.slice(0, 8);
             }
 
-            const deviceLabels = {
-                lexical: 'Lexical repetition',
-                root: 'Root repetition',
-                alliteration: 'Alliteration',
-                assonance: 'Assonance',
-                paronomasia: 'Paronomasia',
-                climactic: 'Climactic repetition',
-                parallelism: 'Syntactic parallelism',
-            };
+                const deviceLabels = {
+                    lexical: 'Lexical repetition',
+                    root: 'Root repetition',
+                    alliteration: 'Alliteration',
+                    assonance: 'Assonance',
+                    paronomasia: 'Paronomasia',
+                    climactic: 'Climactic repetition',
+                    parallelism: 'Syntactic parallelism',
+                };
 
             function createDeviceCard(match, matchId) {
                 const card = document.createElement('div');

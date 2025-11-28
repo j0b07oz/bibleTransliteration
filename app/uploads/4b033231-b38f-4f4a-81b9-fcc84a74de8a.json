@@ -1,0 +1,525 @@
+{
+  "H1": {
+    "color": null,
+    "translations": [
+      "father"
+    ]
+  },
+  "H1004": {
+    "color": null,
+    "translations": [
+      "house"
+    ]
+  },
+  "H1121": {
+    "color": null,
+    "translations": [
+      "son"
+    ]
+  },
+  "H113": {
+    "color": null,
+    "translations": [
+      "lord"
+    ]
+  },
+  "H120": {
+    "color": null,
+    "translations": [
+      "man",
+      "man's",
+      "a man"
+    ]
+  },
+  "H123": {
+    "color": null,
+    "translations": [
+      "stuff"
+    ]
+  },
+  "H126": {
+    "color": null,
+    "translations": [
+      "lord"
+    ]
+  },
+  "H127": {
+    "color": null,
+    "translations": [
+      "ground"
+    ]
+  },
+  "H1285": {
+    "color": null,
+    "translations": [
+      "covenant"
+    ]
+  },
+  "H136": {
+    "color": null,
+    "translations": [
+      "lord"
+    ]
+  },
+  "H1368": {
+    "color": null,
+    "translations": [
+      "mighty men",
+      "mighty one",
+      "mighty man",
+      "valiant men",
+      "that excel",
+      "mighty men's"
+    ]
+  },
+  "H1419": {
+    "color": null,
+    "translations": [
+      "great men",
+      "great"
+    ]
+  },
+  "H1471": {
+    "color": null,
+    "translations": [
+      "people",
+      "nations"
+    ]
+  },
+  "H1588": {
+    "color": null,
+    "translations": [
+      "garden"
+    ]
+  },
+  "H1818": {
+    "color": null,
+    "translations": [
+      "blood"
+    ]
+  },
+  "H1892": {
+    "color": null,
+    "translations": [
+      "vanity"
+    ]
+  },
+  "H1897": {
+    "color": null,
+    "translations": [
+      "meditate",
+      "mutter"
+    ]
+  },
+  "H2": {
+    "color": null,
+    "translations": [
+      "father"
+    ]
+  },
+  "H216": {
+    "color": "#e4f038",
+    "translations": [
+      "light"
+    ]
+  },
+  "H2450": {
+    "color": null,
+    "translations": [
+      "wise men",
+      "expert"
+    ]
+  },
+  "H2451": {
+    "color": null,
+    "translations": [
+      "wisdom"
+    ]
+  },
+  "H2617": {
+    "color": null,
+    "translations": [
+      "merciful kindness",
+      "wicked thing",
+      "lovingkindness",
+      "mercy"
+    ]
+  },
+  "H2895": {
+    "color": null,
+    "translations": [
+      "good"
+    ]
+  },
+  "H2896": {
+    "color": null,
+    "translations": [
+      "good"
+    ]
+  },
+  "H3444": {
+    "color": null,
+    "translations": [
+      "salvation"
+    ]
+  },
+  "H3519": {
+    "color": null,
+    "translations": [
+      "glory"
+    ]
+  },
+  "H376": {
+    "color": null,
+    "translations": [
+      "man",
+      "man's"
+    ]
+  },
+  "H3820": {
+    "color": null,
+    "translations": [
+      "heart",
+      "will"
+    ]
+  },
+  "H3824": {
+    "color": null,
+    "translations": [
+      "heart"
+    ]
+  },
+  "H3899": {
+    "color": null,
+    "translations": [
+      "bread"
+    ]
+  },
+  "H3917": {
+    "color": null,
+    "translations": [
+      "screech owl"
+    ]
+  },
+  "H3966": {
+    "color": null,
+    "translations": [
+      "muchness",
+      "sore"
+    ]
+  },
+  "H410": {
+    "color": null,
+    "translations": [
+      "God",
+      "mighty God"
+    ]
+  },
+  "H4150": {
+    "color": null,
+    "translations": [
+      "appointed time",
+      "set time",
+      "time appointed",
+      "appointed season",
+      "solemn feasts",
+      "set feasts",
+      "appointed times",
+      "solemn feast",
+      "solemn assembly"
+    ]
+  },
+  "H430": {
+    "color": null,
+    "translations": [
+      "God"
+    ]
+  },
+  "H4325": {
+    "color": null,
+    "translations": [
+      "waters"
+    ]
+  },
+  "H4397": {
+    "color": null,
+    "translations": [
+      "angel"
+    ]
+  },
+  "H4428": {
+    "color": null,
+    "translations": [
+      "king"
+    ]
+  },
+  "H4886": {
+    "color": null,
+    "translations": [
+      "anoint",
+      "smear"
+    ]
+  },
+  "H4899": {
+    "color": null,
+    "translations": [
+      "anointed"
+    ]
+  },
+  "H4941": {
+    "color": null,
+    "translations": [
+      "right",
+      "an ordinance",
+      "manner of law",
+      "worthy of",
+      "due order"
+    ]
+  },
+  "H5117": {
+    "color": null,
+    "translations": [
+      "rest",
+      "set down",
+      "let down"
+    ]
+  },
+  "H5146": {
+    "color": null,
+    "translations": [
+      "Noah"
+    ]
+  },
+  "H5172": {
+    "color": null,
+    "translations": [
+      "enchanter",
+      "use enchantment",
+      "interprets omens",
+      "diligently observe",
+      "used enchantments",
+      "learned by experience"
+    ]
+  },
+  "H5173": {
+    "color": null,
+    "translations": [
+      "enchantment"
+    ]
+  },
+  "H5174": {
+    "color": null,
+    "translations": [
+      "copper",
+      "bronze"
+    ]
+  },
+  "H5175": {
+    "color": null,
+    "translations": [
+      "snake"
+    ]
+  },
+  "H5303": {
+    "color": null,
+    "translations": [
+      "giants"
+    ]
+  },
+  "H5315": {
+    "color": null,
+    "translations": [
+      "soul"
+    ]
+  },
+  "H5828": {
+    "color": null,
+    "translations": [
+      "help meet"
+    ]
+  },
+  "H5946": {
+    "color": null,
+    "translations": [
+      "Most High"
+    ]
+  },
+  "H6086": {
+    "color": null,
+    "translations": [
+      "tree"
+    ]
+  },
+  "H6119": {
+    "color": null,
+    "translations": [
+      "heel"
+    ]
+  },
+  "H6453": {
+    "color": null,
+    "translations": [
+      "Passover"
+    ]
+  },
+  "H6635": {
+    "color": null,
+    "translations": [
+      "war",
+      "army",
+      "host of them"
+    ]
+  },
+  "H6666": {
+    "color": null,
+    "translations": [
+      "righteous acts",
+      "righteousness"
+    ]
+  },
+  "H6918": {
+    "color": null,
+    "translations": [
+      "holy",
+      "Holy One",
+      "saints"
+    ]
+  },
+  "H6944": {
+    "color": null,
+    "translations": [
+      "sacredness",
+      "holiness"
+    ]
+  },
+  "H7160": {
+    "color": null,
+    "translations": [
+      "radiate",
+      "shone"
+    ]
+  },
+  "H7161": {
+    "color": null,
+    "translations": [
+      "horn"
+    ]
+  },
+  "H7307": {
+    "color": null,
+    "translations": [
+      "spirit",
+      "wind"
+    ]
+  },
+  "H7308": {
+    "color": null,
+    "translations": [
+      "spirit",
+      "wind"
+    ]
+  },
+  "H7451": {
+    "color": null,
+    "translations": [
+      "evil"
+    ]
+  },
+  "H7673": {
+    "color": null,
+    "translations": [
+      "stop",
+      "put away",
+      "took away"
+    ]
+  },
+  "H776": {
+    "color": null,
+    "translations": [
+      "land"
+    ]
+  },
+  "H7965": {
+    "color": null,
+    "translations": [
+      "peace"
+    ]
+  },
+  "H802": {
+    "color": null,
+    "translations": [
+      "woman"
+    ]
+  },
+  "H8034": {
+    "color": null,
+    "translations": [
+      "name",
+      "name thereof"
+    ]
+  },
+  "H8064": {
+    "color": null,
+    "translations": [
+      "heaven"
+    ]
+  },
+  "H8065": {
+    "color": null,
+    "translations": [
+      "heavens"
+    ]
+  },
+  "H8085": {
+    "color": null,
+    "translations": [
+      "hear",
+      "obey"
+    ]
+  },
+  "H8086": {
+    "color": null,
+    "translations": [
+      "hear",
+      "obey"
+    ]
+  },
+  "H8414": {
+    "color": null,
+    "translations": [
+      "without form",
+      "to nothing",
+      "empty place"
+    ]
+  },
+  "H8415": {
+    "color": null,
+    "translations": [
+      "depths"
+    ]
+  },
+  "H8451": {
+    "color": null,
+    "translations": [
+      "law"
+    ]
+  },
+  "H8452": {
+    "color": null,
+    "translations": [
+      "law"
+    ]
+  },
+  "H8577": {
+    "color": null,
+    "translations": [
+      "dragon"
+    ]
+  },
+  "H922": {
+    "color": null,
+    "translations": [
+      "emptiness"
+    ]
+  }
+}
