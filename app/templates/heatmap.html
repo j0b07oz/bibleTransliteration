@@ -5,53 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Heatmap</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <style>
-        table {
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 4px;
-            text-align: center;
-        }
-    </style>
 </head>
-<body>
+<body class="heatmap-page">
     <h1>Word Heatmap</h1>
-    <form method="get">
+    <form method="get" class="heatmap-form">
         <label for="strong">Strong's Number:</label>
-        <input type="text" id="strong" name="strong" value="{{ strong or '' }}">
+        <input type="text" id="strong" name="strong" value="{{ strong or '' }}" placeholder="e.g. H7225">
         <button type="submit" class="button">Show</button>
     </form>
 
     {% if data %}
-    <table>
-        <thead>
-            <tr>
-                <th>Book</th>
-                <th>Chapters</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for book in ordered_books %}
-            {% set chapters = data.get(book) %}
-            {% if chapters %}
-            <tr>
-                <th>{{ book }}</th>
-                <td>
-                    <table>
-                        <tr>
-                        {% for cell in chapters %}
-                            <td style="background-color: {{ cell.color }}">{{ cell.count if cell.count > 0 else '' }}</td>
-                        {% endfor %}
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-            {% endif %}
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="heatmap-wrapper">
+        <table class="heatmap-table">
+            <thead>
+                <tr>
+                    <th scope="col">Book</th>
+                    <th scope="col">Chapters</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for book in ordered_books %}
+                {% set chapters = data.get(book) %}
+                {% if chapters %}
+                <tr>
+                    <th scope="row">{{ book }}</th>
+                    <td>
+                        <table class="heatmap-row-table">
+                            <tr>
+                            {% for cell in chapters %}
+                                {% set chapter_num = cell.chapter|default(loop.index) %}
+                                <td class="heatmap-cell{% if cell.count > 0 %} is-clickable{% endif %}" data-chapter="{{ chapter_num }}" style="background-color: {{ cell.color }};">
+                                    {% if cell.count > 0 %}
+                                        <a class="heatmap-cell__link" href="{{ url_for('home', book=book, chapter=chapter_num, focus=strong, from_heatmap=1) }}" aria-label="Open {{ book }} {{ chapter_num }}">
+                                            <span class="heatmap-cell__count">{{ cell.count }}</span>
+                                        </a>
+                                    {% else %}
+                                        <span class="heatmap-cell__count heatmap-cell__count--empty">&nbsp;</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 
     <a href="{{ url_for('home') }}" class="button">Return Home</a>

@@ -42,7 +42,7 @@
         </div>
     </div>
     
-    <form method="POST" class="bible-form">
+    <form method="POST" action="{{ url_for('home') }}" class="bible-form">
         <div class="form-group">
             <label for="book">Book:</label>
             <input type="text" id="book" name="book" value="{{ book }}">
@@ -56,19 +56,16 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const initialContextOptions = {{ context_defaults|tojson|safe }};
+            const contextOptions = Object.assign({}, initialContextOptions);
+            const fromHeatmap = {{ from_heatmap|tojson|safe }};
+            const focusStrong = {{ focus_strong|tojson|safe }};
             const bookInput = document.getElementById('book');
             const chapterInput = document.getElementById('chapter');
             const goButton = document.getElementById('go-button');
             const contextMenuButton = document.getElementById('context-menu-button');
             const contextDropdown = document.getElementById('context-dropdown');
             const contextMenu = document.getElementById('context-menu');
-            const contextOptions = {
-                bolded: true,
-                repeats: true,
-                phonetics: true,
-                overview: true,
-                units: true,
-            };
             const activeUnits = {{ active_units|tojson|safe }};
             const storageKey = 'literaryContextOptions';
             let overlayResizeObserver = null;
@@ -93,6 +90,11 @@
                     }
                 } catch (err) {
                     console.warn('Unable to read saved context options', err);
+                }
+                if (fromHeatmap) {
+                    contextOptions.repeats = false;
+                    contextOptions.phonetics = false;
+                    persistOptions();
                 }
             }
 
@@ -547,6 +549,16 @@
             window.addEventListener('resize', renderOverlay);
             renderPhoneticDevices();
             renderOverlay();
+
+            function applyHeatmapFocus() {
+                if (!focusStrong) return;
+                const targets = document.querySelectorAll(`.highlighted-word[data-strongs="${focusStrong}"]`);
+                targets.forEach((el) => {
+                    el.classList.add('heatmap-focus-word');
+                });
+            }
+
+            applyHeatmapFocus();
         });
     </script>
 

@@ -208,10 +208,20 @@ def get_active_unit(book: str, chapter: int):
 
     return None
 
+DEFAULT_CONTEXT_OPTIONS = {
+    'bolded': True,
+    'repeats': True,
+    'phonetics': True,
+    'overview': True,
+    'units': True,
+}
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
     book = request.form.get('book', '') or request.args.get('book', '')
     chapter_str = request.form.get('chapter', '') or request.args.get('chapter', '')
+    focus_strong = (request.args.get('focus') or '').strip().upper()
+    from_heatmap = (request.args.get('from_heatmap') or '').lower() in {'1', 'true', 'yes', 'on'}
 
     chapter = None
     if chapter_str:
@@ -243,6 +253,9 @@ def home():
         total_chapters=total_chapters,
         book_progress=book_progress,
         verses=verses,
+        focus_strong=focus_strong,
+        from_heatmap=from_heatmap,
+        context_defaults=DEFAULT_CONTEXT_OPTIONS,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -280,6 +293,9 @@ def navigate():
         total_chapters=total_chapters,
         book_progress=book_progress,
         verses=verses,
+        focus_strong='',
+        from_heatmap=False,
+        context_defaults=DEFAULT_CONTEXT_OPTIONS,
     )
 
 
@@ -418,7 +434,7 @@ def generate_heatmap(strong_number):
             g = int(255 * (1 - alpha))
             b = int(255 * (1 - alpha))
             color = f'#{r:02x}{g:02x}{b:02x}'
-            row.append({'count': cnt, 'color': color})
+            row.append({'count': cnt, 'color': color, 'chapter': ch})
         heatmap[book] = row
 
     return heatmap
