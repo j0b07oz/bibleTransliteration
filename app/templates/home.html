@@ -26,6 +26,10 @@
                         <span>Highlighted repeated words</span>
                     </label>
                     <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="uncommon" checked>
+                        <span>Highlight uncommon words</span>
+                    </label>
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
                         <input type="checkbox" data-context-option="phonetics" checked>
                         <span>Phonetic literary devices</span>
                     </label>
@@ -122,6 +126,7 @@
             function applyOptionClasses() {
                 document.body.classList.toggle('hide-bolded', !contextOptions.bolded);
                 document.body.classList.toggle('hide-repeats', !contextOptions.repeats);
+                document.body.classList.toggle('hide-uncommon', !contextOptions.uncommon);
                 document.body.classList.toggle('hide-phonetics', !contextOptions.phonetics);
                 document.body.classList.toggle('hide-book-overview', !contextOptions.overview);
                 document.body.classList.toggle('hide-literary-units', !contextOptions.units);

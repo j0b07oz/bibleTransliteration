@@ -1,12 +1,91 @@
 # Description: This script is used to replace words with their respective transliterations.
-import os
 import re
-import json
-import jmespath
 import html
 import colorsys
 import hashlib
 from collections import Counter
+
+STRONGS_REGEX = re.compile(r'{([HG]\d+)}')
+_global_strongs_counts = None
+_verses_by_book = None
+
+
+def extract_strongs_numbers(text: str):
+    return STRONGS_REGEX.findall(text or '')
+
+
+def count_strongs_in_verses(verses, allowed=None):
+    allowed_set = set(allowed) if allowed else None
+    counts = Counter()
+    for verse in verses or []:
+        matches = extract_strongs_numbers(verse.get('text', ''))
+        if allowed_set is not None:
+            matches = [m for m in matches if m in allowed_set]
+        counts.update(matches)
+    return counts
+
+
+def get_global_strongs_counts(kjv_data):
+    global _global_strongs_counts
+    if _global_strongs_counts is None:
+        _global_strongs_counts = count_strongs_in_verses(kjv_data.get('verses', []))
+    return _global_strongs_counts
+
+
+def get_verses_by_book(kjv_data):
+    global _verses_by_book
+    if _verses_by_book is None:
+        _verses_by_book = {}
+        for verse in kjv_data.get('verses', []):
+            _verses_by_book.setdefault(verse.get('book_name'), []).append(verse)
+    return _verses_by_book
+
+
+def _unit_bounds(unit: dict):
+    start = unit.get('range_start', {})
+    end = unit.get('range_end', {})
+    start_ch = int(unit.get('start_chapter') or start.get('chapter') or 0)
+    end_ch = int(unit.get('end_chapter') or end.get('chapter') or 0)
+    start_v = int(unit.get('start_verse_absolute') or start.get('verse') or 1)
+    end_v = int(unit.get('end_verse_absolute') or end.get('verse') or 0)
+    return start_ch, start_v, end_ch, end_v
+
+
+def _verses_for_unit(kjv_data, book: str, unit: dict):
+    verses_by_book = get_verses_by_book(kjv_data)
+    book_verses = verses_by_book.get(book, [])
+    start_ch, start_v, end_ch, end_v = _unit_bounds(unit)
+    if not start_ch or not end_ch:
+        return []
+
+    selected = []
+    for verse in book_verses:
+        ch = int(verse.get('chapter', 0))
+        vs = int(verse.get('verse', 0))
+        if ch < start_ch or ch > end_ch:
+            continue
+        if ch == start_ch and vs < start_v:
+            continue
+        if ch == end_ch and end_v and vs > end_v:
+            continue
+        selected.append(verse)
+    return selected
+
+
+def _rule_global_rare(ctx):
+    return ctx['global_count'] <= 10
+
+
+def _rule_unit_cluster(ctx):
+    return ctx['global_count'] <= 50 and ctx['unit_peak'] >= 3
+
+
+# Add new callables here to extend uncommon-word detection logic. Each rule
+# receives a context dict with Strong's number, global_count, unit_peak, and lemma.
+UNCOMMON_RULES = [
+    _rule_global_rare,
+    _rule_unit_cluster,
+]
 
 def is_light_color(hex_color):
     # Convert hex to RGB
@@ -34,7 +113,7 @@ def generate_repeat_colors(strongs_number):
     return base_color, accent_color
 
 def transliterate_chapter(
-    book, chapter, strongs_dict_path, strongs_path, kjv_path, max_repeated_highlights=10
+    book, chapter, strongs_dict_path, strongs_path, kjv_path, max_repeated_highlights=10, active_units=None
 ):
     replacement_mapping = {}
     strongs_lookup = {
@@ -58,9 +137,6 @@ def transliterate_chapter(
     min_english_highlight_length = 4
     min_repeat_count = 3
 
-    pattern = r'{[HG]\d+}'
-    alt_pattern = r'{[HG]\d+}{'
-
     def consonant_key(text: str) -> str:
         cleaned = re.sub(r'[^A-Za-z]', '', text or '')
         return re.sub(r'[AEIOUaeiou]', '', cleaned).upper()
@@ -78,12 +154,9 @@ def transliterate_chapter(
             return ''
         return html.escape(str(val), quote=True)
 
-    def extract_strongs(text):
-        return re.findall(pattern, text)
-
     chapter_data = [{
         'text': verse['text'],
-        'strongs': extract_strongs(verse['text']),
+        'strongs': extract_strongs_numbers(verse['text']),
         'verse': str(verse['verse'])
     }
     for verse in kjv_path['verses']
@@ -104,7 +177,7 @@ def transliterate_chapter(
             }
 
     strongs_counter = Counter(
-        sn.strip('{}')
+        sn
         for verse in chapter_data
         for sn in verse['strongs']
     )
@@ -119,6 +192,34 @@ def transliterate_chapter(
     }
     repeated_colors = {num: generate_repeat_colors(num) for num in repeated_strongs}
 
+    chapter_strongs_set = {
+        sn
+        for verse in chapter_data
+        for sn in verse['strongs']
+    }
+    global_strongs_counts = get_global_strongs_counts(kjv_path)
+    unit_max_counts = {}
+    if active_units and chapter_strongs_set:
+        for unit in active_units:
+            unit_verses = _verses_for_unit(kjv_path, book, unit)
+            if not unit_verses:
+                continue
+            counts = count_strongs_in_verses(unit_verses, allowed=chapter_strongs_set)
+            for num, cnt in counts.items():
+                if cnt > unit_max_counts.get(num, 0):
+                    unit_max_counts[num] = cnt
+
+    uncommon_lookup = {}
+    for num in chapter_strongs_set:
+        strong_meta = strongs_lookup.get(num, {}) or {}
+        context = {
+            'strongs': num,
+            'global_count': global_strongs_counts.get(num, 0),
+            'unit_peak': unit_max_counts.get(num, 0),
+            'lemma': strong_meta.get('lemma', ''),
+        }
+        uncommon_lookup[num] = any(rule(context) for rule in UNCOMMON_RULES)
+
     def should_skip_english_highlight(display_text, has_transliteration):
         if has_transliteration:
             return False
@@ -129,7 +230,7 @@ def transliterate_chapter(
             or normalized in english_stopwords
         )
 
-    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None):
+    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None, is_uncommon=False):
         classes = ["highlighted-word"]
         data_original_attr = (
             f' data-original="{html.escape(original_text)}"' if has_transliteration else ""
@@ -137,8 +238,12 @@ def transliterate_chapter(
 
         if has_transliteration:
             classes.append("transliterated")
+        if is_uncommon:
+            classes.append("uncommon-word")
 
         data_attrs = [f'data-strongs="{safe_attr(strongs_number)}"']
+        if is_uncommon:
+            data_attrs.append('data-uncommon="true"')
 
         if metadata:
             if metadata.get('xlit'):
@@ -175,8 +280,7 @@ def transliterate_chapter(
     #----------------------------------------------------------------------
     result = []
     for verse in chapter_data:
-        for strongs_number_braced in verse['strongs']:
-            strongs_number = strongs_number_braced.strip('{}')
+        for strongs_number in verse['strongs']:
             match = re.search(r'\b([\w\']*)\{' + re.escape(strongs_number) + r'\}', verse['text'])
             alt_match = re.search(r'{' + re.escape(strongs_number) + r'\}\'{[HG]\d+}', verse['text'])
             if alt_match:
@@ -224,6 +328,7 @@ def transliterate_chapter(
                             color,
                             bool(xlit_info),
                             meta,
+                            uncommon_lookup.get(strongs_number, False),
                         )
                         verse['text'] = verse['text'].replace(matched_text, replacement)
                         replaced = True
@@ -246,7 +351,13 @@ def transliterate_chapter(
                         continue
 
                     replacement = build_span(
-                        strongs_number, display_value, word, color, bool(xlit_info), meta
+                        strongs_number,
+                        display_value,
+                        word,
+                        color,
+                        bool(xlit_info),
+                        meta,
+                        uncommon_lookup.get(strongs_number, False),
                     )
                     verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])

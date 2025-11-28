@@ -5,7 +5,7 @@ import uuid
 import tempfile
 from flask import render_template, request, jsonify, session, send_file, redirect, url_for
 from app import app
-from .transliteration import transliterate_chapter
+from .transliteration import transliterate_chapter, count_strongs_in_verses, get_verses_by_book
 
 # Paths
 current_file_path = os.path.abspath(__file__)
@@ -120,8 +120,8 @@ def _count_verses_in_range(book: str, start_chapter: int, start_verse: int, end_
 
 
 def _calculate_unit_progress(unit: dict, book: str, chapter: int) -> float:
-    start = unit.get('range_start', {})
-    end = unit.get('range_end', {})
+    start = unit.get('range_start') or {}
+    end = unit.get('range_end') or {}
     start_ch = int(start.get('chapter', 0) or 0)
     start_v = int(start.get('verse', 1) or 1)
     end_ch = int(end.get('chapter', 0) or 0)
@@ -141,8 +141,8 @@ def _unit_bounds_for_chapter(unit: dict, book: str, chapter: int):
     chapter_counts = chapter_verse_counts.get(book, {})
     max_verse = chapter_counts.get(chapter, 0)
 
-    start = unit.get('range_start', {})
-    end = unit.get('range_end', {})
+    start = unit.get('range_start') or {}
+    end = unit.get('range_end') or {}
     start_ch = int(start.get('chapter', 0) or 0)
     end_ch = int(end.get('chapter', 0) or 0)
     start_v = int(start.get('verse', 1) or 1)
@@ -161,8 +161,8 @@ def get_active_units(book: str, chapter: int):
     units = outline_data.get(book, [])
     active = []
     for unit in units:
-        start = unit.get('range_start', {})
-        end = unit.get('range_end', {})
+        start = unit.get('range_start') or {}
+        end = unit.get('range_end') or {}
         start_ch = int(start.get('chapter', 0) or 0)
         end_ch = int(end.get('chapter', 0) or 0)
 
@@ -177,6 +177,12 @@ def get_active_units(book: str, chapter: int):
                 'start_verse': start_v,
                 'end_verse': end_v,
                 'marker': unit.get('marker', '').strip(),
+                'start_chapter': start_ch,
+                'end_chapter': end_ch,
+                'start_verse_absolute': int(start.get('verse', 1) or 1),
+                'end_verse_absolute': int(end.get('verse', 0) or 0),
+                'range_start': start,
+                'range_end': end,
             })
 
     return active
@@ -191,10 +197,10 @@ def get_active_unit(book: str, chapter: int):
         return None
 
     for unit in units:
-        start = unit.get('range_start', {})
-        end = unit.get('range_end', {})
-        start_ch = int(start.get('chapter', 0))
-        end_ch = int(end.get('chapter', 0))
+        start = unit.get('range_start') or {}
+        end = unit.get('range_end') or {}
+        start_ch = int(start.get('chapter', 0) or 0)
+        end_ch = int(end.get('chapter', 0) or 0)
 
         if start_ch <= chapter <= end_ch:
             label = f"{unit.get('marker', '').strip()} {unit.get('title', '').strip()}".strip()
@@ -214,6 +220,7 @@ DEFAULT_CONTEXT_OPTIONS = {
     'phonetics': True,
     'overview': True,
     'units': True,
+    'uncommon': True,
 }
 
 @app.route('/', methods=['GET', 'POST'])
@@ -230,17 +237,17 @@ def home():
         except ValueError:
             chapter = None
 
+    active_units = get_active_units(book, chapter) if book and chapter else []
     result = ""
     active_unit = None
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             user_strongs_dict = get_user_strongs_dict()
-            result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
+            result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
             active_unit = get_active_unit(book, chapter)
 
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
-    active_units = get_active_units(book, chapter) if book and chapter else []
     verses = build_verses_for_render(result, active_units) if result else []
 
     return render_template(
@@ -275,10 +282,10 @@ def navigate():
 
     # Here you might want to add logic to handle book transitions
 
-    user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
-    result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data)
-    active_unit = get_active_unit(book, chapter)
     active_units = get_active_units(book, chapter)
+    user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
+    result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
+    active_unit = get_active_unit(book, chapter)
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
     verses = build_verses_for_render(result, active_units) if result else []
@@ -408,16 +415,26 @@ def about():
 
 
 def generate_heatmap(strong_number):
+    strong = (strong_number or '').strip('{}').upper()
+    if not strong:
+        return {}
+
     counts = {}
     max_count = 0
-    for verse in kjv_data.get('verses', []):
-        if f'{{{strong_number}}}' in verse['text']:
-            book = verse['book_name']
-            chapter = int(verse['chapter'])
-            counts.setdefault(book, {})
-            counts[book][chapter] = counts[book].get(chapter, 0) + 1
-            if counts[book][chapter] > max_count:
-                max_count = counts[book][chapter]
+    verses_by_book = get_verses_by_book(kjv_data)
+    for book, verses in verses_by_book.items():
+        chapter_groups = {}
+        for verse in verses:
+            ch = int(verse.get('chapter', 0) or 0)
+            chapter_groups.setdefault(ch, []).append(verse)
+
+        counts[book] = {}
+        for ch, verses_in_chapter in chapter_groups.items():
+            chapter_counts = count_strongs_in_verses(verses_in_chapter, allowed={strong})
+            cnt = chapter_counts.get(strong, 0)
+            counts[book][ch] = cnt
+            if cnt > max_count:
+                max_count = cnt
 
     heatmap = {}
     for book in book_order:
@@ -426,10 +443,7 @@ def generate_heatmap(strong_number):
         chapters = counts.get(book, {})
         for ch in range(1, max_chapter + 1):
             cnt = chapters.get(ch, 0)
-            if max_count:
-                alpha = cnt / max_count
-            else:
-                alpha = 0
+            alpha = (cnt / max_count) if max_count else 0
             r = 255
             g = int(255 * (1 - alpha))
             b = int(255 * (1 - alpha))
