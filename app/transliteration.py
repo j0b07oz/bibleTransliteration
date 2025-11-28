@@ -83,9 +83,27 @@ def _rule_unit_cluster(ctx):
 # Add new callables here to extend uncommon-word detection logic. Each rule
 # receives a context dict with Strong's number, global_count, unit_peak, and lemma.
 UNCOMMON_RULES = [
-    _rule_global_rare,
-    _rule_unit_cluster,
+    ('global', _rule_global_rare),
+    ('unit', _rule_unit_cluster),
 ]
+
+
+def classify_uncommon(context: dict) -> dict:
+    """Return rule match and counts for uncommon highlighting."""
+    for name, fn in UNCOMMON_RULES:
+        if fn(context):
+            return {
+                'is_uncommon': True,
+                'rule': name,
+                'global_count': context.get('global_count', 0),
+                'unit_peak': context.get('unit_peak', 0),
+            }
+    return {
+        'is_uncommon': False,
+        'rule': None,
+        'global_count': context.get('global_count', 0),
+        'unit_peak': context.get('unit_peak', 0),
+    }
 
 def is_light_color(hex_color):
     # Convert hex to RGB
@@ -218,7 +236,7 @@ def transliterate_chapter(
             'unit_peak': unit_max_counts.get(num, 0),
             'lemma': strong_meta.get('lemma', ''),
         }
-        uncommon_lookup[num] = any(rule(context) for rule in UNCOMMON_RULES)
+        uncommon_lookup[num] = classify_uncommon(context)
 
     def should_skip_english_highlight(display_text, has_transliteration):
         if has_transliteration:
@@ -230,7 +248,8 @@ def transliterate_chapter(
             or normalized in english_stopwords
         )
 
-    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None, is_uncommon=False):
+    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None, uncommon_meta=None):
+        is_uncommon = bool(uncommon_meta and uncommon_meta.get('is_uncommon'))
         tag_name = "button" if is_uncommon else "span"
         classes = ["highlighted-word"]
         data_original_attr = (
@@ -239,13 +258,20 @@ def transliterate_chapter(
 
         if has_transliteration:
             classes.append("transliterated")
+        uncommon_label = None
         if is_uncommon:
             classes.append("uncommon-word")
 
         data_attrs = [f'data-strongs="{safe_attr(strongs_number)}"']
         if is_uncommon:
             data_attrs.append('data-uncommon="true"')
-            uncommon_label = f"Strong's {strongs_number} \u00b7 {(metadata or {}).get('xlit') or original_text or display_text}"
+            counts_suffix = ""
+            if uncommon_meta:
+                if uncommon_meta.get('rule') == 'global':
+                    counts_suffix = f" \u00b7 {uncommon_meta.get('global_count', 0)}x"
+                elif uncommon_meta.get('rule') == 'unit':
+                    counts_suffix = f" \u00b7 {uncommon_meta.get('global_count', 0)}x \u00b7 {uncommon_meta.get('unit_peak', 0)}x"
+            uncommon_label = f"Strong's {strongs_number} \u00b7 {(metadata or {}).get('xlit') or original_text or display_text}{counts_suffix}"
             data_attrs.append(f'data-uncommon-info="{safe_attr(uncommon_label)}"')
 
         if metadata:
@@ -332,7 +358,7 @@ def transliterate_chapter(
                             color,
                             bool(xlit_info),
                             meta,
-                            uncommon_lookup.get(strongs_number, False),
+                            uncommon_lookup.get(strongs_number),
                         )
                         verse['text'] = verse['text'].replace(matched_text, replacement)
                         replaced = True
@@ -361,7 +387,7 @@ def transliterate_chapter(
                         color,
                         bool(xlit_info),
                         meta,
-                        uncommon_lookup.get(strongs_number, False),
+                        uncommon_lookup.get(strongs_number),
                     )
                     verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])
