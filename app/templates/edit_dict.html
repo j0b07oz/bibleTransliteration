@@ -12,6 +12,29 @@
             margin-bottom: 20px;
             font-size: 16px;
         }
+        .dict-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .dict-toggle {
+            padding: 8px 12px;
+            border: 1px solid #4a90e2;
+            background: #fff;
+            color: #4a90e2;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .dict-toggle.is-active {
+            background: #4a90e2;
+            color: #fff;
+        }
+        .dict-sort select {
+            padding: 6px 10px;
+            font-size: 14px;
+        }
         .hidden {
             display: none;
         }
@@ -73,6 +96,19 @@
     </div>
 
     <h2>Current Entries</h2>
+    <div class="dict-toolbar" aria-label="Dictionary controls">
+        <div class="dict-filters" role="group" aria-label="Filter entries by language">
+            <button type="button" class="dict-toggle is-active" id="toggle-hebrew">Hebrew (H)</button>
+            <button type="button" class="dict-toggle is-active" id="toggle-greek">Greek (G)</button>
+        </div>
+        <div class="dict-sort">
+            <label for="sort-order">Sort:</label>
+            <select id="sort-order">
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
+    </div>
     <div id="dict-entries">
         {% for strong_number, data in strongs_dict.items() %}
         <div class="dict-entry" data-strong="{{ strong_number }}" data-translations="{{ data.translations|join(',') }}">
@@ -173,21 +209,80 @@
         });
     });
 
-    document.getElementById('search-box').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const entries = document.getElementsByClassName('dict-entry');
-        
-        for (let entry of entries) {
+    (function() {
+        const entriesContainer = document.getElementById('dict-entries');
+        const entries = Array.from(entriesContainer.querySelectorAll('.dict-entry'));
+        const searchBox = document.getElementById('search-box');
+        const toggleHebrew = document.getElementById('toggle-hebrew');
+        const toggleGreek = document.getElementById('toggle-greek');
+        const sortOrderSelect = document.getElementById('sort-order');
+
+        let showHebrew = true;
+        let showGreek = true;
+        let sortOrder = 'asc';
+
+        function getStrongNumber(entry) {
+            const raw = entry.getAttribute('data-strong') || '';
+            const numeric = raw.replace(/^[a-zA-Z]/, '');
+            return parseInt(numeric, 10) || 0;
+        }
+
+        function matchesSearch(entry) {
+            const searchTerm = searchBox.value.toLowerCase();
+            if (!searchTerm) return true;
             const strongNumber = entry.getAttribute('data-strong').toLowerCase();
             const translations = entry.getAttribute('data-translations').toLowerCase();
-            
-            if (strongNumber.includes(searchTerm) || translations.includes(searchTerm)) {
-                entry.classList.remove('hidden');
-            } else {
-                entry.classList.add('hidden');
-            }
+            return strongNumber.includes(searchTerm) || translations.includes(searchTerm);
         }
-    });
+
+        function matchesLanguage(entry) {
+            const strongNumber = entry.getAttribute('data-strong') || '';
+            const prefix = strongNumber.charAt(0).toUpperCase();
+            if (prefix === 'H') return showHebrew;
+            if (prefix === 'G') return showGreek;
+            return true;
+        }
+
+        function renderEntries() {
+            const sorted = [...entries].sort((a, b) => {
+                const aNum = getStrongNumber(a);
+                const bNum = getStrongNumber(b);
+                return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
+            });
+
+            const fragment = document.createDocumentFragment();
+
+            sorted.forEach((entry) => {
+                const shouldShow = matchesSearch(entry) && matchesLanguage(entry);
+                entry.classList.toggle('hidden', !shouldShow);
+                fragment.appendChild(entry);
+            });
+
+            entriesContainer.innerHTML = '';
+            entriesContainer.appendChild(fragment);
+        }
+
+        searchBox.addEventListener('input', renderEntries);
+
+        toggleHebrew.addEventListener('click', () => {
+            showHebrew = !showHebrew;
+            toggleHebrew.classList.toggle('is-active', showHebrew);
+            renderEntries();
+        });
+
+        toggleGreek.addEventListener('click', () => {
+            showGreek = !showGreek;
+            toggleGreek.classList.toggle('is-active', showGreek);
+            renderEntries();
+        });
+
+        sortOrderSelect.addEventListener('change', (event) => {
+            sortOrder = event.target.value;
+            renderEntries();
+        });
+
+        renderEntries();
+    })();
     </script>
 </body>
 </html>
