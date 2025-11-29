@@ -271,6 +271,7 @@ a:hover {
 .uncommon-word {
     position: relative;
     text-decoration: underline wavy #b21b12;
+    text-decoration-thickness: 2px;
     text-underline-offset: 0.16em;
     box-shadow: inset 0 -2px 0 rgba(178, 27, 18, 0.18);
     border-radius: 2px;
@@ -339,9 +340,16 @@ a:hover {
     font-weight: inherit;
 }
 
+.hide-repeats:not(.hide-bolded) .repeated.transliterated {
+    font-weight: 600;
+}
+
 .hide-uncommon .uncommon-word {
     text-decoration: none !important;
     box-shadow: none !important;
+}
+.hide-uncommon .uncommon-word::after {
+    display: none !important;
 }
 
 .hide-book-overview .unit-progress {
@@ -891,8 +899,30 @@ a:hover {
     display: none;
 }
 
-.hide-phonetics .phonetic-hit {
+.hide-phonetics .phonetic-hit:not(.uncommon-word) {
     text-decoration: none !important;
     box-shadow: none !important;
     border-bottom: none !important;
+}
+
+/* Keep uncommon underline visible even when phonetic styling is toggled or layered */
+.uncommon-word.phonetic-hit {
+    text-decoration: underline wavy #b21b12;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.16em;
+    box-shadow: inset 0 -2px 0 rgba(178, 27, 18, 0.18);
+}
+
+.hide-phonetics .uncommon-word.phonetic-hit {
+    text-decoration: underline wavy #b21b12 !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 0.16em !important;
+    box-shadow: inset 0 -2px 0 rgba(178, 27, 18, 0.18) !important;
+}
+
+.hide-phonetics.hide-uncommon .uncommon-word.phonetic-hit {
+    text-decoration: none !important;
+    text-decoration-thickness: initial !important;
+    text-underline-offset: initial !important;
+    box-shadow: none !important;
 }
