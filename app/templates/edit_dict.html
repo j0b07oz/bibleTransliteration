@@ -61,27 +61,31 @@
 
     <p>Add or remove the words to be transliterated by inputting their Strong's concordance value and their KJV translation(s). While there are many reference sites for searching Strong's, I like to use <a href="https://biblehub.com/strongs.htm" target="_blank">Biblehub</a>. If a certain word is sometimes translated as more than one word, like H1368, make sure to add those in the second column. You do not need to add every different one-word translation for the program to work.</p>
 
-    <p>
-        <a href="{{ url_for('home') }}" class="button">Return to Main Page</a>
-        <a href="{{ url_for('export_dict') }}" class="button">Export your list of words</a>
-    </p>
-
-    {% if upload_error %}
-    <p style="color: #a94442; font-weight: 600;">{{ upload_error }}</p>
-    {% elif upload_success %}
-    <p style="color: #2d7a3e; font-weight: 600;">{{ upload_success }}</p>
-    {% endif %}
-
-    <div style="margin: 16px 0;">
-        <h2>Upload your my_strongs_dict.json</h2>
-        <form method="POST" action="{{ url_for('upload_dict') }}" enctype="multipart/form-data">
-            <input type="file" name="dict_file" accept="application/json" required>
-            <button type="submit" class="button">Upload</button>
+    <div class="dict-actions" aria-label="Dictionary import and export controls">
+        <a href="{{ url_for('home') }}" class="button button--sm">Return to Main Page</a>
+        <a href="{{ url_for('export_dict') }}" class="button button--sm">Export your list</a>
+        <form method="POST" action="{{ url_for('upload_dict') }}" enctype="multipart/form-data" class="upload-form" id="dict-upload-form">
+            <input type="file" id="dict-file-input" name="dict_file" accept="application/json" required class="upload-form__input">
+            <label for="dict-file-input" class="button button--sm" id="upload-trigger">Upload your list</label>
         </form>
-        <p style="font-size: 14px; color: #555; margin-top: 6px;">
+        {% if upload_error %}
+        <p class="upload-feedback upload-feedback--error">{{ upload_error }}</p>
+        {% elif upload_success %}
+        <p class="upload-feedback upload-feedback--success">{{ upload_success }}</p>
+        {% endif %}
+    </div>
+
+    {% if upload_error or not upload_success %}
+    <div class="upload-help">
+        <h2>Upload your my_strongs_dict.json</h2>
+        <p>
+            Use the "Upload your list" button to select your <code>my_strongs_dict.json</code> file. After selection, the upload will begin automatically.
+        </p>
+        <p class="upload-help__hint">
             Expected format: {"H7225": {"translations": ["beginning"], "color": "#ffaa00"}, ...}
         </p>
     </div>
+    {% endif %}
 
     <input type="text" id="search-box" placeholder="Search Strong's numbers or translations...">
 
@@ -123,7 +127,18 @@
     </div>
 
     <script>
-    
+
+    const uploadInput = document.getElementById('dict-file-input');
+    const uploadForm = document.getElementById('dict-upload-form');
+
+    if (uploadInput && uploadForm) {
+        uploadInput.addEventListener('change', () => {
+            if (uploadInput.files && uploadInput.files.length) {
+                uploadForm.submit();
+            }
+        });
+    }
+
     function resetColor(strongNumber, button) {
     const colorInput = button.previousElementSibling;
     colorInput.value = '#000000';
