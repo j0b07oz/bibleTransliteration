@@ -341,31 +341,79 @@ def build_verses_for_render(result_html: str, active_units: list):
 @app.route('/edit_dict', methods=['GET', 'POST'])
 def edit_dict():
     user_strongs_dict = get_user_strongs_dict()
-    
+
     if request.method == 'POST':
-        # Update the dictionary based on user input
+        def _normalize_translations(raw):
+            if raw is None:
+                return None
+            if isinstance(raw, list):
+                return [str(item).strip() for item in raw if str(item).strip()]
+            if isinstance(raw, str):
+                return [part.strip() for part in raw.split(',') if part.strip()]
+            return None
+
+        def _normalize_color(raw):
+            if raw is None or raw == 'null':
+                return None
+            return raw
+
+        def _process_action(item: dict):
+            strong_number = (item.get('strong_number') or '').strip()
+            if not strong_number:
+                return None
+            action = item.get('action')
+            if action == 'delete':
+                user_strongs_dict.pop(strong_number, None)
+                return {'strong_number': strong_number, 'deleted': True}
+            if action in ('update', 'add'):
+                translations = _normalize_translations(item.get('translations'))
+                color = _normalize_color(item.get('color')) if 'color' in item else None
+                if strong_number not in user_strongs_dict:
+                    user_strongs_dict[strong_number] = {"translations": [], "color": None}
+                if translations is not None:
+                    user_strongs_dict[strong_number]["translations"] = translations
+                if 'color' in item:
+                    user_strongs_dict[strong_number]["color"] = color
+                return {
+                    'strong_number': strong_number,
+                    'translations': user_strongs_dict[strong_number]["translations"],
+                    'color': user_strongs_dict[strong_number].get("color"),
+                }
+            return None
+
+        if request.is_json:
+            payload = request.get_json(silent=True) or {}
+            actions = payload.get('actions')
+            if isinstance(actions, list):
+                results = []
+                for item in actions:
+                    if not isinstance(item, dict):
+                        continue
+                    result = _process_action(item)
+                    if result:
+                        results.append(result)
+                save_user_dict(user_strongs_dict)
+                return jsonify({"success": True, "results": results})
+
+        # Fallback for form submissions
         strong_number = request.form.get('strong_number')
         action = request.form.get('action')
 
         if action == 'delete':
             user_strongs_dict.pop(strong_number, None)
         elif action == 'update':
-            translations = request.form.get('translations')#, '').split(',')
+            translations = _normalize_translations(request.form.get('translations'))
             color = request.form.get('color')
-            #user_strongs_dict[strong_number] = {"translations": translations, "color": color}
-            #if the null values don't work, remove these next few lines and put the split back above
-            if translations:
-                user_strongs_dict[strong_number]["translations"] = translations.split(',')
+            if strong_number not in user_strongs_dict:
+                user_strongs_dict[strong_number] = {"translations": [], "color": None}
+            if translations is not None:
+                user_strongs_dict[strong_number]["translations"] = translations
             if color is not None:
-                if color == 'null':
-                    user_strongs_dict[strong_number]["color"] = None
-                else:
-                    user_strongs_dict[strong_number]["color"] = color
+                user_strongs_dict[strong_number]["color"] = _normalize_color(color)
         elif action == 'add':
-            translations = request.form.get('translations', '').split(',')
-            color = request.form.get('color')
+            translations = _normalize_translations(request.form.get('translations', '')) or []
+            color = _normalize_color(request.form.get('color'))
             user_strongs_dict[strong_number] = {"translations": translations, "color": color}
-        # Save the updated dictionary to the session
         save_user_dict(user_strongs_dict)
         return jsonify({"success": True})
     

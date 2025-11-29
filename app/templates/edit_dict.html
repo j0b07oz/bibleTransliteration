@@ -39,9 +39,14 @@
             display: none;
         }
         .dict-entry {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             border-bottom: 1px solid #ddd;
-            padding-bottom: 20px;
+            padding-bottom: 12px;
+            display: grid;
+            grid-template-columns: 28px 110px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            position: relative;
         }
         .dict-entry:last-child {
             border-bottom: none;
@@ -49,10 +54,87 @@
         .dict-entry input[type="text"] {
             width: 100%;
             padding: 5px;
-            margin-bottom: 10px;
         }
         .dict-entry button {
-            margin-right: 10px;
+            margin-right: 0;
+        }
+        .entry-select-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .entry-select {
+            width: 16px;
+            height: 16px;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+        .entry-menu {
+            display: flex;
+            justify-content: flex-end;
+            position: relative;
+        }
+        .action-toggle {
+            border: 1px solid #cfd8e3;
+            background: #f7f9fc;
+            color: #374151;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            min-width: 36px;
+            min-height: 36px;
+        }
+        .action-toggle:focus {
+            outline: 2px solid #4a90e2;
+            outline-offset: 2px;
+        }
+        .entry-actions {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            background: #fff;
+            border: 1px solid #d7dde7;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 260px;
+            z-index: 10;
+        }
+        .entry-actions__row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .entry-actions__buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .entry-actions[hidden] {
+            display: none;
+        }
+        .dict-entry.actions-open .action-toggle {
+            border-color: #4a90e2;
+            background: #e8f1ff;
+        }
+        @media (max-width: 700px) {
+            .dict-entry {
+                grid-template-columns: 28px 90px 1fr auto;
+            }
         }
     </style>
 </head>
@@ -112,19 +194,41 @@
                 <option value="desc">Descending</option>
             </select>
         </div>
+        <div class="bulk-actions" aria-label="Bulk actions">
+            <button type="button" class="button button--sm" id="select-visible">Select visible</button>
+            <button type="button" class="button button--sm" id="clear-selection">Clear selection</button>
+            <button type="button" class="button button--sm" id="bulk-reset" disabled>Reset color</button>
+            <button type="button" class="button button--sm" id="bulk-delete" disabled>Delete selected</button>
+            <span class="selection-count" id="selection-count" aria-live="polite">No items selected</span>
+        </div>
     </div>
     <div id="dict-entries">
         {% for strong_number, data in strongs_dict.items() %}
         <div class="dict-entry" data-strong="{{ strong_number }}" data-translations="{{ data.translations|join(',') }}">
+            <label class="entry-select-label">
+                <input type="checkbox" class="entry-select" aria-label="Select {{ strong_number }}">
+            </label>
             <input type="text" value="{{ strong_number }}" readonly>
-            <input type="text" value="{{ data.translations|join(',') }}">
-            <button class="button" onclick="updateEntry('{{ strong_number }}')">Update</button>
-            <button class="button" onclick="deleteEntry('{{ strong_number }}')">Delete</button>
-            <input type="color" value="{{ data.color or '#000000' }}" onchange="updateColor('{{ strong_number }}', this)">
-            <button class="button" onclick="resetColor('{{ strong_number }}', this)">Reset highlight color</button>
+            <input type="text" class="translation-input" value="{{ data.translations|join(',') }}">
+            <div class="entry-menu">
+                <button type="button" class="action-toggle" aria-expanded="false" aria-haspopup="true" aria-label="Open actions for {{ strong_number }}">⋯</button>
+                <div class="entry-actions" hidden>
+                    <div class="entry-actions__row">
+                        <label for="color-{{ strong_number }}" class="sr-only">Color for {{ strong_number }}</label>
+                        <input id="color-{{ strong_number }}" type="color" value="{{ data.color or '#000000' }}" aria-label="Color for {{ strong_number }}">
+                    </div>
+                    <div class="entry-actions__buttons">
+                        <button class="button" data-action="update">Update</button>
+                        <button class="button" data-action="reset-color">Reset highlight color</button>
+                        <button class="button" data-action="delete">Delete</button>
+                    </div>
+                </div>
+            </div>
         </div>
         {% endfor %}
     </div>
+
+    <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <script>
 
@@ -139,102 +243,120 @@
         });
     }
 
-    function resetColor(strongNumber, button) {
-    const colorInput = button.previousElementSibling;
-    colorInput.value = '#000000';
-    updateColor(strongNumber, colorInput, true);
+    const toastContainer = document.getElementById('toast-container');
+
+    function showToast(message, type = 'info') {
+        if (!toastContainer) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast--${type}`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('is-visible'));
+        setTimeout(() => {
+            toast.classList.remove('is-visible');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
     }
 
-    function updateColor(strongNumber, colorInput, isReset = false) {
-        const color = isReset ? null : colorInput.value;
-        
-        fetch('/edit_dict', {
+    function sendActions(actions) {
+        return fetch('/edit_dict', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: `strong_number=${strongNumber}&action=update&color=${encodeURIComponent(color)}`
+            body: JSON.stringify({ actions }),
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Color updated successfully');
-            }
-        });
-    }
-
-    function updateEntry(strongNumber) {
-        const entryDiv = event.target.closest('.dict-entry');
-        const translations = entryDiv.querySelector('input[type="text"]:nth-child(2)').value;
-        const color = entryDiv.querySelector('input[type="color"]').value;
-        
-        fetch('/edit_dict', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `strong_number=${strongNumber}&action=update&translations=${encodeURIComponent(translations)}&color=${encodeURIComponent(color)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Entry updated successfully');
-            }
-        });
-    }    
-
-    function deleteEntry(strongNumber) {
-        if (confirm('Are you sure you want to delete this entry?')) {
-            fetch('/edit_dict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `strong_number=${strongNumber}&action=delete`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Entry deleted successfully');
-                    location.reload();
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Request failed. Please try again.');
                 }
+                return response.json();
+            })
+            .then((data) => {
+                if (!data?.success) {
+                    throw new Error(data?.error || 'Unable to save changes.');
+                }
+                return data;
+            })
+            .catch((error) => {
+                console.error('Dictionary action failed', error);
+                showToast(error.message || 'Unable to save changes.', 'error');
+                return { success: false };
             });
-        }
     }
 
-    document.getElementById('add-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const strongNumber = document.getElementById('new-strong-number').value;
-        const translations = document.getElementById('new-translations').value;
-        const color = document.getElementById('new-color').value;
+    function buildEntryElement(strongNumber, translations, color) {
+        const entry = document.createElement('div');
+        entry.className = 'dict-entry';
+        entry.dataset.strong = strongNumber;
+        entry.dataset.translations = translations.join(',');
+        entry.innerHTML = `
+            <label class="entry-select-label">
+                <input type="checkbox" class="entry-select" aria-label="Select ${strongNumber}">
+            </label>
+            <input type="text" value="${strongNumber}" readonly>
+            <input type="text" class="translation-input" value="${translations.join(',')}">
+            <div class="entry-menu">
+                <button type="button" class="action-toggle" aria-expanded="false" aria-haspopup="true" aria-label="Open actions for ${strongNumber}">⋯</button>
+                <div class="entry-actions" hidden>
+                    <div class="entry-actions__row">
+                        <label class="sr-only" for="color-${strongNumber}">Color for ${strongNumber}</label>
+                        <input id="color-${strongNumber}" type="color" value="${color || '#000000'}" aria-label="Color for ${strongNumber}">
+                    </div>
+                    <div class="entry-actions__buttons">
+                        <button class="button" data-action="update">Update</button>
+                        <button class="button" data-action="reset-color">Reset highlight color</button>
+                        <button class="button" data-action="delete">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        return entry;
+    }
 
-        fetch('/edit_dict', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `strong_number=${encodeURIComponent(strongNumber)}&action=add&translations=${encodeURIComponent(translations)}&color=${encodeURIComponent(color)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('New entry added successfully');
-                location.reload();
-            }
-        });
-    });
+        function getTranslationsFromInput(inputValue) {
+            return inputValue
+                .split(',')
+                .map((value) => value.trim())
+                .filter(Boolean);
+        }
 
     (function() {
         const entriesContainer = document.getElementById('dict-entries');
-        const entries = Array.from(entriesContainer.querySelectorAll('.dict-entry'));
+        let entries = Array.from(entriesContainer.querySelectorAll('.dict-entry'));
         const searchBox = document.getElementById('search-box');
         const toggleHebrew = document.getElementById('toggle-hebrew');
         const toggleGreek = document.getElementById('toggle-greek');
         const sortOrderSelect = document.getElementById('sort-order');
+        const selectVisibleButton = document.getElementById('select-visible');
+        const clearSelectionButton = document.getElementById('clear-selection');
+        const bulkDeleteButton = document.getElementById('bulk-delete');
+        const bulkResetButton = document.getElementById('bulk-reset');
+        const selectionCountLabel = document.getElementById('selection-count');
 
         let showHebrew = true;
         let showGreek = true;
         let sortOrder = 'asc';
+        const selected = new Set();
+
+        function closeAllMenus(except = null) {
+            entriesContainer.querySelectorAll('.entry-actions').forEach((actions) => {
+                if (actions === except) return;
+                if (!actions.hidden) {
+                    actions.hidden = true;
+                    const toggle = actions.closest('.entry-menu')?.querySelector('.action-toggle');
+                    const parent = actions.closest('.dict-entry');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                    if (parent) parent.classList.remove('actions-open');
+                }
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.entry-menu')) {
+                closeAllMenus();
+            }
+        });
 
         function getStrongNumber(entry) {
             const raw = entry.getAttribute('data-strong') || '';
@@ -246,7 +368,7 @@
             const searchTerm = searchBox.value.toLowerCase();
             if (!searchTerm) return true;
             const strongNumber = entry.getAttribute('data-strong').toLowerCase();
-            const translations = entry.getAttribute('data-translations').toLowerCase();
+            const translations = (entry.getAttribute('data-translations') || '').toLowerCase();
             return strongNumber.includes(searchTerm) || translations.includes(searchTerm);
         }
 
@@ -256,6 +378,96 @@
             if (prefix === 'H') return showHebrew;
             if (prefix === 'G') return showGreek;
             return true;
+        }
+
+        function updateSelectionUI() {
+            const count = selected.size;
+            selectionCountLabel.textContent = count ? `${count} selected` : 'No items selected';
+            bulkDeleteButton.disabled = count === 0;
+            bulkResetButton.disabled = count === 0;
+        }
+
+        function attachEntryHandlers(entry) {
+            const strongNumber = entry.dataset.strong;
+            const updateBtn = entry.querySelector('[data-action="update"]');
+            const deleteBtn = entry.querySelector('[data-action="delete"]');
+            const resetBtn = entry.querySelector('[data-action="reset-color"]');
+            const colorInput = entry.querySelector('input[type="color"]');
+            const checkbox = entry.querySelector('.entry-select');
+            const actionToggle = entry.querySelector('.action-toggle');
+            const actionsMenu = entry.querySelector('.entry-actions');
+            const translationsInput = entry.querySelector('.translation-input');
+
+            if (actionToggle && actionsMenu) {
+                actionToggle.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const willOpen = actionsMenu.hidden;
+                    closeAllMenus(willOpen ? actionsMenu : null);
+                    actionsMenu.hidden = !willOpen;
+                    actionToggle.setAttribute('aria-expanded', String(willOpen));
+                    entry.classList.toggle('actions-open', willOpen);
+                });
+            }
+
+            if (updateBtn) {
+                updateBtn.addEventListener('click', () => {
+                    const translations = getTranslationsFromInput(translationsInput?.value || '');
+                    const color = colorInput.value;
+                    sendActions([{ action: 'update', strong_number: strongNumber, translations, color }]).then((data) => {
+                        if (data.success) {
+                            entry.dataset.translations = translations.join(',');
+                            showToast('Entry updated successfully', 'success');
+                            renderEntries();
+                        }
+                    });
+                });
+            }
+
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', () => {
+                    sendActions([{ action: 'delete', strong_number: strongNumber }]).then((data) => {
+                        if (data.success) {
+                            entries = entries.filter((node) => node.dataset.strong !== strongNumber);
+                            selected.delete(strongNumber);
+                            entry.remove();
+                            showToast('Entry deleted', 'success');
+                            renderEntries();
+                        }
+                    });
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    sendActions([{ action: 'update', strong_number: strongNumber, color: null }]).then((data) => {
+                        if (data.success) {
+                            colorInput.value = '#000000';
+                            showToast('Highlight color reset', 'success');
+                        }
+                    });
+                });
+            }
+
+            if (colorInput) {
+                colorInput.addEventListener('change', () => {
+                    sendActions([{ action: 'update', strong_number: strongNumber, color: colorInput.value }]).then((data) => {
+                        if (data.success) {
+                            showToast('Color updated', 'success');
+                        }
+                    });
+                });
+            }
+
+            if (checkbox) {
+                checkbox.addEventListener('change', (event) => {
+                    if (event.target.checked) {
+                        selected.add(strongNumber);
+                    } else {
+                        selected.delete(strongNumber);
+                    }
+                    updateSelectionUI();
+                });
+            }
         }
 
         function renderEntries() {
@@ -268,13 +480,74 @@
             const fragment = document.createDocumentFragment();
 
             sorted.forEach((entry) => {
+                const strong = entry.dataset.strong;
+                const checkbox = entry.querySelector('.entry-select');
                 const shouldShow = matchesSearch(entry) && matchesLanguage(entry);
+                if (!shouldShow) {
+                    selected.delete(strong);
+                }
                 entry.classList.toggle('hidden', !shouldShow);
+                if (checkbox) {
+                    checkbox.checked = selected.has(strong) && shouldShow;
+                }
                 fragment.appendChild(entry);
             });
 
             entriesContainer.innerHTML = '';
             entriesContainer.appendChild(fragment);
+            updateSelectionUI();
+            closeAllMenus();
+        }
+
+        function registerEntries() {
+            entries.forEach(attachEntryHandlers);
+        }
+
+        function handleBulkDelete() {
+            const targets = Array.from(selected);
+            if (!targets.length) return;
+            const actions = targets.map((strong) => ({ action: 'delete', strong_number: strong }));
+            sendActions(actions).then((data) => {
+                if (data.success) {
+                    entries = entries.filter((entry) => !selected.has(entry.dataset.strong));
+                    selected.clear();
+                    entriesContainer.innerHTML = '';
+                    entries.forEach((entry) => entriesContainer.appendChild(entry));
+                    showToast('Selected entries deleted', 'success');
+                    renderEntries();
+                }
+            });
+        }
+
+        function handleBulkReset() {
+            const targets = Array.from(selected);
+            if (!targets.length) return;
+            const actions = targets.map((strong) => ({ action: 'update', strong_number: strong, color: null }));
+            sendActions(actions).then((data) => {
+                if (data.success) {
+                    entries.forEach((entry) => {
+                        if (selected.has(entry.dataset.strong)) {
+                            const colorInput = entry.querySelector('input[type="color"]');
+                            if (colorInput) colorInput.value = '#000000';
+                        }
+                    });
+                    showToast('Highlight colors reset', 'success');
+                }
+            });
+        }
+
+        function selectVisibleEntries() {
+            entries.forEach((entry) => {
+                if (!entry.classList.contains('hidden')) {
+                    selected.add(entry.dataset.strong);
+                }
+            });
+            renderEntries();
+        }
+
+        function clearSelection() {
+            selected.clear();
+            renderEntries();
         }
 
         searchBox.addEventListener('input', renderEntries);
@@ -296,7 +569,38 @@
             renderEntries();
         });
 
+        selectVisibleButton.addEventListener('click', selectVisibleEntries);
+        clearSelectionButton.addEventListener('click', clearSelection);
+        bulkDeleteButton.addEventListener('click', handleBulkDelete);
+        bulkResetButton.addEventListener('click', handleBulkReset);
+
+        registerEntries();
         renderEntries();
+
+        document.getElementById('add-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const strongNumber = document.getElementById('new-strong-number').value.trim();
+            const translationsValue = document.getElementById('new-translations').value;
+            const translations = getTranslationsFromInput(translationsValue);
+            const color = document.getElementById('new-color').value;
+
+            if (!strongNumber) {
+                showToast("Strong's number is required", 'error');
+                return;
+            }
+
+            sendActions([{ action: 'add', strong_number: strongNumber, translations, color }]).then((data) => {
+                if (data.success) {
+                    const entry = buildEntryElement(strongNumber, translations, color);
+                    entries.push(entry);
+                    attachEntryHandlers(entry);
+                    renderEntries();
+                    showToast('New entry added', 'success');
+                    document.getElementById('add-form').reset();
+                    document.getElementById('new-color').value = '#000000';
+                }
+            });
+        });
     })();
     </script>
 </body>
