@@ -216,8 +216,12 @@
                 });
             }
 
-            function consonantKey(text) {
-                return (text || '').replace(/[^a-z]/gi, '').replace(/[aeiou]/gi, '').toUpperCase();
+            function stripDiacritics(text) {
+                return (text || '').normalize('NFKD').replace(/\p{M}+/gu, '');
+            }
+
+            function extractLetters(text) {
+                return (stripDiacritics(text).match(/\p{L}+/gu) || []).join('');
             }
 
             function stripDiacritics(text) {
@@ -236,6 +240,16 @@
 
             const vowelRegex = /[aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/giu;
 
+            function consonantKey(text) {
+                const lettersOnly = (text || '').replace(/[^\p{L}]/gu, '');
+                return lettersOnly.replace(vowelRegex, '').toUpperCase();
+            }
+
+            function extractRootLetters(text) {
+                const letters = (stripDiacritics(text).match(/\p{L}+/gu) || []).join('');
+                return letters.toUpperCase();
+            }
+
             function normalizeToken(el) {
                 const rawXlit = (el.dataset.xliteral || el.textContent || '').trim();
                 const normalized = rawXlit.normalize('NFKD');
@@ -250,7 +264,7 @@
                 const strongsNumber = Number.parseInt(strongs.slice(1), 10) || null;
                 const lemmaRoot = extractRootLetters(el.dataset.lemma || '');
                 const rawRootKey = extractRootLetters(el.dataset.rootkey || '');
-                const rootLetters = (rawRootKey || lemmaRoot || consonantKey(rawXlit)).toUpperCase();
+                const rootLetters = (rawRootKey || lemmaRoot || extractRootLetters(rawXlit)).toUpperCase();
                 const rootLettersArray = Array.from(
                     new Set((rootLetters.match(/\p{L}/gu) || rootLetters.split('')).map((ch) => ch.toUpperCase())),
                 ).filter(Boolean);
@@ -325,9 +339,13 @@
             }
 
             function sharedRootCount(a, b) {
-                const aLetters = a.rootLettersArray || [];
+                const aLetters = new Set(a.rootLettersArray || []);
                 const bLetters = new Set(b.rootLettersArray || []);
-                return aLetters.reduce((count, letter) => count + (bLetters.has(letter) ? 1 : 0), 0);
+                let shared = 0;
+                aLetters.forEach((letter) => {
+                    if (bLetters.has(letter)) shared += 1;
+                });
+                return shared;
             }
 
             function strongsProximityScore(a, b) {
@@ -386,8 +404,8 @@
                         if (!a.rootLettersArray || !b.rootLettersArray) continue;
                         if (!a.rootLettersArray.length || !b.rootLettersArray.length) continue;
                         const shared = sharedRootCount(a, b);
+                        if (shared < 2) continue;
                         const proximity = strongsProximityScore(a, b);
-                        if (shared < 2 && !(shared >= 1 && proximity >= 0.65)) continue;
                         const letterUnion = Array.from(new Set([...a.rootLettersArray, ...b.rootLettersArray]))
                             .sort()
                             .join('');

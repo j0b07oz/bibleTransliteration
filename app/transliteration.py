@@ -3,6 +3,7 @@ import re
 import html
 import colorsys
 import hashlib
+import unicodedata
 from collections import Counter
 
 STRONGS_REGEX = re.compile(r'{([HG]\d+)}')
@@ -155,9 +156,13 @@ def transliterate_chapter(
     min_english_highlight_length = 4
     min_repeat_count = 3
 
+    def strip_diacritics(text: str) -> str:
+        normalized = unicodedata.normalize('NFKD', text or '')
+        return ''.join(ch for ch in normalized if not unicodedata.combining(ch))
+
     def consonant_key(text: str) -> str:
-        cleaned = re.sub(r'[^A-Za-z]', '', text or '')
-        return re.sub(r'[AEIOUaeiou]', '', cleaned).upper()
+        letters_only = ''.join(ch for ch in strip_diacritics(text) if ch.isalpha())
+        return re.sub(r'[AEIOUaeiou]', '', letters_only).upper()
 
     def derive_root(entry: dict, fallback_xlit: str = '') -> str:
         if not isinstance(entry, dict):
