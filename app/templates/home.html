@@ -224,6 +224,20 @@
                 return (stripDiacritics(text).match(/\p{L}+/gu) || []).join('');
             }
 
+            function stripDiacritics(text) {
+                return (text || '').normalize('NFKD').replace(/\p{M}+/gu, '');
+            }
+
+            function extractLetters(text) {
+                return (stripDiacritics(text).match(/\p{L}+/gu) || []).join('');
+            }
+
+            function extractRootLetters(text) {
+                const letters = extractLetters(text);
+                const consonants = consonantKey(letters) || letters;
+                return consonants.toUpperCase();
+            }
+
             const vowelRegex = /[aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/giu;
 
             function consonantKey(text) {
