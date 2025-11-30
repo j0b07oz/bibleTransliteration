@@ -220,6 +220,20 @@
                 return (text || '').replace(/[^a-z]/gi, '').replace(/[aeiou]/gi, '').toUpperCase();
             }
 
+            function stripDiacritics(text) {
+                return (text || '').normalize('NFKD').replace(/\p{M}+/gu, '');
+            }
+
+            function extractLetters(text) {
+                return (stripDiacritics(text).match(/\p{L}+/gu) || []).join('');
+            }
+
+            function extractRootLetters(text) {
+                const letters = extractLetters(text);
+                const consonants = consonantKey(letters) || letters;
+                return consonants.toUpperCase();
+            }
+
             const vowelRegex = /[aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/giu;
 
             function normalizeToken(el) {
@@ -231,16 +245,29 @@
                 const vowels = (cleanedWithMarks.match(vowelRegex) || []).join('-');
                 const onsetMatch = baseLetters.match(/^[^aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/i);
                 const onset = onsetMatch ? onsetMatch[0].toUpperCase() : '';
-                const rootKey = (el.dataset.rootkey || consonantKey(rawXlit)).toUpperCase();
+                const strongs = (el.dataset.strongs || '').toUpperCase();
+                const strongsPrefix = strongs[0] || '';
+                const strongsNumber = Number.parseInt(strongs.slice(1), 10) || null;
+                const lemmaRoot = extractRootLetters(el.dataset.lemma || '');
+                const rawRootKey = extractRootLetters(el.dataset.rootkey || '');
+                const rootLetters = (rawRootKey || lemmaRoot || consonantKey(rawXlit)).toUpperCase();
+                const rootLettersArray = Array.from(
+                    new Set((rootLetters.match(/\p{L}/gu) || rootLetters.split('')).map((ch) => ch.toUpperCase())),
+                ).filter(Boolean);
+                const rootKey = rootLettersArray.join('');
                 return {
                     element: el,
-                    strongs: el.dataset.strongs || '',
+                    strongs,
+                    strongsPrefix,
+                    strongsNumber,
                     xlit: rawXlit,
                     cleaned: baseLetters,
                     cleanedWithMarks,
                     vowels,
                     onset,
                     rootKey,
+                    rootLetters,
+                    rootLettersArray,
                     gloss: el.dataset.gloss || '',
                     lemma: el.dataset.lemma || '',
                     pronounce: el.dataset.pronounce || '',
@@ -297,6 +324,21 @@
                 return 1 - distance / maxLen;
             }
 
+            function sharedRootCount(a, b) {
+                const aLetters = a.rootLettersArray || [];
+                const bLetters = new Set(b.rootLettersArray || []);
+                return aLetters.reduce((count, letter) => count + (bLetters.has(letter) ? 1 : 0), 0);
+            }
+
+            function strongsProximityScore(a, b) {
+                if (!a.strongsNumber || !b.strongsNumber) return 0;
+                if (a.strongsPrefix !== b.strongsPrefix) return 0;
+                const diff = Math.abs(a.strongsNumber - b.strongsNumber);
+                if (diff === 0) return 1;
+                const maxRange = 30;
+                return Math.max(0, 1 - diff / maxRange);
+            }
+
             function detectPhoneticDevices(tokens) {
                 const matches = [];
                 const lexicalKeys = new Set();
@@ -314,12 +356,12 @@
                         tokens: unique,
                         displayTokens: list,
                         meta: `Strong's ${key}`,
-                        note: 'Lexical repetition anchors the thought in the original tongue.',
+                    note: 'Lexical repetition anchors the thought in the original tongue.',
                     });
                 });
 
                 const rootGroups = Object.entries(groupBy(tokens, (t) => t.rootKey))
-                    .filter(([key, list]) => key.length >= 3 && list.length >= 2)
+                    .filter(([key, list]) => key.length >= 2 && list.length >= 2)
                     .sort((a, b) => b[1].length - a[1].length)
                     .slice(0, 2);
                 rootGroups.forEach(([key, list]) => {
@@ -335,6 +377,50 @@
                         note: 'Related roots weave a semantic thread through the verse.',
                     });
                 });
+
+                const affinityBuckets = {};
+                for (let i = 0; i < tokens.length; i++) {
+                    for (let j = i + 1; j < tokens.length; j++) {
+                        const a = tokens[i];
+                        const b = tokens[j];
+                        if (!a.rootLettersArray || !b.rootLettersArray) continue;
+                        if (!a.rootLettersArray.length || !b.rootLettersArray.length) continue;
+                        const shared = sharedRootCount(a, b);
+                        const proximity = strongsProximityScore(a, b);
+                        if (shared < 2 && !(shared >= 1 && proximity >= 0.65)) continue;
+                        const letterUnion = Array.from(new Set([...a.rootLettersArray, ...b.rootLettersArray]))
+                            .sort()
+                            .join('');
+                        const bucketKey = letterUnion || `${a.strongs}-${b.strongs}`;
+                        if (!affinityBuckets[bucketKey]) {
+                            affinityBuckets[bucketKey] = { tokens: [], proximity: 0 };
+                        }
+                        affinityBuckets[bucketKey].tokens.push(a, b);
+                        affinityBuckets[bucketKey].proximity = Math.max(affinityBuckets[bucketKey].proximity, proximity);
+                    }
+                }
+
+                Object.entries(affinityBuckets)
+                    .map(([key, data]) => ({ key, list: uniqueTokens(data.tokens), proximity: data.proximity }))
+                    .filter((entry) => entry.list.length >= 2)
+                    .sort((a, b) => b.list.length - a.list.length)
+                    .slice(0, 2)
+                    .forEach(({ key, list, proximity }) => {
+                        const filtered = list.filter((tok) => !lexicalKeys.has(tokenKey(tok)));
+                        if (filtered.length < 2) return;
+                        const metaBits = [`Root echo ${key}`];
+                        if (proximity >= 0.4) {
+                            metaBits.push(`Strong's nearby ${(proximity * 100).toFixed(0)}%`);
+                        }
+                        matches.push({
+                            className: 'root',
+                            key,
+                            tokens: filtered,
+                            displayTokens: filtered,
+                            meta: metaBits.join(' · '),
+                            note: 'Close roots or neighboring Strong\'s entries hint at wordplay.',
+                        });
+                    });
 
                 const allitGroups = Object.entries(groupBy(tokens, (t) => t.onset))
                     .filter(([key, list]) => key && list.length >= 2)
