@@ -220,22 +220,23 @@
                 return (text || '').normalize('NFKD').replace(/\p{M}+/gu, '');
             }
 
-            function extractLetters(text) {
-                return (stripDiacritics(text).match(/\p{L}+/gu) || []).join('');
-            }
+            const finalFormMap = {
+                '\u05DA': '\u05DB', // final kaf → kaf
+                '\u05DD': '\u05DE', // final mem → mem
+                '\u05DF': '\u05E0', // final nun → nun
+                '\u05E3': '\u05E4', // final pe → pe
+                '\u05E5': '\u05E6', // final tsadi → tsadi
+            };
 
-            function stripDiacritics(text) {
-                return (text || '').normalize('NFKD').replace(/\p{M}+/gu, '');
-            }
-
-            function extractLetters(text) {
-                return (stripDiacritics(text).match(/\p{L}+/gu) || []).join('');
-            }
-
-            function extractRootLetters(text) {
-                const letters = extractLetters(text);
-                const consonants = consonantKey(letters) || letters;
-                return consonants.toUpperCase();
+            function normalizeRootLetters(text) {
+                const stripped = stripDiacritics(text);
+                if (!stripped) return '';
+                const letters = (stripped.match(/\p{L}+/gu) || []).join('');
+                return letters
+                    .split('')
+                    .map((ch) => finalFormMap[ch] || ch)
+                    .join('')
+                    .toUpperCase();
             }
 
             const vowelRegex = /[aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/giu;
@@ -243,11 +244,6 @@
             function consonantKey(text) {
                 const lettersOnly = (text || '').replace(/[^\p{L}]/gu, '');
                 return lettersOnly.replace(vowelRegex, '').toUpperCase();
-            }
-
-            function extractRootLetters(text) {
-                const letters = (stripDiacritics(text).match(/\p{L}+/gu) || []).join('');
-                return letters.toUpperCase();
             }
 
             function normalizeToken(el) {
@@ -262,13 +258,10 @@
                 const strongs = (el.dataset.strongs || '').toUpperCase();
                 const strongsPrefix = strongs[0] || '';
                 const strongsNumber = Number.parseInt(strongs.slice(1), 10) || null;
-                const lemmaRoot = extractRootLetters(el.dataset.lemma || '');
-                const rawRootKey = extractRootLetters(el.dataset.rootkey || '');
-                const rootLetters = (rawRootKey || lemmaRoot || extractRootLetters(rawXlit)).toUpperCase();
-                const rootLettersArray = Array.from(
-                    new Set((rootLetters.match(/\p{L}/gu) || rootLetters.split('')).map((ch) => ch.toUpperCase())),
-                ).filter(Boolean);
-                const rootKey = rootLettersArray.join('');
+                const rootSource = el.dataset.lemma || el.dataset.rootkey || rawXlit || cleanedWithMarks;
+                const rootLetters = normalizeRootLetters(rootSource);
+                const rootLettersArray = Array.from(rootLetters);
+                const rootKey = rootLetters;
                 return {
                     element: el,
                     strongs,
@@ -338,14 +331,23 @@
                 return 1 - distance / maxLen;
             }
 
-            function sharedRootCount(a, b) {
-                const aLetters = new Set(a.rootLettersArray || []);
-                const bLetters = new Set(b.rootLettersArray || []);
-                let shared = 0;
-                aLetters.forEach((letter) => {
-                    if (bLetters.has(letter)) shared += 1;
-                });
-                return shared;
+            function longestSharedRun(a, b) {
+                const aRoot = a.rootLetters || '';
+                const bRoot = b.rootLetters || '';
+                if (!aRoot || !bRoot) return '';
+                let best = '';
+                for (let i = 0; i < aRoot.length; i++) {
+                    for (let j = 0; j < bRoot.length; j++) {
+                        let len = 0;
+                        while (aRoot[i + len] && bRoot[j + len] && aRoot[i + len] === bRoot[j + len]) {
+                            len += 1;
+                        }
+                        if (len > best.length) {
+                            best = aRoot.slice(i, i + len);
+                        }
+                    }
+                }
+                return best.length >= 2 ? best : '';
             }
 
             function strongsProximityScore(a, b) {
@@ -401,17 +403,13 @@
                     for (let j = i + 1; j < tokens.length; j++) {
                         const a = tokens[i];
                         const b = tokens[j];
-                        if (!a.rootLettersArray || !b.rootLettersArray) continue;
-                        if (!a.rootLettersArray.length || !b.rootLettersArray.length) continue;
-                        const shared = sharedRootCount(a, b);
-                        if (shared < 2) continue;
+                        if (!a.rootLetters || !b.rootLetters) continue;
+                        const sharedRun = longestSharedRun(a, b);
+                        if (!sharedRun) continue;
                         const proximity = strongsProximityScore(a, b);
-                        const letterUnion = Array.from(new Set([...a.rootLettersArray, ...b.rootLettersArray]))
-                            .sort()
-                            .join('');
-                        const bucketKey = letterUnion || `${a.strongs}-${b.strongs}`;
+                        const bucketKey = sharedRun || `${a.strongs}-${b.strongs}`;
                         if (!affinityBuckets[bucketKey]) {
-                            affinityBuckets[bucketKey] = { tokens: [], proximity: 0 };
+                            affinityBuckets[bucketKey] = { tokens: [], proximity: 0, shared: sharedRun };
                         }
                         affinityBuckets[bucketKey].tokens.push(a, b);
                         affinityBuckets[bucketKey].proximity = Math.max(affinityBuckets[bucketKey].proximity, proximity);
@@ -419,14 +417,15 @@
                 }
 
                 Object.entries(affinityBuckets)
-                    .map(([key, data]) => ({ key, list: uniqueTokens(data.tokens), proximity: data.proximity }))
+                    .map(([key, data]) => ({ key, list: uniqueTokens(data.tokens), proximity: data.proximity, shared: data.shared }))
                     .filter((entry) => entry.list.length >= 2)
                     .sort((a, b) => b.list.length - a.list.length)
                     .slice(0, 2)
-                    .forEach(({ key, list, proximity }) => {
+                    .forEach(({ key, list, proximity, shared }) => {
                         const filtered = list.filter((tok) => !lexicalKeys.has(tokenKey(tok)));
                         if (filtered.length < 2) return;
-                        const metaBits = [`Root echo ${key}`];
+                        const overlapLabel = shared || key;
+                        const metaBits = [`Root echo ${overlapLabel}`];
                         if (proximity >= 0.4) {
                             metaBits.push(`Strong's nearby ${(proximity * 100).toFixed(0)}%`);
                         }
