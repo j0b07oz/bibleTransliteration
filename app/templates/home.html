@@ -216,11 +216,35 @@
                 });
             }
 
-            function consonantKey(text) {
-                return (text || '').replace(/[^a-z]/gi, '').replace(/[aeiou]/gi, '').toUpperCase();
+            function stripDiacritics(text) {
+                return (text || '').normalize('NFKD').replace(/\p{M}+/gu, '');
+            }
+
+            const finalFormMap = {
+                '\u05DA': '\u05DB', // final kaf → kaf
+                '\u05DD': '\u05DE', // final mem → mem
+                '\u05DF': '\u05E0', // final nun → nun
+                '\u05E3': '\u05E4', // final pe → pe
+                '\u05E5': '\u05E6', // final tsadi → tsadi
+            };
+
+            function normalizeRootLetters(text) {
+                const stripped = stripDiacritics(text);
+                if (!stripped) return '';
+                const letters = (stripped.match(/\p{L}+/gu) || []).join('');
+                return letters
+                    .split('')
+                    .map((ch) => finalFormMap[ch] || ch)
+                    .join('')
+                    .toUpperCase();
             }
 
             const vowelRegex = /[aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/giu;
+
+            function consonantKey(text) {
+                const lettersOnly = (text || '').replace(/[^\p{L}]/gu, '');
+                return lettersOnly.replace(vowelRegex, '').toUpperCase();
+            }
 
             function normalizeToken(el) {
                 const rawXlit = (el.dataset.xliteral || el.textContent || '').trim();
@@ -231,16 +255,26 @@
                 const vowels = (cleanedWithMarks.match(vowelRegex) || []).join('-');
                 const onsetMatch = baseLetters.match(/^[^aeiouāēīōūâêîôûáéíóúàèìòùäëïöüăĕĭŏŭȳŷ]+/i);
                 const onset = onsetMatch ? onsetMatch[0].toUpperCase() : '';
-                const rootKey = (el.dataset.rootkey || consonantKey(rawXlit)).toUpperCase();
+                const strongs = (el.dataset.strongs || '').toUpperCase();
+                const strongsPrefix = strongs[0] || '';
+                const strongsNumber = Number.parseInt(strongs.slice(1), 10) || null;
+                const rootSource = el.dataset.lemma || el.dataset.rootkey || rawXlit || cleanedWithMarks;
+                const rootLetters = normalizeRootLetters(rootSource);
+                const rootLettersArray = Array.from(rootLetters);
+                const rootKey = rootLetters;
                 return {
                     element: el,
-                    strongs: el.dataset.strongs || '',
+                    strongs,
+                    strongsPrefix,
+                    strongsNumber,
                     xlit: rawXlit,
                     cleaned: baseLetters,
                     cleanedWithMarks,
                     vowels,
                     onset,
                     rootKey,
+                    rootLetters,
+                    rootLettersArray,
                     gloss: el.dataset.gloss || '',
                     lemma: el.dataset.lemma || '',
                     pronounce: el.dataset.pronounce || '',
@@ -297,6 +331,34 @@
                 return 1 - distance / maxLen;
             }
 
+            function longestSharedRun(a, b) {
+                const aRoot = a.rootLetters || '';
+                const bRoot = b.rootLetters || '';
+                if (!aRoot || !bRoot) return '';
+                let best = '';
+                for (let i = 0; i < aRoot.length; i++) {
+                    for (let j = 0; j < bRoot.length; j++) {
+                        let len = 0;
+                        while (aRoot[i + len] && bRoot[j + len] && aRoot[i + len] === bRoot[j + len]) {
+                            len += 1;
+                        }
+                        if (len > best.length) {
+                            best = aRoot.slice(i, i + len);
+                        }
+                    }
+                }
+                return best.length >= 2 ? best : '';
+            }
+
+            function strongsProximityScore(a, b) {
+                if (!a.strongsNumber || !b.strongsNumber) return 0;
+                if (a.strongsPrefix !== b.strongsPrefix) return 0;
+                const diff = Math.abs(a.strongsNumber - b.strongsNumber);
+                if (diff === 0) return 1;
+                const maxRange = 30;
+                return Math.max(0, 1 - diff / maxRange);
+            }
+
             function detectPhoneticDevices(tokens) {
                 const matches = [];
                 const lexicalKeys = new Set();
@@ -314,12 +376,12 @@
                         tokens: unique,
                         displayTokens: list,
                         meta: `Strong's ${key}`,
-                        note: 'Lexical repetition anchors the thought in the original tongue.',
+                    note: 'Lexical repetition anchors the thought in the original tongue.',
                     });
                 });
 
                 const rootGroups = Object.entries(groupBy(tokens, (t) => t.rootKey))
-                    .filter(([key, list]) => key.length >= 3 && list.length >= 2)
+                    .filter(([key, list]) => key.length >= 2 && list.length >= 2)
                     .sort((a, b) => b[1].length - a[1].length)
                     .slice(0, 2);
                 rootGroups.forEach(([key, list]) => {
@@ -335,6 +397,47 @@
                         note: 'Related roots weave a semantic thread through the verse.',
                     });
                 });
+
+                const affinityBuckets = {};
+                for (let i = 0; i < tokens.length; i++) {
+                    for (let j = i + 1; j < tokens.length; j++) {
+                        const a = tokens[i];
+                        const b = tokens[j];
+                        if (!a.rootLetters || !b.rootLetters) continue;
+                        const sharedRun = longestSharedRun(a, b);
+                        if (!sharedRun) continue;
+                        const proximity = strongsProximityScore(a, b);
+                        const bucketKey = sharedRun || `${a.strongs}-${b.strongs}`;
+                        if (!affinityBuckets[bucketKey]) {
+                            affinityBuckets[bucketKey] = { tokens: [], proximity: 0, shared: sharedRun };
+                        }
+                        affinityBuckets[bucketKey].tokens.push(a, b);
+                        affinityBuckets[bucketKey].proximity = Math.max(affinityBuckets[bucketKey].proximity, proximity);
+                    }
+                }
+
+                Object.entries(affinityBuckets)
+                    .map(([key, data]) => ({ key, list: uniqueTokens(data.tokens), proximity: data.proximity, shared: data.shared }))
+                    .filter((entry) => entry.list.length >= 2)
+                    .sort((a, b) => b.list.length - a.list.length)
+                    .slice(0, 2)
+                    .forEach(({ key, list, proximity, shared }) => {
+                        const filtered = list.filter((tok) => !lexicalKeys.has(tokenKey(tok)));
+                        if (filtered.length < 2) return;
+                        const overlapLabel = shared || key;
+                        const metaBits = [`Root echo ${overlapLabel}`];
+                        if (proximity >= 0.4) {
+                            metaBits.push(`Strong's nearby ${(proximity * 100).toFixed(0)}%`);
+                        }
+                        matches.push({
+                            className: 'root',
+                            key,
+                            tokens: filtered,
+                            displayTokens: filtered,
+                            meta: metaBits.join(' · '),
+                            note: 'Close roots or neighboring Strong\'s entries hint at wordplay.',
+                        });
+                    });
 
                 const allitGroups = Object.entries(groupBy(tokens, (t) => t.onset))
                     .filter(([key, list]) => key && list.length >= 2)
