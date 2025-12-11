@@ -322,8 +322,6 @@ def transliterate_chapter(
                 strongs_group = alt_match.group(1)
                 verse['text'] = verse['text'].replace(f"{{{strongs_number}}}", "")
                 continue
-            if strongs_number not in strongs_dict_path:
-                continue
             if match:
                 word = match.group(1)
                 strongs_entry = strongs_dict_path.get(strongs_number, {})
