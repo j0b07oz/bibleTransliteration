@@ -605,7 +605,7 @@
                     const verseText = row.querySelector('.verse-text');
                     if (!verseText || verseText.querySelector('.phonetic-card-shell')) return;
 
-                    const tokens = Array.from(row.querySelectorAll('.highlighted-word[data-strongs]'))
+                    const tokens = Array.from(row.querySelectorAll('.strongs-token[data-strongs]'))
                         .map(normalizeToken)
                         .filter((tok) => tok.strongs);
                     if (!tokens.length) return;
@@ -661,7 +661,7 @@
 
             function applyHeatmapFocus() {
                 if (!focusStrong) return;
-                const targets = document.querySelectorAll(`.highlighted-word[data-strongs="${focusStrong}"]`);
+                const targets = document.querySelectorAll(`.strongs-token[data-strongs="${focusStrong}"]`);
                 targets.forEach((el) => {
                     el.classList.add('heatmap-focus-word');
                 });
