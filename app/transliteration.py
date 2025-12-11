@@ -254,14 +254,15 @@ def transliterate_chapter(
         )
 
     def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None, uncommon_meta=None):
-        is_uncommon = bool(uncommon_meta and uncommon_meta.get('is_uncommon'))
+        is_uncommon = bool(has_transliteration and uncommon_meta and uncommon_meta.get('is_uncommon'))
         tag_name = "button" if is_uncommon else "span"
-        classes = ["highlighted-word"]
+        classes = ["strongs-token"]
         data_original_attr = (
             f' data-original="{html.escape(original_text)}"' if has_transliteration else ""
         )
 
         if has_transliteration:
+            classes.append("highlighted-word")
             classes.append("transliterated")
         uncommon_label = None
         if is_uncommon:
@@ -273,10 +274,10 @@ def transliterate_chapter(
             counts_suffix = ""
             if uncommon_meta:
                 if uncommon_meta.get('rule') == 'global':
-                    counts_suffix = f" \u00b7 {uncommon_meta.get('global_count', 0)}x"
+                    counts_suffix = f" · {uncommon_meta.get('global_count', 0)}x"
                 elif uncommon_meta.get('rule') == 'unit':
-                    counts_suffix = f" \u00b7 {uncommon_meta.get('global_count', 0)}x \u00b7 {uncommon_meta.get('unit_peak', 0)}x"
-            uncommon_label = f"Strong's {strongs_number} \u00b7 {(metadata or {}).get('xlit') or original_text or display_text}{counts_suffix}"
+                    counts_suffix = f" · {uncommon_meta.get('global_count', 0)}x · {uncommon_meta.get('unit_peak', 0)}x"
+            uncommon_label = f"Strong's {strongs_number} · {(metadata or {}).get('xlit') or original_text or display_text}{counts_suffix}"
             data_attrs.append(f'data-uncommon-info="{safe_attr(uncommon_label)}"')
 
         if metadata:
@@ -297,21 +298,20 @@ def transliterate_chapter(
         data_attr_str = f" {' '.join(data_attrs)}" if data_attrs else ""
         style_parts = []
 
-        if base_color:
+        if base_color and has_transliteration:
             text_color = '#ffffff' if not is_light_color(base_color[1:]) else '#000000'
             style_parts.append(f"background-color: {base_color}; color: {text_color};")
 
-        if strongs_number in repeated_colors:
+        if has_transliteration and strongs_number in repeated_colors:
             classes.append("repeated")
             repeat_color, shadow_color = repeated_colors[strongs_number]
             style_parts.append(
-                f"color: #1f0f0b; background-color: {shadow_color}; border: 1px solid {repeat_color};"
+                f"color: #1f0f0b; background-color: {shadow_color}; border: 1px solid {repeat_color};",
             )
 
-        style_attr = f" style=\"{' '.join(style_parts)}\"" if style_parts else ""
+        style_attr = f' style="{" ".join(style_parts)}"' if style_parts else ''
         type_attr = ' type="button"' if tag_name == "button" else ""
         return f'<{tag_name} class="{" ".join(classes)}"{data_original_attr}{data_attr_str}{style_attr}{type_attr}>{display_text}</{tag_name}>'
-
     #----------------------------------------------------------------------
     result = []
     for verse in chapter_data:
