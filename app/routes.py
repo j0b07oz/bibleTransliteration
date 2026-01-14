@@ -3,6 +3,8 @@ import os
 import json
 import uuid
 import tempfile
+import time
+from datetime import datetime, timedelta
 from flask import render_template, request, jsonify, session, send_file, redirect, url_for
 from app import app
 from .transliteration import transliterate_chapter, count_strongs_in_verses, get_verses_by_book
@@ -13,6 +15,41 @@ current_dir = os.path.dirname(current_file_path)
 STATIC_DATA_DIR = os.path.join(current_dir, 'static')
 UPLOAD_DATA_DIR = os.path.join(current_dir, 'uploads')
 os.makedirs(UPLOAD_DATA_DIR, exist_ok=True)
+
+def cleanup_old_session_files(days=30):
+    """
+    Delete session files older than the specified number of days.
+
+    Args:
+        days: Number of days to keep session files (default: 30)
+
+    Returns:
+        Number of files deleted
+    """
+    try:
+        cutoff_time = time.time() - (days * 24 * 60 * 60)
+        deleted_count = 0
+
+        for filename in os.listdir(UPLOAD_DATA_DIR):
+            if not filename.endswith('.json'):
+                continue
+
+            filepath = os.path.join(UPLOAD_DATA_DIR, filename)
+            try:
+                if os.path.isfile(filepath) and os.path.getmtime(filepath) < cutoff_time:
+                    os.remove(filepath)
+                    deleted_count += 1
+            except OSError:
+                # Skip files we can't access or delete
+                continue
+
+        return deleted_count
+    except OSError:
+        # If we can't read the directory, return 0
+        return 0
+
+# Run cleanup on startup (delete files older than 30 days)
+cleanup_old_session_files(days=30)
 
 def get_session_id():
     if 'user_id' not in session:
