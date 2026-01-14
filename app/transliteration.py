@@ -120,6 +120,12 @@ def hls_to_hex(h, l, s):
     return '#{:02x}{:02x}{:02x}'.format(int(r * 255), int(g * 255), int(b * 255))
 
 
+def generate_color_from_strongs(strongs_number):
+    """Generate a consistent color for a given Strong's number using hash-based approach."""
+    base_color, _ = generate_repeat_colors(strongs_number)
+    return base_color
+
+
 def generate_repeat_colors(strongs_number):
     digest = hashlib.sha256(strongs_number.encode('utf-8')).digest()
     hue = digest[0] / 255
@@ -132,12 +138,12 @@ def generate_repeat_colors(strongs_number):
     return base_color, accent_color
 
 def transliterate_chapter(
-    book, chapter, strongs_dict_path, strongs_path, kjv_path, max_repeated_highlights=10, active_units=None
+    book, chapter, strongs_dict, strongs_data, kjv_data, max_repeated_highlights=10, active_units=None
 ):
     replacement_mapping = {}
     strongs_lookup = {
-        entry.get('number'): entry for entry in strongs_path if isinstance(entry, dict)
-    } if isinstance(strongs_path, list) else {}
+        entry.get('number'): entry for entry in strongs_data if isinstance(entry, dict)
+    } if isinstance(strongs_data, list) else {}
 
     stop_strongs = {
         # Common articles, conjunctions, and pronouns that add noise when highlighted
@@ -182,17 +188,17 @@ def transliterate_chapter(
         'strongs': extract_strongs_numbers(verse['text']),
         'verse': str(verse['verse'])
     }
-    for verse in kjv_path['verses']
+    for verse in kjv_data['verses']
     if verse['book_name'] == book and verse['chapter'] == int(chapter)] #and verse['verse'] == int(verse_num)]
 
-    for strongs_number in strongs_dict_path:
+    for strongs_number in strongs_dict:
         strong_entry = strongs_lookup.get(strongs_number, {})
         xlit_value = strong_entry.get('xlit')
         # Adding the xlit value and color to the replacement_mapping dictionary
         if xlit_value:
             replacement_mapping[strongs_number] = {
                 'xlit': xlit_value,
-                'color': strongs_dict_path[strongs_number].get("color"),
+                'color': strongs_dict[strongs_number].get("color"),
                 'lemma': strong_entry.get('lemma') or '',
                 'pronounce': strong_entry.get('pronounce') or '',
                 'description': strong_entry.get('description') or '',
@@ -220,11 +226,11 @@ def transliterate_chapter(
         for verse in chapter_data
         for sn in verse['strongs']
     }
-    global_strongs_counts = get_global_strongs_counts(kjv_path)
+    global_strongs_counts = get_global_strongs_counts(kjv_data)
     unit_max_counts = {}
     if active_units and chapter_strongs_set:
         for unit in active_units:
-            unit_verses = _verses_for_unit(kjv_path, book, unit)
+            unit_verses = _verses_for_unit(kjv_data, book, unit)
             if not unit_verses:
                 continue
             counts = count_strongs_in_verses(unit_verses, allowed=chapter_strongs_set)
@@ -324,7 +330,7 @@ def transliterate_chapter(
                 continue
             if match:
                 word = match.group(1)
-                strongs_entry = strongs_dict_path.get(strongs_number, {})
+                strongs_entry = strongs_dict.get(strongs_number, {})
                 strongs_meta = strongs_lookup.get(strongs_number, {}) or {}
                 translations = strongs_entry.get("translations", [word])
                 sorted_translations = sorted(translations, key=lambda x: len(x.split()), reverse=True)

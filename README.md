@@ -1,6 +1,22 @@
 # Bible Transliteration
 
-This repository contains a Flask application for transliterating Bible content.
+This repository contains a Flask application for transliterating Bible content with Hebrew and Greek Strong's numbers.
+
+## Features
+
+- **Chapter-by-chapter Bible viewing** with customizable transliteration overlays
+- **Phonetic literary device detection** (alliteration, assonance, paronomasia, etc.)
+- **Interactive Strong's dictionary editor** with search, filtering, and bulk operations
+- **Frequency heatmap visualization** showing word distribution across the entire Bible
+- **Literary unit overlays** with progress tracking through books
+- **Uncommon word highlighting** based on statistical analysis
+- **Import/export functionality** for custom dictionaries
+
+## Documentation
+
+- **[API Documentation](API.md)** - Complete API endpoint reference
+- **[Architecture Guide](ARCHITECTURE.md)** - System design and component diagrams
+- **[Testing Guide](#testing)** - How to run and write tests
 
 ## Installation
 
@@ -31,3 +47,48 @@ If you see this message:
 
 This provides the MSVC toolchain needed for pip to build any packages that ship C
 extensions when wheels are not available for your Python version or platform.
+
+## Running the Application
+
+To run the development server:
+```bash
+python run.py
+```
+
+The application will be available at `http://localhost:5000`
+
+## Configuration
+
+Set the `SECRET_KEY` environment variable for production:
+```bash
+export SECRET_KEY="your-production-secret-key"
+```
+
+## Testing
+
+This project uses pytest for testing. To run the tests:
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=app --cov-report=term-missing
+
+# Run specific test file
+pytest tests/test_transliteration.py
+
+# Run tests in verbose mode
+pytest -v
+
+# Generate HTML coverage report
+pytest --cov=app --cov-report=html
+```
+
+The HTML coverage report will be available in `htmlcov/index.html`
+
+### Test Structure
+
+- `tests/test_transliteration.py` - Tests for core transliteration logic
+- `tests/test_routes.py` - Tests for Flask routes and API endpoints
+- `tests/test_validation.py` - Tests for data validation functions

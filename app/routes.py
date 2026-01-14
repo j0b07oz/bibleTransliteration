@@ -3,9 +3,15 @@ import os
 import json
 import uuid
 import tempfile
+import time
+from datetime import datetime, timedelta
+from functools import lru_cache
 from flask import render_template, request, jsonify, session, send_file, redirect, url_for
 from app import app
 from .transliteration import transliterate_chapter, count_strongs_in_verses, get_verses_by_book
+
+# Get logger
+logger = app.logger
 
 # Paths
 current_file_path = os.path.abspath(__file__)
@@ -13,6 +19,41 @@ current_dir = os.path.dirname(current_file_path)
 STATIC_DATA_DIR = os.path.join(current_dir, 'static')
 UPLOAD_DATA_DIR = os.path.join(current_dir, 'uploads')
 os.makedirs(UPLOAD_DATA_DIR, exist_ok=True)
+
+def cleanup_old_session_files(days=30):
+    """
+    Delete session files older than the specified number of days.
+
+    Args:
+        days: Number of days to keep session files (default: 30)
+
+    Returns:
+        Number of files deleted
+    """
+    try:
+        cutoff_time = time.time() - (days * 24 * 60 * 60)
+        deleted_count = 0
+
+        for filename in os.listdir(UPLOAD_DATA_DIR):
+            if not filename.endswith('.json'):
+                continue
+
+            filepath = os.path.join(UPLOAD_DATA_DIR, filename)
+            try:
+                if os.path.isfile(filepath) and os.path.getmtime(filepath) < cutoff_time:
+                    os.remove(filepath)
+                    deleted_count += 1
+            except OSError:
+                # Skip files we can't access or delete
+                continue
+
+        return deleted_count
+    except OSError:
+        # If we can't read the directory, return 0
+        return 0
+
+# Run cleanup on startup (delete files older than 30 days)
+cleanup_old_session_files(days=30)
 
 def get_session_id():
     if 'user_id' not in session:
@@ -46,9 +87,42 @@ def save_user_dict(user_dict: dict):
     try:
         with open(_user_dict_path(), 'w', encoding='utf-8') as f:
             json.dump(user_dict, f, ensure_ascii=False, indent=2)
-    except OSError:
+    except OSError as e:
         # If persisting to disk fails, we still keep the session copy.
-        pass
+        logger.warning(f"Failed to persist user dictionary to disk: {e}")
+
+
+def validate_book_chapter(book, chapter):
+    """
+    Validate book name and chapter number.
+
+    Args:
+        book: Book name string
+        chapter: Chapter number (int or None)
+
+    Returns:
+        tuple: (is_valid: bool, error_message: str or None)
+    """
+    if not book:
+        return False, "Book name is required"
+
+    # Check if book exists
+    if book not in book_chapter_count:
+        return False, f"Unknown book: {book}"
+
+    if chapter is None:
+        return False, "Chapter number is required"
+
+    # Check if chapter is a positive integer
+    if not isinstance(chapter, int) or chapter < 1:
+        return False, "Chapter must be a positive integer"
+
+    # Check if chapter exists in the book
+    max_chapters = book_chapter_count.get(book, 0)
+    if chapter > max_chapters:
+        return False, f"{book} only has {max_chapters} chapter{'s' if max_chapters != 1 else ''}"
+
+    return True, None
 
 
 def get_user_strongs_dict():
@@ -61,12 +135,14 @@ def get_user_strongs_dict():
         try:
             with open(user_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            valid, _ = _validate_user_dict(data)
+            valid, error = _validate_user_dict(data)
             if valid:
                 session['user_strongs_dict'] = data
                 return data
-        except (OSError, json.JSONDecodeError):
-            pass
+            else:
+                logger.warning(f"Invalid user dictionary file: {error}")
+        except (OSError, json.JSONDecodeError) as e:
+            logger.error(f"Failed to load user dictionary from {user_file}: {e}")
 
     session['user_strongs_dict'] = default_dict
     return default_dict
@@ -231,20 +307,29 @@ def home():
     from_heatmap = (request.args.get('from_heatmap') or '').lower() in {'1', 'true', 'yes', 'on'}
 
     chapter = None
+    error_message = None
     if chapter_str:
         try:
             chapter = int(chapter_str)
         except ValueError:
-            chapter = None
+            error_message = "Chapter must be a valid number"
+            logger.warning(f"Invalid chapter format: {chapter_str}")
 
     active_units = get_active_units(book, chapter) if book and chapter else []
     result = ""
     active_unit = None
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
-            user_strongs_dict = get_user_strongs_dict()
-            result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
-            active_unit = get_active_unit(book, chapter)
+            # Validate inputs
+            is_valid, validation_error = validate_book_chapter(book, chapter)
+            if not is_valid:
+                error_message = validation_error
+                logger.warning(f"Invalid book/chapter request: {validation_error} (book={book}, chapter={chapter})")
+                result = f'<div class="error-message">{validation_error}</div>'
+            else:
+                user_strongs_dict = get_user_strongs_dict()
+                result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
+                active_unit = get_active_unit(book, chapter)
 
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
@@ -273,17 +358,25 @@ def navigate():
         chapter = int(chapter_str)
     except ValueError:
         chapter = 1
+        logger.warning(f"Invalid chapter in navigation: {chapter_str}")
+
     direction = request.form.get('direction', '')
+    max_chapters = book_chapter_count.get(book, 1)
 
     if direction == 'next':
-        chapter += 1
+        chapter = min(chapter + 1, max_chapters)
     elif direction == 'prev':
         chapter = max(1, chapter - 1)
 
-    # Here you might want to add logic to handle book transitions
+    # Validate the resulting chapter
+    is_valid, validation_error = validate_book_chapter(book, chapter)
+    if not is_valid:
+        logger.error(f"Navigation resulted in invalid state: {validation_error}")
+        # Redirect back to home with error
+        return redirect(url_for('home'))
 
     active_units = get_active_units(book, chapter)
-    user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
+    user_strongs_dict = get_user_strongs_dict()
     result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
     active_unit = get_active_unit(book, chapter)
     total_chapters = book_chapter_count.get(book)
@@ -462,7 +555,19 @@ def about():
     return render_template('about.html')
 
 
+@lru_cache(maxsize=128)
 def generate_heatmap(strong_number):
+    """
+    Generate heatmap data for a Strong's number across all Bible chapters.
+
+    Results are cached to improve performance on repeated requests.
+
+    Args:
+        strong_number: Strong's number (e.g., "H7225" or "G2316")
+
+    Returns:
+        dict: Heatmap data with counts and colors for each book/chapter
+    """
     strong = (strong_number or '').strip('{}').upper()
     if not strong:
         return {}

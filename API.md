@@ -1,0 +1,530 @@
+# API Documentation
+
+This document provides comprehensive documentation for all API endpoints in the Bible Transliteration application.
+
+## Base URL
+
+- **Development**: `http://localhost:5000`
+- **Production**: Configured via deployment
+
+---
+
+## Endpoints
+
+### 1. Home / Chapter View
+
+**Endpoint**: `/`
+**Methods**: `GET`, `POST`
+**Description**: Display a Bible chapter with transliteration overlay.
+
+#### Request Parameters
+
+**Query/Form Parameters**:
+- `book` (string, optional): Book name (e.g., "Genesis", "Matthew")
+- `chapter` (integer, optional): Chapter number (1-based)
+- `focus` (string, optional): Strong's number to highlight (e.g., "H7225")
+- `from_heatmap` (boolean, optional): Flag indicating navigation from heatmap view
+
+#### Response
+
+**Success (200 OK)**:
+- Returns HTML page with:
+  - Bible chapter text with transliteration
+  - Literary units and progress bars
+  - Phonetic device detection cards
+  - Context menu options
+  - Navigation controls
+
+**Validation Errors**:
+- Invalid book name: Error message displayed
+- Invalid chapter number: Error message displayed
+- Chapter out of range: Error message displayed
+
+#### Example Usage
+
+```bash
+# View Genesis chapter 1
+GET /?book=Genesis&chapter=1
+
+# View with Strong's number focus
+GET /?book=Genesis&chapter=1&focus=H7225&from_heatmap=true
+```
+
+#### Logged Events
+- Invalid chapter format warnings
+- Book/chapter validation failures
+
+---
+
+### 2. Chapter Navigation
+
+**Endpoint**: `/navigate`
+**Method**: `POST`
+**Description**: Navigate to previous or next chapter within a book.
+
+#### Request Parameters
+
+**Form Data**:
+- `book` (string, required): Current book name
+- `chapter` (integer, required): Current chapter number
+- `direction` (string, required): Navigation direction (`"prev"` or `"next"`)
+
+#### Response
+
+**Success (200 OK)**:
+- Returns HTML page with the navigated chapter
+- Automatically bounds navigation within book limits
+
+**Errors**:
+- Invalid state: Redirects to home page
+
+#### Behavior
+- **Previous**: Navigates to previous chapter (minimum: chapter 1)
+- **Next**: Navigates to next chapter (maximum: last chapter of book)
+- Validates resulting chapter before rendering
+
+#### Example Usage
+
+```html
+<form method="POST" action="/navigate">
+    <input type="hidden" name="book" value="Genesis">
+    <input type="hidden" name="chapter" value="1">
+    <button name="direction" value="next">Next Chapter</button>
+</form>
+```
+
+#### Logged Events
+- Invalid chapter in navigation
+- Navigation validation failures
+
+---
+
+### 3. Dictionary Editor
+
+**Endpoint**: `/edit_dict`
+**Methods**: `GET`, `POST`
+**Description**: Manage Strong's transliteration dictionary entries.
+
+#### GET Request
+
+**Description**: Display dictionary editor interface.
+
+**Response**:
+- Returns HTML page with:
+  - List of all dictionary entries
+  - Search and filter controls
+  - Add entry form
+  - Bulk action controls
+
+#### POST Request
+
+**Description**: Execute dictionary CRUD operations.
+
+**Request Body** (JSON):
+```json
+{
+  "actions": [
+    {
+      "action": "add|update|delete",
+      "strong_number": "H7225",
+      "translations": ["beginning", "first"],
+      "color": "#FF5733"
+    }
+  ]
+}
+```
+
+**Action Types**:
+- `add`: Add new Strong's entry
+- `update`: Update existing entry (translations, color)
+- `delete`: Remove entry from dictionary
+
+**Response**:
+```json
+{
+  "success": true
+}
+```
+
+**Error Response**:
+```json
+{
+  "success": false,
+  "error": "Error message"
+}
+```
+
+#### Validation Rules
+
+1. **Strong's Number**:
+   - Must be string (e.g., "H7225", "G2316")
+   - Required for all operations
+
+2. **Translations**:
+   - Must be array of strings
+   - At least one translation required
+   - Required for add/update operations
+
+3. **Color**:
+   - Must be hex color string (e.g., "#FF5733")
+   - Can be `null` to use default coloring
+
+#### Example Usage
+
+```javascript
+// Add a new entry
+fetch('/edit_dict', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    actions: [{
+      action: 'add',
+      strong_number: 'H7225',
+      translations: ['beginning', 'first'],
+      color: '#FF5733'
+    }]
+  })
+});
+
+// Update multiple entries
+fetch('/edit_dict', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    actions: [
+      { action: 'update', strong_number: 'H7225', color: null },
+      { action: 'delete', strong_number: 'H430' }
+    ]
+  })
+});
+```
+
+#### Logged Events
+- Invalid user dictionary files
+- Dictionary update failures
+
+---
+
+### 4. Dictionary Upload
+
+**Endpoint**: `/upload_dict`
+**Method**: `POST`
+**Description**: Upload a complete dictionary file to replace user dictionary.
+
+#### Request Parameters
+
+**Form Data**:
+- `dict_file` (file, required): JSON file containing dictionary entries
+
+**Expected File Format**:
+```json
+{
+  "H7225": {
+    "translations": ["beginning", "first"],
+    "color": "#FF5733"
+  },
+  "H430": {
+    "translations": ["God"],
+    "color": null
+  }
+}
+```
+
+#### Response
+
+**Success**:
+- Redirects to `/edit_dict` with success message
+
+**Validation Errors**:
+- Invalid JSON format
+- Missing required fields
+- Invalid data types
+
+#### Validation Rules
+
+1. Root must be object/dictionary
+2. Keys must be strings (Strong's numbers)
+3. Values must be objects with:
+   - `translations`: array of strings (required)
+   - `color`: string or null (optional)
+
+#### Example Usage
+
+```html
+<form method="POST" action="/upload_dict" enctype="multipart/form-data">
+    <input type="file" name="dict_file" accept=".json">
+    <button type="submit">Upload</button>
+</form>
+```
+
+#### Logged Events
+- File upload validation errors
+
+---
+
+### 5. Dictionary Export
+
+**Endpoint**: `/export_dict`
+**Method**: `GET`
+**Description**: Download current user dictionary as JSON file.
+
+#### Response
+
+**Success (200 OK)**:
+- Content-Type: `application/json`
+- Content-Disposition: `attachment; filename="strongs_dict.json"`
+- Body: JSON file containing user's dictionary
+
+**Response Format**:
+```json
+{
+  "H7225": {
+    "translations": ["beginning", "first"],
+    "color": "#FF5733"
+  },
+  "H430": {
+    "translations": ["God"],
+    "color": null
+  }
+}
+```
+
+#### Example Usage
+
+```html
+<a href="/export_dict" download>Export Dictionary</a>
+```
+
+```javascript
+// Programmatic download
+window.location.href = '/export_dict';
+```
+
+---
+
+### 6. About Page
+
+**Endpoint**: `/about`
+**Method**: `GET`
+**Description**: Display application information and usage instructions.
+
+#### Response
+
+**Success (200 OK)**:
+- Returns HTML page with:
+  - Application description
+  - Usage instructions
+  - Feature explanations
+  - External resource links
+
+#### Example Usage
+
+```html
+<a href="/about">About</a>
+```
+
+---
+
+### 7. Heatmap View
+
+**Endpoint**: `/heatmap`
+**Method**: `GET`
+**Description**: Display frequency heatmap for a Strong's number across all Bible chapters.
+
+#### Request Parameters
+
+**Query Parameters**:
+- `strong` (string, optional): Strong's number to visualize (e.g., "H7225")
+
+#### Response
+
+**Success (200 OK)**:
+- Returns HTML page with:
+  - Heatmap visualization grid (books × chapters)
+  - Color-coded frequency indicators
+  - Interactive chapter navigation
+  - Search input for Strong's numbers
+
+**Caching**:
+- Results cached using `@lru_cache(maxsize=128)`
+- First request: Full Bible scan (~2-3 seconds)
+- Subsequent requests: Near-instant (cached)
+
+#### Heatmap Data Structure
+
+Each cell represents a chapter with:
+- `count`: Number of occurrences in chapter
+- `color`: RGB hex color (red intensity based on frequency)
+- `chapter`: Chapter number
+
+Color calculation:
+- `R = 255` (fixed)
+- `G = 255 * (1 - alpha)` where `alpha = count / max_count`
+- `B = 255 * (1 - alpha)`
+
+Result: White (0 occurrences) → Red (maximum occurrences)
+
+#### Example Usage
+
+```bash
+# View heatmap for H7225 (beginning)
+GET /heatmap?strong=H7225
+
+# Empty heatmap (no Strong's specified)
+GET /heatmap
+```
+
+#### Logged Events
+- Heatmap generation performance metrics (if enabled)
+
+---
+
+## Data Models
+
+### User Dictionary Entry
+
+```typescript
+{
+  translations: string[],  // List of translation strings
+  color: string | null     // Hex color (e.g., "#FF5733") or null for default
+}
+```
+
+### Strong's Number Format
+
+- **Hebrew**: `H` + 1-5 digits (e.g., "H7225", "H1")
+- **Greek**: `G` + 1-5 digits (e.g., "G2316", "G25")
+
+### Book Names
+
+Valid book names include:
+- Old Testament: "Genesis", "Exodus", "Leviticus", etc.
+- New Testament: "Matthew", "Mark", "Luke", "John", etc.
+
+Full list available via `book_chapter_count` dictionary in backend.
+
+---
+
+## Error Handling
+
+### Error Response Format
+
+```json
+{
+  "success": false,
+  "error": "Human-readable error message"
+}
+```
+
+### Common Errors
+
+| Error | Cause | HTTP Status |
+|-------|-------|-------------|
+| Invalid book name | Book not in Bible | 200 (with error message) |
+| Invalid chapter | Chapter out of range | 200 (with error message) |
+| Validation error | Invalid request data | 400 |
+| Missing file | File upload missing | 400 |
+| Invalid JSON | Malformed JSON in upload | 400 |
+
+---
+
+## Session Management
+
+### Session Data
+
+- **Storage**: Flask server-side sessions
+- **Cookie**: Secure session cookie sent to client
+- **Persistence**: User dictionary saved to `app/uploads/{session_id}.json`
+- **Cleanup**: Files older than 30 days automatically deleted on startup
+
+### Session Schema
+
+```python
+{
+  'user_id': str,              # UUID v4
+  'user_strongs_dict': dict    # User's dictionary entries
+}
+```
+
+---
+
+## Performance Considerations
+
+### Caching Strategy
+
+1. **Heatmap Generation**:
+   - Function-level LRU cache (128 entries)
+   - Cache key: Strong's number
+   - Cache hit: ~1ms response time
+   - Cache miss: ~2-3s processing time
+
+2. **Static Data**:
+   - Bible text, Strong's concordance loaded at startup
+   - ~14.3 MB in memory
+   - Never reloaded during runtime
+
+### Rate Limiting
+
+- **Not implemented**: Consider adding for production
+- **Recommended**: 100 requests/minute per IP for dictionary operations
+
+---
+
+## Security Considerations
+
+### Input Validation
+
+- All book/chapter inputs validated before processing
+- Dictionary uploads validated against schema
+- HTML output auto-escaped by Jinja2
+
+### Session Security
+
+- Secret key required (environment variable: `SECRET_KEY`)
+- Session files stored server-side with UUID filenames
+- Automatic cleanup prevents disk exhaustion
+
+### Known Limitations
+
+- No CSRF protection (recommended for production)
+- No rate limiting (recommended for production)
+- File uploads not scanned for malware
+
+---
+
+## Logging
+
+### Log Levels
+
+- **INFO**: Application startup, normal operations
+- **WARNING**: Validation failures, non-critical errors
+- **ERROR**: Critical failures, unexpected exceptions
+
+### Log Location
+
+- **Production**: `logs/bible_transliteration.log`
+- **Development**: Console output
+
+### Logged Events
+
+- Application startup/shutdown
+- Validation failures (book/chapter/dictionary)
+- File I/O errors
+- Navigation errors
+- Dictionary operation failures
+
+---
+
+## API Versioning
+
+**Current Version**: 1.0 (implicit)
+
+No explicit versioning implemented. Breaking changes should increment version and be documented.
+
+---
+
+## Support
+
+For issues, questions, or contributions:
+- **GitHub**: https://github.com/j0b07oz/bibleTransliteration/issues
+- **Documentation**: README.md, ARCHITECTURE.md
