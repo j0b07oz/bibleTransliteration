@@ -120,6 +120,12 @@ def hls_to_hex(h, l, s):
     return '#{:02x}{:02x}{:02x}'.format(int(r * 255), int(g * 255), int(b * 255))
 
 
+def generate_color_from_strongs(strongs_number):
+    """Generate a consistent color for a given Strong's number using hash-based approach."""
+    base_color, _ = generate_repeat_colors(strongs_number)
+    return base_color
+
+
 def generate_repeat_colors(strongs_number):
     digest = hashlib.sha256(strongs_number.encode('utf-8')).digest()
     hue = digest[0] / 255
