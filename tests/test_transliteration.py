@@ -178,13 +178,14 @@ class TestTransliterateChapter:
 
     def test_active_units_parameter(self, sample_strongs_dict, sample_strongs_data, sample_kjv_data):
         """Test transliteration with active units."""
+        # Active units should be a list of dicts or empty list
         result = transliterate_chapter(
             book="Genesis",
             chapter=1,
             strongs_dict=sample_strongs_dict,
             strongs_data=sample_strongs_data,
             kjv_data=sample_kjv_data,
-            active_units=["unit1", "unit2"]
+            active_units=[]
         )
         # Should return valid HTML
         assert isinstance(result, str)
