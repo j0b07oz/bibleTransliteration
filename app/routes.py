@@ -283,7 +283,7 @@ def navigate():
     # Here you might want to add logic to handle book transitions
 
     active_units = get_active_units(book, chapter)
-    user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict)
+    user_strongs_dict = get_user_strongs_dict()
     result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
     active_unit = get_active_unit(book, chapter)
     total_chapters = book_chapter_count.get(book)
