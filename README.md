@@ -1,6 +1,22 @@
 # Bible Transliteration
 
-This repository contains a Flask application for transliterating Bible content.
+This repository contains a Flask application for transliterating Bible content with Hebrew and Greek Strong's numbers.
+
+## Features
+
+- **Chapter-by-chapter Bible viewing** with customizable transliteration overlays
+- **Phonetic literary device detection** (alliteration, assonance, paronomasia, etc.)
+- **Interactive Strong's dictionary editor** with search, filtering, and bulk operations
+- **Frequency heatmap visualization** showing word distribution across the entire Bible
+- **Literary unit overlays** with progress tracking through books
+- **Uncommon word highlighting** based on statistical analysis
+- **Import/export functionality** for custom dictionaries
+
+## Documentation
+
+- **[API Documentation](API.md)** - Complete API endpoint reference
+- **[Architecture Guide](ARCHITECTURE.md)** - System design and component diagrams
+- **[Testing Guide](#testing)** - How to run and write tests
 
 ## Installation
 
