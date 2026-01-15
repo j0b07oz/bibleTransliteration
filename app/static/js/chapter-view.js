@@ -650,6 +650,271 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ===== Word Context Menu =====
+
+    const userStrongsSet = window.USER_STRONGS_SET || new Set();
+    const wordPopup = document.getElementById('word-popup');
+    const toastContainer = document.getElementById('toast-container');
+    let currentPopupStrongs = null;
+    let currentPopupElement = null;
+
+    function showToast(message, type = 'info') {
+        if (!toastContainer) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast--${type}`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('is-visible'));
+        setTimeout(() => {
+            toast.classList.remove('is-visible');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+
+    function sendDictAction(actions) {
+        return fetch('/edit_dict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ actions }),
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Request failed');
+            return response.json();
+        })
+        .then(data => {
+            if (!data?.success) throw new Error(data?.error || 'Unable to save');
+            return data;
+        })
+        .catch(error => {
+            showToast(error.message || 'Unable to save changes.', 'error');
+            return { success: false };
+        });
+    }
+
+    function positionPopup(targetEl) {
+        if (!wordPopup || !targetEl) return;
+
+        const rect = targetEl.getBoundingClientRect();
+        const popupWidth = 320;
+        const margin = 12;
+
+        // Temporarily show to get actual height
+        wordPopup.style.visibility = 'hidden';
+        wordPopup.style.display = 'block';
+        const popupHeight = wordPopup.offsetHeight;
+        wordPopup.style.display = '';
+        wordPopup.style.visibility = '';
+
+        // Calculate position (below and centered on word)
+        let left = rect.left + (rect.width / 2) - (popupWidth / 2);
+        let top = rect.bottom + margin;
+
+        // Adjust for viewport boundaries
+        if (left < margin) left = margin;
+        if (left + popupWidth > window.innerWidth - margin) {
+            left = window.innerWidth - popupWidth - margin;
+        }
+
+        // If below viewport, position above the word
+        if (top + popupHeight > window.innerHeight - margin) {
+            top = rect.top - popupHeight - margin;
+        }
+
+        // Ensure not above viewport
+        if (top < margin) top = margin;
+
+        wordPopup.style.left = `${left + window.scrollX}px`;
+        wordPopup.style.top = `${top + window.scrollY}px`;
+    }
+
+    function populatePopup(tokenData) {
+        if (!wordPopup) return;
+
+        const titleEl = wordPopup.querySelector('.word-popup__title');
+        const lemmaEl = wordPopup.querySelector('.word-popup__lemma');
+        const detailsEl = wordPopup.querySelector('.word-popup__details');
+        const inputEl = document.getElementById('word-popup-translation');
+        const statusEl = document.getElementById('word-popup-status');
+        const addBtn = wordPopup.querySelector('[data-action="add"]');
+
+        // Set Strong's number as title
+        if (titleEl) titleEl.textContent = tokenData.strongs || '';
+
+        // Set lemma (Hebrew/Greek)
+        if (lemmaEl) lemmaEl.textContent = tokenData.lemma || '';
+
+        // Build details line
+        const detailParts = [];
+        if (tokenData.xlit) detailParts.push(tokenData.xlit);
+        if (tokenData.pronounce) detailParts.push(`(${tokenData.pronounce})`);
+        if (tokenData.gloss) detailParts.push(`"${tokenData.gloss}"`);
+        if (detailsEl) detailsEl.textContent = detailParts.join(' · ');
+
+        // Pre-fill input with gloss
+        if (inputEl) inputEl.value = tokenData.gloss || '';
+
+        // Check if already in user's list
+        const isInList = userStrongsSet.has(tokenData.strongs);
+        if (statusEl) {
+            statusEl.textContent = isInList ? '✓ In Your List' : '';
+            statusEl.classList.toggle('word-popup__status--active', isInList);
+        }
+        if (addBtn) {
+            addBtn.textContent = isInList ? 'Update' : 'Add to My List';
+        }
+
+        currentPopupStrongs = tokenData.strongs;
+    }
+
+    function showWordPopup(event, tokenEl) {
+        if (!wordPopup || !tokenEl) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Extract data from token element
+        const tokenData = {
+            strongs: (tokenEl.dataset.strongs || '').toUpperCase(),
+            lemma: tokenEl.dataset.lemma || '',
+            xlit: tokenEl.dataset.xliteral || tokenEl.textContent.trim(),
+            pronounce: tokenEl.dataset.pronounce || '',
+            gloss: tokenEl.dataset.gloss || tokenEl.dataset.original || '',
+        };
+
+        if (!tokenData.strongs) return;
+
+        currentPopupElement = tokenEl;
+        populatePopup(tokenData);
+        wordPopup.classList.add('is-visible');
+        wordPopup.setAttribute('aria-hidden', 'false');
+        positionPopup(tokenEl);
+
+        // Focus the input field
+        const inputEl = document.getElementById('word-popup-translation');
+        if (inputEl) {
+            inputEl.focus();
+            inputEl.select();
+        }
+    }
+
+    function hideWordPopup() {
+        if (!wordPopup) return;
+        wordPopup.classList.remove('is-visible');
+        wordPopup.setAttribute('aria-hidden', 'true');
+        currentPopupStrongs = null;
+        currentPopupElement = null;
+    }
+
+    function handlePopupAction(action) {
+        const inputEl = document.getElementById('word-popup-translation');
+        const translation = inputEl?.value.trim() || '';
+
+        switch (action) {
+            case 'add':
+                if (!currentPopupStrongs) return;
+                if (!translation) {
+                    showToast('Please enter a translation', 'error');
+                    if (inputEl) inputEl.focus();
+                    return;
+                }
+                const actionType = userStrongsSet.has(currentPopupStrongs) ? 'update' : 'add';
+                sendDictAction([{
+                    action: actionType,
+                    strong_number: currentPopupStrongs,
+                    translations: [translation],
+                    color: null
+                }]).then(data => {
+                    if (data.success) {
+                        userStrongsSet.add(currentPopupStrongs);
+                        showToast(
+                            actionType === 'add'
+                                ? `${currentPopupStrongs} added to your list`
+                                : `${currentPopupStrongs} updated`,
+                            'success'
+                        );
+                        // Update status indicator
+                        const statusEl = document.getElementById('word-popup-status');
+                        const addBtn = wordPopup.querySelector('[data-action="add"]');
+                        if (statusEl) {
+                            statusEl.textContent = '✓ In Your List';
+                            statusEl.classList.add('word-popup__status--active');
+                        }
+                        if (addBtn) addBtn.textContent = 'Update';
+                    }
+                });
+                break;
+
+            case 'heatmap':
+                if (!currentPopupStrongs) return;
+                window.location.href = `${heatmapBase}?strong=${encodeURIComponent(currentPopupStrongs)}`;
+                break;
+
+            case 'copy':
+                if (!currentPopupStrongs) return;
+                navigator.clipboard.writeText(currentPopupStrongs).then(() => {
+                    showToast(`Copied ${currentPopupStrongs}`, 'success');
+                }).catch(() => {
+                    showToast('Failed to copy', 'error');
+                });
+                break;
+        }
+    }
+
+    function bindWordPopup() {
+        if (!wordPopup) return;
+
+        // Close button
+        const closeBtn = wordPopup.querySelector('.word-popup__close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', hideWordPopup);
+        }
+
+        // Action buttons
+        wordPopup.querySelectorAll('[data-action]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                handlePopupAction(btn.dataset.action);
+            });
+        });
+
+        // Click outside to close
+        document.addEventListener('click', (event) => {
+            if (wordPopup.classList.contains('is-visible') &&
+                !wordPopup.contains(event.target) &&
+                !event.target.closest('.strongs-token')) {
+                hideWordPopup();
+            }
+        });
+
+        // Escape key to close
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && wordPopup.classList.contains('is-visible')) {
+                hideWordPopup();
+            }
+        });
+
+        // Enter key in input to submit
+        const inputEl = document.getElementById('word-popup-translation');
+        if (inputEl) {
+            inputEl.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handlePopupAction('add');
+                }
+            });
+        }
+    }
+
+    function bindStrongsTokenClicks() {
+        document.querySelectorAll('.strongs-token[data-strongs]').forEach(token => {
+            if (token.dataset.popupBound) return;
+            token.dataset.popupBound = '1';
+            token.style.cursor = 'pointer';
+            token.addEventListener('click', (event) => {
+                showWordPopup(event, token);
+            });
+        });
+    }
+
     // ===== Initialization =====
 
     loadSavedOptions();
@@ -663,4 +928,6 @@ document.addEventListener('DOMContentLoaded', function() {
     renderOverlay();
     applyHeatmapFocus();
     bindUncommonWordLinks();
+    bindWordPopup();
+    bindStrongsTokenClicks();
 });

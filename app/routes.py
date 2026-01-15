@@ -335,6 +335,7 @@ def home():
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
     verses = build_verses_for_render(result, active_units) if result else []
 
+    user_strongs_keys = list(user_strongs_dict.keys()) if 'user_strongs_dict' in dir() else []
     return render_template(
         'home.html',
         result=result,
@@ -348,6 +349,7 @@ def home():
         focus_strong=focus_strong,
         from_heatmap=from_heatmap,
         context_defaults=DEFAULT_CONTEXT_OPTIONS,
+        user_strongs_keys=user_strongs_keys,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -383,6 +385,7 @@ def navigate():
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
     verses = build_verses_for_render(result, active_units) if result else []
 
+    user_strongs_keys = list(user_strongs_dict.keys())
     return render_template(
         'home.html',
         result=result,
@@ -396,6 +399,7 @@ def navigate():
         focus_strong='',
         from_heatmap=False,
         context_defaults=DEFAULT_CONTEXT_OPTIONS,
+        user_strongs_keys=user_strongs_keys,
     )
 
 

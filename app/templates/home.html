@@ -65,6 +65,7 @@
         window.FOCUS_STRONG = {{ focus_strong|tojson|safe }};
         window.ACTIVE_UNITS = {{ active_units|tojson|safe }};
         window.HEATMAP_URL = "{{ url_for('heatmap') }}";
+        window.USER_STRONGS_SET = new Set({{ user_strongs_keys|default([])|tojson|safe }});
     </script>
     <script src="{{ url_for('static', filename='js/chapter-view.js') }}"></script>
 
@@ -139,5 +140,30 @@
             </form>
         </div>
     {% endif %}
+
+    <!-- Toast notifications container -->
+    <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Word Context Menu Popup -->
+    <div class="word-popup" id="word-popup" role="dialog" aria-labelledby="word-popup-title" aria-hidden="true">
+        <div class="word-popup__header">
+            <h3 class="word-popup__title" id="word-popup-title"></h3>
+            <span class="word-popup__status" id="word-popup-status"></span>
+            <button type="button" class="word-popup__close" aria-label="Close">&times;</button>
+        </div>
+        <div class="word-popup__info">
+            <div class="word-popup__lemma"></div>
+            <div class="word-popup__details"></div>
+        </div>
+        <div class="word-popup__form">
+            <label for="word-popup-translation" class="word-popup__label">Translation:</label>
+            <input type="text" id="word-popup-translation" class="word-popup__input" placeholder="Enter translation...">
+        </div>
+        <div class="word-popup__actions">
+            <button type="button" class="word-popup__btn word-popup__btn--primary" data-action="add">Add to My List</button>
+            <button type="button" class="word-popup__btn" data-action="heatmap">View Heatmap</button>
+            <button type="button" class="word-popup__btn" data-action="copy">Copy Strong's #</button>
+        </div>
+    </div>
 </body>
 </html>
