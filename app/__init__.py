@@ -38,3 +38,13 @@ else:
     console_handler.setLevel(logging.DEBUG)
     app.logger.addHandler(console_handler)
     app.logger.setLevel(logging.DEBUG)
+
+# HTTPS redirect middleware
+@app.before_request
+def redirect_to_https():
+    """Redirect HTTP requests to HTTPS in production."""
+    if not app.debug:
+        # Check if the request came through HTTP via reverse proxy
+        if request.headers.get('X-Forwarded-Proto') == 'http':
+            url = request.url.replace('http://', 'https://', 1)
+            return redirect(url, code=301)
