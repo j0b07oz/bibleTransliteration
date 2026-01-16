@@ -175,6 +175,29 @@ for verse in kjv_data.get('verses', []):
     chapter_verse_counts.setdefault(name, {})
     chapter_verse_counts[name][chapter] = max(int(verse['verse']), chapter_verse_counts[name].get(chapter, 0))
 
+# Build case-insensitive lookup for book names
+book_name_lookup = {name.lower(): name for name in book_chapter_count.keys()}
+
+def normalize_book_name(book_input):
+    """
+    Normalize book name input to match exact book name in data.
+    Handles case-insensitive matching.
+
+    Args:
+        book_input: User-provided book name string
+
+    Returns:
+        str: Normalized book name if found, original input otherwise
+    """
+    if not book_input:
+        return book_input
+    # Try exact match first
+    if book_input in book_chapter_count:
+        return book_input
+    # Try case-insensitive match
+    normalized = book_name_lookup.get(book_input.lower())
+    return normalized if normalized else book_input
+
 
 def _get_unit_color(unit: dict) -> str:
     seed = f"{unit.get('marker', '')}-{unit.get('title', '')}"
@@ -301,7 +324,9 @@ DEFAULT_CONTEXT_OPTIONS = {
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    book = request.form.get('book', '') or request.args.get('book', '')
+    raw_book = request.form.get('book', '') or request.args.get('book', '')
+    # Normalize book name for case-insensitive matching
+    book = normalize_book_name(raw_book)
     chapter_str = request.form.get('chapter', '') or request.args.get('chapter', '')
     focus_strong = (request.args.get('focus') or '').strip().upper()
     from_heatmap = (request.args.get('from_heatmap') or '').lower() in {'1', 'true', 'yes', 'on'}
@@ -318,6 +343,7 @@ def home():
     active_units = get_active_units(book, chapter) if book and chapter else []
     result = ""
     active_unit = None
+    is_valid_request = False
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
             # Validate inputs
@@ -327,15 +353,20 @@ def home():
                 logger.warning(f"Invalid book/chapter request: {validation_error} (book={book}, chapter={chapter})")
                 result = f'<div class="error-message">{validation_error}</div>'
             else:
+                is_valid_request = True
                 user_strongs_dict = get_user_strongs_dict()
                 result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
                 active_unit = get_active_unit(book, chapter)
 
-    total_chapters = book_chapter_count.get(book)
+    # Only show book overview and progress for valid requests
+    total_chapters = book_chapter_count.get(book) if is_valid_request else None
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
     verses = build_verses_for_render(result, active_units) if result else []
 
     user_strongs_keys = list(user_strongs_dict.keys()) if 'user_strongs_dict' in dir() else []
+    # Generate book data for autocomplete
+    ordered_books = sorted(book_order.items(), key=lambda x: x[1])
+    book_data = [{'name': name, 'chapters': book_chapter_count.get(name, 0)} for name, _ in ordered_books]
     return render_template(
         'home.html',
         result=result,
@@ -350,6 +381,7 @@ def home():
         from_heatmap=from_heatmap,
         context_defaults=DEFAULT_CONTEXT_OPTIONS,
         user_strongs_keys=user_strongs_keys,
+        book_data=book_data,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -619,3 +651,18 @@ def heatmap():
         data = generate_heatmap(strong)
     ordered_books = [b for b, _ in sorted(book_order.items(), key=lambda x: x[1])]
     return render_template('heatmap.html', strong=strong, data=data, ordered_books=ordered_books)
+
+
+@app.route('/api/books')
+def api_books():
+    """
+    Return list of books with their chapter counts for frontend autocomplete.
+    Books are ordered by their position in the Bible.
+    """
+    ordered_books = sorted(book_order.items(), key=lambda x: x[1])
+    return jsonify({
+        'books': [
+            {'name': name, 'chapters': book_chapter_count.get(name, 0)}
+            for name, _ in ordered_books
+        ]
+    })

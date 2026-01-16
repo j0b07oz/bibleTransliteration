@@ -64,8 +64,274 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // ===== Book Data and Validation =====
+
+    const bookData = window.BOOK_DATA || [];
+    const bookNames = bookData.map(b => b.name);
+    const bookChapterMap = {};
+    bookData.forEach(b => { bookChapterMap[b.name.toLowerCase()] = { name: b.name, chapters: b.chapters }; });
+
+    const bookValidation = document.getElementById('book-validation');
+    const chapterValidation = document.getElementById('chapter-validation');
+    const autocompleteList = document.getElementById('book-autocomplete');
+
+    let selectedAutocompleteIndex = -1;
+    let currentSuggestions = [];
+
+    /**
+     * Calculate Levenshtein distance for fuzzy matching
+     */
+    function levenshteinDistance(a, b) {
+        if (!a || !b) return Math.max((a || '').length, (b || '').length);
+        const aLower = a.toLowerCase();
+        const bLower = b.toLowerCase();
+        const dp = Array.from({ length: bLower.length + 1 }, (_, i) => i);
+        for (let i = 1; i <= aLower.length; i++) {
+            let prev = dp[0];
+            dp[0] = i;
+            for (let j = 1; j <= bLower.length; j++) {
+                const temp = dp[j];
+                dp[j] = Math.min(
+                    dp[j] + 1,
+                    dp[j - 1] + 1,
+                    prev + (aLower[i - 1] === bLower[j - 1] ? 0 : 1)
+                );
+                prev = temp;
+            }
+        }
+        return dp[bLower.length];
+    }
+
+    /**
+     * Find matching books with fuzzy search support
+     */
+    function findMatchingBooks(query) {
+        if (!query) return [];
+        const q = query.toLowerCase().trim();
+
+        // Exact match (case-insensitive)
+        const exactMatch = bookData.find(b => b.name.toLowerCase() === q);
+        if (exactMatch) return [exactMatch];
+
+        // Prefix matches (prioritized)
+        const prefixMatches = bookData.filter(b => b.name.toLowerCase().startsWith(q));
+
+        // Contains matches
+        const containsMatches = bookData.filter(b =>
+            !b.name.toLowerCase().startsWith(q) && b.name.toLowerCase().includes(q)
+        );
+
+        // Fuzzy matches for spelling mistakes (Levenshtein distance <= 2)
+        const fuzzyMatches = bookData.filter(b => {
+            const name = b.name.toLowerCase();
+            if (name.startsWith(q) || name.includes(q)) return false;
+            const distance = levenshteinDistance(q, name);
+            // Allow more tolerance for longer input
+            const maxDistance = Math.min(2, Math.floor(q.length / 2) + 1);
+            return distance <= maxDistance;
+        }).sort((a, b) => {
+            const distA = levenshteinDistance(q, a.name.toLowerCase());
+            const distB = levenshteinDistance(q, b.name.toLowerCase());
+            return distA - distB;
+        });
+
+        // Combine and limit results
+        return [...prefixMatches, ...containsMatches, ...fuzzyMatches].slice(0, 8);
+    }
+
+    /**
+     * Validate book name and return validation result
+     */
+    function validateBook(bookName) {
+        if (!bookName || !bookName.trim()) {
+            return { valid: false, message: '', book: null };
+        }
+        const normalized = bookName.trim().toLowerCase();
+        const bookInfo = bookChapterMap[normalized];
+        if (bookInfo) {
+            return { valid: true, message: '', book: bookInfo };
+        }
+        // Check for close matches to suggest
+        const suggestions = findMatchingBooks(bookName);
+        if (suggestions.length > 0) {
+            return {
+                valid: false,
+                message: `Did you mean "${suggestions[0].name}"?`,
+                book: null,
+                suggestions
+            };
+        }
+        return { valid: false, message: 'Unknown book name', book: null };
+    }
+
+    /**
+     * Validate chapter number for a given book
+     */
+    function validateChapter(bookInfo, chapterStr) {
+        if (!bookInfo) {
+            return { valid: false, message: '' };
+        }
+        if (!chapterStr || chapterStr.trim() === '') {
+            return { valid: false, message: '' };
+        }
+        const chapter = parseInt(chapterStr, 10);
+        if (isNaN(chapter) || chapter < 1) {
+            return { valid: false, message: 'Chapter must be a positive number' };
+        }
+        if (chapter > bookInfo.chapters) {
+            const chapterWord = bookInfo.chapters === 1 ? 'chapter' : 'chapters';
+            return { valid: false, message: `${bookInfo.name} only has ${bookInfo.chapters} ${chapterWord}` };
+        }
+        return { valid: true, message: `Chapter ${chapter} of ${bookInfo.chapters}` };
+    }
+
+    /**
+     * Update validation display and button state
+     */
+    function updateValidation() {
+        const bookResult = validateBook(bookInput.value);
+        const chapterResult = validateChapter(bookResult.book, chapterInput.value);
+
+        // Update book validation display
+        if (bookValidation) {
+            bookValidation.textContent = bookResult.message;
+            bookValidation.classList.toggle('validation-message--error', !bookResult.valid && bookResult.message);
+            bookValidation.classList.toggle('validation-message--success', bookResult.valid);
+        }
+
+        // Update chapter validation display
+        if (chapterValidation) {
+            chapterValidation.textContent = chapterResult.message;
+            chapterValidation.classList.toggle('validation-message--error', !chapterResult.valid && chapterResult.message);
+            chapterValidation.classList.toggle('validation-message--success', chapterResult.valid && chapterResult.message);
+        }
+
+        // Enable Go button only when both are valid
+        const bothValid = bookResult.valid && chapterResult.valid;
+        goButton.disabled = !bothValid;
+
+        return { bookResult, chapterResult, bothValid };
+    }
+
+    // ===== Autocomplete Functions =====
+
+    function showAutocomplete(suggestions) {
+        if (!autocompleteList) return;
+        currentSuggestions = suggestions;
+        selectedAutocompleteIndex = -1;
+
+        if (suggestions.length === 0) {
+            hideAutocomplete();
+            return;
+        }
+
+        autocompleteList.innerHTML = '';
+        suggestions.forEach((book, index) => {
+            const li = document.createElement('li');
+            li.className = 'autocomplete-item';
+            li.setAttribute('role', 'option');
+            li.setAttribute('aria-selected', 'false');
+            li.dataset.index = index;
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'autocomplete-item__name';
+            nameSpan.textContent = book.name;
+
+            const chaptersSpan = document.createElement('span');
+            chaptersSpan.className = 'autocomplete-item__chapters';
+            chaptersSpan.textContent = `${book.chapters} ch`;
+
+            li.appendChild(nameSpan);
+            li.appendChild(chaptersSpan);
+
+            li.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                selectAutocompleteItem(index);
+            });
+
+            li.addEventListener('mouseenter', () => {
+                highlightAutocompleteItem(index);
+            });
+
+            autocompleteList.appendChild(li);
+        });
+
+        autocompleteList.classList.add('is-visible');
+        bookInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function hideAutocomplete() {
+        if (!autocompleteList) return;
+        autocompleteList.classList.remove('is-visible');
+        autocompleteList.innerHTML = '';
+        bookInput.setAttribute('aria-expanded', 'false');
+        currentSuggestions = [];
+        selectedAutocompleteIndex = -1;
+    }
+
+    function highlightAutocompleteItem(index) {
+        const items = autocompleteList.querySelectorAll('.autocomplete-item');
+        items.forEach((item, i) => {
+            const isSelected = i === index;
+            item.classList.toggle('is-highlighted', isSelected);
+            item.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        });
+        selectedAutocompleteIndex = index;
+    }
+
+    function selectAutocompleteItem(index) {
+        if (index < 0 || index >= currentSuggestions.length) return;
+        const book = currentSuggestions[index];
+        bookInput.value = book.name;
+        hideAutocomplete();
+        updateValidation();
+        // Focus chapter input for convenience
+        chapterInput.focus();
+    }
+
+    function handleAutocompleteKeydown(e) {
+        if (!autocompleteList.classList.contains('is-visible')) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                highlightAutocompleteItem(
+                    selectedAutocompleteIndex < currentSuggestions.length - 1
+                        ? selectedAutocompleteIndex + 1
+                        : 0
+                );
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                highlightAutocompleteItem(
+                    selectedAutocompleteIndex > 0
+                        ? selectedAutocompleteIndex - 1
+                        : currentSuggestions.length - 1
+                );
+                break;
+            case 'Enter':
+                if (selectedAutocompleteIndex >= 0) {
+                    e.preventDefault();
+                    selectAutocompleteItem(selectedAutocompleteIndex);
+                }
+                break;
+            case 'Escape':
+                hideAutocomplete();
+                break;
+            case 'Tab':
+                if (selectedAutocompleteIndex >= 0) {
+                    selectAutocompleteItem(selectedAutocompleteIndex);
+                } else if (currentSuggestions.length > 0) {
+                    selectAutocompleteItem(0);
+                }
+                hideAutocomplete();
+                break;
+        }
+    }
+
     function updateButtonState() {
-        goButton.disabled = !bookInput.value || !chapterInput.value;
+        // Delegate to updateValidation for comprehensive check
+        updateValidation();
     }
 
     function updateToggleState() {
@@ -105,8 +371,42 @@ document.addEventListener('DOMContentLoaded', function() {
         contextMenuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     }
 
-    // Event listeners for context menu
-    bookInput.addEventListener('input', updateButtonState);
+    // Event listeners for book/chapter inputs with autocomplete
+    bookInput.addEventListener('input', () => {
+        updateValidation();
+        const query = bookInput.value.trim();
+        if (query.length >= 1) {
+            const suggestions = findMatchingBooks(query);
+            // Don't show autocomplete if exact match
+            const exactMatch = suggestions.length === 1 && suggestions[0].name.toLowerCase() === query.toLowerCase();
+            if (exactMatch) {
+                hideAutocomplete();
+            } else {
+                showAutocomplete(suggestions);
+            }
+        } else {
+            hideAutocomplete();
+        }
+    });
+
+    bookInput.addEventListener('keydown', handleAutocompleteKeydown);
+
+    bookInput.addEventListener('blur', () => {
+        // Delay to allow click on autocomplete item
+        setTimeout(hideAutocomplete, 150);
+    });
+
+    bookInput.addEventListener('focus', () => {
+        const query = bookInput.value.trim();
+        if (query.length >= 1) {
+            const suggestions = findMatchingBooks(query);
+            const exactMatch = suggestions.length === 1 && suggestions[0].name.toLowerCase() === query.toLowerCase();
+            if (!exactMatch && suggestions.length > 0) {
+                showAutocomplete(suggestions);
+            }
+        }
+    });
+
     chapterInput.addEventListener('input', updateButtonState);
 
     contextMenuButton.addEventListener('click', (event) => {
