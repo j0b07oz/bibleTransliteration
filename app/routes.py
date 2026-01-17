@@ -658,12 +658,64 @@ def generate_heatmap(strong_number):
 
 @app.route('/heatmap')
 def heatmap():
-    strong = request.args.get('strong', '').strip()
+    strong = request.args.get('strong', '').strip().upper()
+    show_crossrefs = request.args.get('show_crossrefs', 'false') == 'true'
+    from_crossref = request.args.get('from_crossref', '') == '1'
+
     data = None
+    crossrefs = {'primary': [], 'secondary': []}
+    crossref_heatmaps = {}
+    crossref_metadata = {}
+
     if strong:
+        # Generate main heatmap
         data = generate_heatmap(strong)
+
+        # Get cross-references for this Strong's number
+        if strong.startswith('H'):
+            source_map = hebrew_to_greek
+            crossref_language = 'greek'
+        else:
+            source_map = greek_to_hebrew
+            crossref_language = 'hebrew'
+
+        entry = source_map.get(strong, {})
+        crossrefs = {
+            'primary': entry.get('primary', []),
+            'secondary': entry.get('secondary', [])
+        }
+
+        # Build metadata for cross-referenced words
+        all_refs = crossrefs['primary'] + crossrefs['secondary']
+        target_map = greek_to_hebrew if strong.startswith('H') else hebrew_to_greek
+        for ref in all_refs[:6]:  # Limit to 6 cross-refs
+            ref_entry = target_map.get(ref, {})
+            # Also check the source map for the ref's own entry if target doesn't have it
+            if not ref_entry:
+                ref_entry = source_map.get(ref, {})
+            crossref_metadata[ref] = {
+                'lemma': ref_entry.get('lemma', ''),
+                'xlit': ref_entry.get('xlit', ''),
+                'gloss': ref_entry.get('gloss', '')
+            }
+
+        # Generate heatmaps for cross-referenced words if toggled on
+        if show_crossrefs:
+            for ref_strong in crossrefs.get('primary', [])[:3]:  # Limit to top 3 primary refs
+                crossref_heatmaps[ref_strong] = generate_heatmap(ref_strong)
+
     ordered_books = [b for b, _ in sorted(book_order.items(), key=lambda x: x[1])]
-    return render_template('heatmap.html', strong=strong, data=data, ordered_books=ordered_books)
+    return render_template(
+        'heatmap.html',
+        strong=strong,
+        data=data,
+        ordered_books=ordered_books,
+        crossrefs=crossrefs,
+        crossref_metadata=crossref_metadata,
+        crossref_heatmaps=crossref_heatmaps,
+        show_crossrefs=show_crossrefs,
+        from_crossref=from_crossref
+    )
 
 
 @app.route('/api/books')
