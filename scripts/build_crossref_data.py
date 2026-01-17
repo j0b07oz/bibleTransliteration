@@ -49,10 +49,23 @@ STRONGS_PATTERN = re.compile(r'^([HG]\d+)')
 
 
 def normalize_strongs(strongs: str) -> str:
-    """Normalize Strong's number by removing suffix letters."""
+    """Normalize Strong's number by removing suffix letters and leading zeroes.
+
+    Examples:
+        G0005 -> G5
+        H0175 -> H175
+        G0005A -> G5
+        H07225 -> H7225
+    """
     match = STRONGS_PATTERN.match(strongs.strip())
     if match:
-        return match.group(1)
+        raw = match.group(1)
+        # Extract prefix (H or G) and number
+        prefix = raw[0]
+        num_str = raw[1:]
+        # Remove leading zeroes but keep at least one digit
+        num = int(num_str)
+        return f"{prefix}{num}"
     return strongs.strip()
 
 
