@@ -173,7 +173,7 @@
 
         .dict-entry {
             display: grid;
-            grid-template-columns: 36px 120px 1fr auto;
+            grid-template-columns: 36px 100px 1fr 140px auto;
             gap: 12px;
             align-items: center;
             padding: 12px 14px;
@@ -436,12 +436,73 @@
             color: #3d2a26;
         }
 
+        /* ===== Cross-reference Column ===== */
+        .crossref-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .crossref-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-family: monospace;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .crossref-badge.primary {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .crossref-badge.primary:hover {
+            background: #bbdefb;
+        }
+
+        .crossref-badge.secondary {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .crossref-badge.secondary:hover {
+            background: #e1bee7;
+        }
+
+        .crossref-more {
+            color: #888;
+            font-size: 11px;
+            cursor: help;
+            padding: 2px 6px;
+            background: #f0ebe6;
+            border-radius: 10px;
+        }
+
+        .no-crossrefs {
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        .crossref-loading {
+            color: #999;
+            font-size: 11px;
+            font-style: italic;
+        }
+
         /* ===== Responsive ===== */
         @media (max-width: 700px) {
             .dict-entry {
-                grid-template-columns: 32px 90px 1fr auto;
+                grid-template-columns: 32px 80px 1fr auto;
                 gap: 8px;
                 padding: 10px 12px;
+            }
+
+            .dict-entry .crossref-badges {
+                display: none;
             }
 
             .dict-toolbar {
@@ -518,6 +579,7 @@
         <div class="dict-filters" role="group" aria-label="Filter entries by language">
             <button type="button" class="dict-toggle is-active" id="toggle-hebrew" aria-pressed="true">Hebrew (H)</button>
             <button type="button" class="dict-toggle is-active" id="toggle-greek" aria-pressed="true">Greek (G)</button>
+            <button type="button" class="dict-toggle" id="toggle-crossrefs" aria-pressed="false" title="Show only entries with LXX/Hebrew cross-references">Has Links</button>
         </div>
         <div class="dict-sort">
             <label for="sort-order">Sort:</label>
@@ -547,6 +609,9 @@
             </label>
             <input type="text" value="{{ strong_number }}" readonly>
             <input type="text" class="translation-input" value="{{ data.translations|join(',') }}">
+            <div class="crossref-badges" data-strong="{{ strong_number }}">
+                <span class="crossref-loading">...</span>
+            </div>
             <div class="entry-menu">
                 <button type="button" class="action-toggle" aria-expanded="false" aria-haspopup="true" aria-label="Open actions for {{ strong_number }}">⋯</button>
                 <div class="entry-actions" hidden>

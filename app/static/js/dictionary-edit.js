@@ -75,6 +75,9 @@ function buildEntryElement(strongNumber, translations, color) {
         </label>
         <input type="text" value="${strongNumber}" readonly>
         <input type="text" class="translation-input" value="${translations.join(',')}">
+        <div class="crossref-badges" data-strong="${strongNumber}">
+            <span class="crossref-loading">...</span>
+        </div>
         <div class="entry-menu">
             <button type="button" class="action-toggle" aria-expanded="false" aria-haspopup="true" aria-label="Open actions for ${strongNumber}">⋯</button>
             <div class="entry-actions" hidden>
@@ -100,6 +103,68 @@ function getTranslationsFromInput(inputValue) {
         .filter(Boolean);
 }
 
+// ===== Cross-reference Cache =====
+
+const crossrefCache = new Map();
+let crossrefsLoaded = false;
+
+async function loadCrossrefsForEntries(strongNumbers) {
+    // Filter out already cached
+    const uncached = strongNumbers.filter(sn => !crossrefCache.has(sn));
+
+    if (uncached.length === 0) return;
+
+    try {
+        // Batch fetch in chunks of 50
+        const chunks = [];
+        for (let i = 0; i < uncached.length; i += 50) {
+            chunks.push(uncached.slice(i, i + 50));
+        }
+
+        for (const chunk of chunks) {
+            const response = await fetch(`/api/crossref/batch?strongs=${chunk.join(',')}`);
+            const data = await response.json();
+
+            // Cache results
+            for (const [sn, refs] of Object.entries(data.results || {})) {
+                crossrefCache.set(sn, refs);
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load cross-references:', err);
+    }
+}
+
+function renderCrossrefBadges(strongNumber, container) {
+    const refs = crossrefCache.get(strongNumber);
+
+    if (!refs || (refs.primary.length === 0 && refs.secondary.length === 0)) {
+        container.innerHTML = '';  // Clean empty state, no "—"
+        container.dataset.hasCrossrefs = 'false';
+        return;
+    }
+
+    container.dataset.hasCrossrefs = 'true';
+
+    // Combine primary and secondary, prioritizing primary
+    const allRefs = [...refs.primary, ...refs.secondary];
+
+    // Show first 2 badges from combined list
+    const badges = allRefs.slice(0, 2).map((ref, idx) => {
+        const isPrimary = idx < refs.primary.length;
+        return `<a href="/heatmap?strong=${ref}" class="crossref-badge ${isPrimary ? 'primary' : 'secondary'}" title="View ${ref} heatmap">${ref}</a>`;
+    });
+
+    // Correct remaining count: total refs minus badges shown
+    const remaining = allRefs.length - 2;
+    if (remaining > 0) {
+        const moreRefs = allRefs.slice(2).join(', ');
+        badges.push(`<span class="crossref-more" title="${moreRefs}">+${remaining}</span>`);
+    }
+
+    container.innerHTML = badges.join('');
+}
+
 // ===== Main Dictionary Editor =====
 
 (function() {
@@ -110,6 +175,7 @@ function getTranslationsFromInput(inputValue) {
     const searchBox = document.getElementById('search-box');
     const toggleHebrew = document.getElementById('toggle-hebrew');
     const toggleGreek = document.getElementById('toggle-greek');
+    const toggleCrossrefs = document.getElementById('toggle-crossrefs');
     const sortOrderSelect = document.getElementById('sort-order');
     const selectAllButton = document.getElementById('select-all');
     const clearSelectionButton = document.getElementById('clear-selection');
@@ -123,6 +189,7 @@ function getTranslationsFromInput(inputValue) {
 
     let showHebrew = true;
     let showGreek = true;
+    let showOnlyCrossrefs = false;
     let sortOrder = 'asc';
     const selected = new Set();
 
@@ -172,6 +239,12 @@ function getTranslationsFromInput(inputValue) {
         return true;
     }
 
+    function matchesCrossrefFilter(entry) {
+        if (!showOnlyCrossrefs) return true;
+        const crossrefContainer = entry.querySelector('.crossref-badges');
+        return crossrefContainer && crossrefContainer.dataset.hasCrossrefs === 'true';
+    }
+
     function updateSelectionUI() {
         const count = selected.size;
         if (selectionCountLabel) {
@@ -190,7 +263,7 @@ function getTranslationsFromInput(inputValue) {
     function updateFilterStatus(visibleCount, totalCount) {
         if (!filterStatus || !visibleCountEl || !totalCountEl) return;
 
-        const hasFilters = searchBox.value.trim() || !showHebrew || !showGreek;
+        const hasFilters = searchBox.value.trim() || !showHebrew || !showGreek || showOnlyCrossrefs;
 
         if (hasFilters && visibleCount !== totalCount) {
             filterStatus.style.display = 'block';
@@ -294,7 +367,22 @@ function getTranslationsFromInput(inputValue) {
 
     // ===== Rendering =====
 
-    function renderEntries() {
+    async function renderEntries() {
+        // Load crossrefs if not yet loaded
+        if (!crossrefsLoaded) {
+            const allStrongs = entries.map(e => e.dataset.strong);
+            await loadCrossrefsForEntries(allStrongs);
+            crossrefsLoaded = true;
+
+            // Render crossref badges for all entries
+            entries.forEach(entry => {
+                const container = entry.querySelector('.crossref-badges');
+                if (container) {
+                    renderCrossrefBadges(entry.dataset.strong, container);
+                }
+            });
+        }
+
         const sorted = [...entries].sort((a, b) => {
             const aNum = getStrongNumber(a);
             const bNum = getStrongNumber(b);
@@ -307,7 +395,7 @@ function getTranslationsFromInput(inputValue) {
         sorted.forEach((entry) => {
             const strong = entry.dataset.strong;
             const checkbox = entry.querySelector('.entry-select');
-            const shouldShow = matchesSearch(entry) && matchesLanguage(entry);
+            const shouldShow = matchesSearch(entry) && matchesLanguage(entry) && matchesCrossrefFilter(entry);
 
             if (shouldShow) {
                 visibleCount++;
@@ -410,6 +498,15 @@ function getTranslationsFromInput(inputValue) {
         });
     }
 
+    if (toggleCrossrefs) {
+        toggleCrossrefs.addEventListener('click', () => {
+            showOnlyCrossrefs = !showOnlyCrossrefs;
+            toggleCrossrefs.classList.toggle('is-active', showOnlyCrossrefs);
+            toggleCrossrefs.setAttribute('aria-pressed', String(showOnlyCrossrefs));
+            renderEntries();
+        });
+    }
+
     if (sortOrderSelect) {
         sortOrderSelect.addEventListener('change', (event) => {
             sortOrder = event.target.value;
@@ -467,11 +564,19 @@ function getTranslationsFromInput(inputValue) {
                 return;
             }
 
-            sendActions([{ action: 'add', strong_number: strongNumber, translations, color }]).then((data) => {
+            sendActions([{ action: 'add', strong_number: strongNumber, translations, color }]).then(async (data) => {
                 if (data.success) {
                     const entry = buildEntryElement(strongNumber, translations, color);
                     entries.push(entry);
                     attachEntryHandlers(entry);
+
+                    // Load crossref for the new entry
+                    await loadCrossrefsForEntries([strongNumber]);
+                    const container = entry.querySelector('.crossref-badges');
+                    if (container) {
+                        renderCrossrefBadges(strongNumber, container);
+                    }
+
                     renderEntries();
                     showToast(`${strongNumber} added`, 'success');
                     addForm.reset();
