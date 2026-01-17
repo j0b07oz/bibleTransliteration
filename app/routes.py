@@ -692,7 +692,7 @@ def generate_combined_heatmap(primary_strong, crossref_strongs):
         crossref_strongs: List of cross-referenced Strong's numbers
 
     Returns:
-        dict: Combined heatmap with multiple bars per cell
+        dict: Combined heatmap with multiple bars per cell (only when overlap exists)
     """
     # Get counts for primary word
     primary_counts, primary_max = generate_heatmap_counts(primary_strong)
@@ -725,8 +725,11 @@ def generate_combined_heatmap(primary_strong, crossref_strongs):
 
             # Cross-reference data
             crossref_bars = []
+            any_crossref_count = False
             for cref in crossref_data:
                 ref_cnt = cref['counts'].get(book, {}).get(ch, 0)
+                if ref_cnt > 0:
+                    any_crossref_count = True
                 ref_alpha = (ref_cnt / cref['max_count']) if cref['max_count'] else 0
                 cr, cg, cb = cref['base_color']
                 # Blend with white based on alpha
@@ -737,14 +740,20 @@ def generate_combined_heatmap(primary_strong, crossref_strongs):
                 crossref_bars.append({
                     'strong': cref['strong'],
                     'count': ref_cnt,
-                    'color': ref_color
+                    'color': ref_color,
+                    'base_color': f'#{cr:02x}{cg:02x}{cb:02x}'
                 })
+
+            # Determine if there's overlap (primary AND any crossref both have counts)
+            has_overlap = primary_cnt > 0 and any_crossref_count
 
             row.append({
                 'chapter': ch,
                 'count': primary_cnt,
                 'color': primary_color,
-                'crossrefs': crossref_bars
+                'crossrefs': crossref_bars,
+                'has_overlap': has_overlap,
+                'any_crossref_count': any_crossref_count
             })
         heatmap[book] = row
 

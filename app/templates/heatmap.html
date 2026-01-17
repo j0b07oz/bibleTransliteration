@@ -101,22 +101,30 @@
                             {% for cell in chapters %}
                                 {% set chapter_num = cell.chapter|default(loop.index) %}
                                 {% set has_any_count = cell.count > 0 or (cell.crossrefs and cell.crossrefs|selectattr('count', 'gt', 0)|list|length > 0) %}
-                                <td class="heatmap-cell{% if has_any_count %} is-clickable{% endif %}{% if show_crossrefs and active_crossrefs %} heatmap-cell--combined{% endif %}" data-chapter="{{ chapter_num }}">
-                                    {% if show_crossrefs and active_crossrefs %}
-                                    <!-- Combined multi-bar cell -->
+                                {% set show_split = show_crossrefs and active_crossrefs and cell.has_overlap %}
+                                <td class="heatmap-cell{% if has_any_count %} is-clickable{% endif %}{% if show_split %} heatmap-cell--combined{% endif %}" data-chapter="{{ chapter_num }}">
+                                    {% if show_split %}
+                                    <!-- Split cell: both primary and crossref present -->
                                     <div class="heatmap-cell__bars">
                                         <div class="heatmap-cell__bar heatmap-cell__bar--primary" style="background-color: {{ cell.color }};" title="{{ strong }}: {{ cell.count }}"></div>
                                         {% for cref in cell.crossrefs %}
+                                        {% if cref.count > 0 %}
                                         <div class="heatmap-cell__bar" style="background-color: {{ cref.color }};" title="{{ cref.strong }}: {{ cref.count }}"></div>
+                                        {% endif %}
                                         {% endfor %}
                                     </div>
-                                    {% if has_any_count %}
                                     <a class="heatmap-cell__link" href="{{ url_for('home', book=book, chapter=chapter_num, focus=strong, from_heatmap=1) }}" aria-label="Open {{ book }} {{ chapter_num }}">
                                         <span class="heatmap-cell__count">{{ cell.count }}</span>
                                     </a>
-                                    {% endif %}
+                                    {% elif show_crossrefs and active_crossrefs and cell.any_crossref_count %}
+                                    <!-- Full cell: only crossref present (no primary) -->
+                                    {% set first_crossref = cell.crossrefs|selectattr('count', 'gt', 0)|first %}
+                                    <div class="heatmap-cell__bg" style="background-color: {{ first_crossref.color }};"></div>
+                                    <a class="heatmap-cell__link" href="{{ url_for('home', book=book, chapter=chapter_num, focus=first_crossref.strong, from_heatmap=1) }}" aria-label="Open {{ book }} {{ chapter_num }}">
+                                        <span class="heatmap-cell__count heatmap-cell__count--crossref" style="border-left: 3px solid {{ first_crossref.base_color }};">{{ first_crossref.count }}</span>
+                                    </a>
                                     {% else %}
-                                    <!-- Standard single-color cell -->
+                                    <!-- Standard single-color cell (primary only or empty) -->
                                     <div class="heatmap-cell__bg" style="background-color: {{ cell.color }};"></div>
                                     {% if cell.count > 0 %}
                                         <a class="heatmap-cell__link" href="{{ url_for('home', book=book, chapter=chapter_num, focus=strong, from_heatmap=1) }}" aria-label="Open {{ book }} {{ chapter_num }}">
