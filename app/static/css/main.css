@@ -957,13 +957,9 @@ a:hover {
     color: #2f1f1c;
 }
 
-/* Combined heatmap cells with multiple bars */
+/* Combined heatmap cells with multiple bars (only shown when overlap exists) */
 .heatmap-cell--combined {
     position: relative;
-    min-width: 28px;
-    height: auto !important;
-    min-height: 28px;
-    padding: 0 !important;
     overflow: hidden;
 }
 
@@ -978,16 +974,15 @@ a:hover {
     flex-direction: column;
     width: 100%;
     height: 100%;
-    min-height: 28px;
 }
 
 .heatmap-cell__bar {
     flex: 1;
-    min-height: 6px;
+    min-height: 10px;
 }
 
 .heatmap-cell__bar--primary {
-    min-height: 8px;
+    min-height: 12px;
 }
 
 .heatmap-cell--combined .heatmap-cell__link {
@@ -1006,6 +1001,11 @@ a:hover {
     font-size: 10px;
 }
 
+/* Crossref-only cell count indicator */
+.heatmap-cell__count--crossref {
+    padding-left: 6px;
+}
+
 /* Active crossref chip styling */
 .heatmap-crossref-chip.is-active {
     background: #fff;
@@ -1016,11 +1016,6 @@ a:hover {
     height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
-}
-
-/* Combined table adjustments */
-.heatmap-table--combined .heatmap-row-table td {
-    padding: 1px;
 }
 
 .phonetic-card-panel {
