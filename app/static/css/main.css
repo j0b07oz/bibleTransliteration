@@ -811,6 +811,151 @@ a:hover {
     }
 }
 
+/* Heatmap cross-reference styles */
+.heatmap-crossref-section {
+    margin: 16px 0 24px;
+    padding: 12px 16px;
+    background: #faf7f2;
+    border: 1px solid #d8d6ce;
+    border-radius: 8px;
+}
+
+.heatmap-crossref-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 12px;
+}
+
+.heatmap-crossref-icon {
+    font-size: 18px;
+    color: #7d4b36;
+}
+
+.heatmap-crossref-label {
+    font-weight: 600;
+    color: #2f1f1c;
+    font-size: 14px;
+}
+
+.heatmap-crossref-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    font-size: 13px;
+    color: #5a4a44;
+    cursor: pointer;
+}
+
+.heatmap-crossref-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #7d4b36;
+}
+
+.heatmap-crossref-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.heatmap-crossref-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.15s ease;
+}
+
+.heatmap-crossref-chip--primary {
+    background: #e8ddd4;
+    border: 1px solid #c8b8a8;
+    color: #2f1f1c;
+}
+
+.heatmap-crossref-chip--primary:hover {
+    background: #ddd0c4;
+    border-color: #7d4b36;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.heatmap-crossref-chip--secondary {
+    background: #f0ebe5;
+    border: 1px solid #d8d6ce;
+    color: #5a4a44;
+}
+
+.heatmap-crossref-chip--secondary:hover {
+    background: #e8ddd4;
+    border-color: #b8a898;
+}
+
+.chip-strong {
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.chip-lemma {
+    font-size: 15px;
+}
+
+.chip-xlit {
+    font-size: 12px;
+    color: #6a5a54;
+}
+
+.heatmap-title {
+    margin: 0 0 12px;
+    font-size: 16px;
+    color: #2f1f1c;
+}
+
+.heatmap-title-lemma {
+    font-size: 18px;
+    margin-left: 8px;
+}
+
+.heatmap-title-gloss {
+    font-weight: 400;
+    color: #5a4a44;
+    font-size: 14px;
+    margin-left: 8px;
+}
+
+.crossref-heatmaps-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid #d8d6ce;
+}
+
+.crossref-heatmaps-title {
+    margin: 0 0 20px;
+    font-size: 18px;
+    color: #7d4b36;
+}
+
+.heatmap-wrapper--crossref {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #fdfcfa;
+    border: 1px solid #e8e4de;
+    border-radius: 8px;
+}
+
+.heatmap-wrapper--crossref .heatmap-table {
+    font-size: 12px;
+}
+
+.heatmap-wrapper--crossref .heatmap-cell {
+    min-width: 18px;
+    height: 18px;
+}
+
 .phonetic-card-panel {
     margin-top: 6px;
     display: grid;

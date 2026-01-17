@@ -8,14 +8,55 @@
 </head>
 <body class="heatmap-page">
     <h1>Word Heatmap</h1>
-    <form method="get" class="heatmap-form">
+    <form method="get" class="heatmap-form" id="heatmap-form">
         <label for="strong">Strong's Number:</label>
         <input type="text" id="strong" name="strong" value="{{ strong or '' }}" placeholder="e.g. H7225">
         <button type="submit" class="button">Show</button>
     </form>
 
     {% if data %}
+    <!-- Cross-reference section -->
+    {% if crossrefs and (crossrefs.primary or crossrefs.secondary) %}
+    <div class="heatmap-crossref-section">
+        <div class="heatmap-crossref-header">
+            <span class="heatmap-crossref-icon">⇄</span>
+            <span class="heatmap-crossref-label">
+                {% if strong.startswith('H') %}LXX Equivalents:{% else %}Hebrew Equivalents:{% endif %}
+            </span>
+            <label class="heatmap-crossref-toggle">
+                <input type="checkbox" id="show-crossrefs" name="show_crossrefs" value="true" {% if show_crossrefs %}checked{% endif %}>
+                <span>Show cross-reference heatmaps</span>
+            </label>
+        </div>
+        <div class="heatmap-crossref-chips">
+            {% for ref in crossrefs.primary %}
+            {% set meta = crossref_metadata.get(ref, {}) %}
+            <a href="{{ url_for('heatmap', strong=ref, from_crossref=1) }}" class="heatmap-crossref-chip heatmap-crossref-chip--primary" title="{{ meta.gloss or 'View heatmap' }}">
+                <span class="chip-strong">{{ ref }}</span>
+                {% if meta.lemma %}
+                <span class="chip-lemma">{{ meta.lemma }}</span>
+                {% endif %}
+                {% if meta.xlit %}
+                <span class="chip-xlit">({{ meta.xlit }})</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+            {% for ref in crossrefs.secondary[:3] %}
+            {% set meta = crossref_metadata.get(ref, {}) %}
+            <a href="{{ url_for('heatmap', strong=ref, from_crossref=1) }}" class="heatmap-crossref-chip heatmap-crossref-chip--secondary" title="{{ meta.gloss or 'View heatmap' }}">
+                <span class="chip-strong">{{ ref }}</span>
+                {% if meta.lemma %}
+                <span class="chip-lemma">{{ meta.lemma }}</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main heatmap -->
     <div class="heatmap-wrapper">
+        <h3 class="heatmap-title">{{ strong }}</h3>
         <table class="heatmap-table">
             <thead>
                 <tr>
@@ -53,8 +94,75 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Cross-reference heatmaps (when toggle is on) -->
+    {% if show_crossrefs and crossref_heatmaps %}
+    <div class="crossref-heatmaps-section">
+        <h2 class="crossref-heatmaps-title">Cross-Reference Heatmaps</h2>
+        {% for ref_strong, ref_data in crossref_heatmaps.items() %}
+        {% set meta = crossref_metadata.get(ref_strong, {}) %}
+        <div class="heatmap-wrapper heatmap-wrapper--crossref">
+            <h3 class="heatmap-title">
+                {{ ref_strong }}
+                {% if meta.lemma %}<span class="heatmap-title-lemma">{{ meta.lemma }}</span>{% endif %}
+                {% if meta.gloss %}<span class="heatmap-title-gloss">- {{ meta.gloss }}</span>{% endif %}
+            </h3>
+            <table class="heatmap-table heatmap-table--crossref">
+                <thead>
+                    <tr>
+                        <th scope="col">Book</th>
+                        <th scope="col">Chapters</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for book in ordered_books %}
+                    {% set chapters = ref_data.get(book) %}
+                    {% if chapters %}
+                    <tr>
+                        <th scope="row">{{ book }}</th>
+                        <td>
+                            <table class="heatmap-row-table">
+                                <tr>
+                                {% for cell in chapters %}
+                                    {% set chapter_num = cell.chapter|default(loop.index) %}
+                                    <td class="heatmap-cell{% if cell.count > 0 %} is-clickable{% endif %}" data-chapter="{{ chapter_num }}" style="background-color: {{ cell.color }};">
+                                        {% if cell.count > 0 %}
+                                            <a class="heatmap-cell__link" href="{{ url_for('home', book=book, chapter=chapter_num, focus=ref_strong, from_heatmap=1) }}" aria-label="Open {{ book }} {{ chapter_num }}">
+                                                <span class="heatmap-cell__count">{{ cell.count }}</span>
+                                            </a>
+                                        {% else %}
+                                            <span class="heatmap-cell__count heatmap-cell__count--empty">&nbsp;</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% endif %}
 
     <a href="{{ url_for('home') }}" class="button">Return Home</a>
+
+    <script>
+        // Auto-submit form when toggle changes
+        document.getElementById('show-crossrefs')?.addEventListener('change', function() {
+            const form = document.getElementById('heatmap-form');
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'show_crossrefs';
+            hiddenInput.value = this.checked ? 'true' : 'false';
+            form.appendChild(hiddenInput);
+            form.submit();
+        });
+    </script>
 </body>
 </html>
