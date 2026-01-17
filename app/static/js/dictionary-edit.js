@@ -139,21 +139,27 @@ function renderCrossrefBadges(strongNumber, container) {
     const refs = crossrefCache.get(strongNumber);
 
     if (!refs || (refs.primary.length === 0 && refs.secondary.length === 0)) {
-        container.innerHTML = '<span class="no-crossrefs">—</span>';
+        container.innerHTML = '';  // Clean empty state, no "—"
         container.dataset.hasCrossrefs = 'false';
         return;
     }
 
     container.dataset.hasCrossrefs = 'true';
 
-    const badges = refs.primary.slice(0, 2).map(ref =>
-        `<a href="/heatmap?strong=${ref}" class="crossref-badge primary" title="View ${ref} heatmap">${ref}</a>`
-    );
+    // Combine primary and secondary, prioritizing primary
+    const allRefs = [...refs.primary, ...refs.secondary];
 
-    const remaining = refs.primary.length - 2 + refs.secondary.length;
+    // Show first 2 badges from combined list
+    const badges = allRefs.slice(0, 2).map((ref, idx) => {
+        const isPrimary = idx < refs.primary.length;
+        return `<a href="/heatmap?strong=${ref}" class="crossref-badge ${isPrimary ? 'primary' : 'secondary'}" title="View ${ref} heatmap">${ref}</a>`;
+    });
+
+    // Correct remaining count: total refs minus badges shown
+    const remaining = allRefs.length - 2;
     if (remaining > 0) {
-        const allRefs = [...refs.primary.slice(2), ...refs.secondary].join(', ');
-        badges.push(`<span class="crossref-more" title="${allRefs}">+${remaining}</span>`);
+        const moreRefs = allRefs.slice(2).join(', ');
+        badges.push(`<span class="crossref-more" title="${moreRefs}">+${remaining}</span>`);
     }
 
     container.innerHTML = badges.join('');

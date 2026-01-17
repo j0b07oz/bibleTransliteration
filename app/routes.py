@@ -799,8 +799,10 @@ def heatmap():
             }
 
         # Generate heatmap - combined if crossrefs toggled on
-        if show_crossrefs and crossrefs['primary']:
-            active_crossrefs = crossrefs['primary'][:4]  # Limit to 4 crossrefs in combined view
+        # Combine primary and secondary crossrefs (primary takes precedence)
+        all_crossrefs = crossrefs['primary'] + crossrefs['secondary']
+        if show_crossrefs and all_crossrefs:
+            active_crossrefs = all_crossrefs[:4]  # Limit to 4 crossrefs in combined view
             data = generate_combined_heatmap(strong, active_crossrefs)
         else:
             data = generate_heatmap(strong)
