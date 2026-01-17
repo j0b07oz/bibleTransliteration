@@ -6,67 +6,397 @@
     <title>Edit Strong's Dictionary</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <style>
+        /* ===== Page Layout ===== */
+        .dict-page {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .dict-page h1 {
+            color: #2f1f1c;
+            margin-bottom: 16px;
+            font-size: 1.75rem;
+        }
+
+        .dict-page h2 {
+            color: #3d2a26;
+            font-size: 1.1rem;
+            margin: 24px 0 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8e0d8;
+        }
+
+        .dict-intro {
+            background: #f7f0e9;
+            border: 1px solid #e0d8d0;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #4b3a34;
+        }
+
+        .dict-intro a {
+            color: #7d4b36;
+            font-weight: 600;
+        }
+
+        /* ===== Search Box ===== */
         #search-box {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            font-size: 16px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 15px;
+            border: 1px solid #d8d0c8;
+            border-radius: 8px;
+            background: #fff;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
+
+        #search-box:focus {
+            outline: none;
+            border-color: #a08878;
+            box-shadow: 0 0 0 3px rgba(125, 75, 54, 0.12);
+        }
+
+        #search-box::placeholder {
+            color: #a09890;
+        }
+
+        /* ===== Toolbar ===== */
         .dict-toolbar {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            padding: 14px;
+            background: #f9f6f3;
+            border: 1px solid #e8e0d8;
+            border-radius: 10px;
         }
+
+        .dict-filters {
+            display: flex;
+            gap: 8px;
+        }
+
         .dict-toggle {
-            padding: 8px 12px;
-            border: 1px solid #4a90e2;
+            padding: 8px 14px;
+            border: 1px solid #d8d0c8;
             background: #fff;
-            color: #4a90e2;
-            border-radius: 4px;
+            color: #5a4a44;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.15s ease;
         }
+
+        .dict-toggle:hover {
+            background: #f7f0e9;
+            border-color: #c0b8b0;
+        }
+
         .dict-toggle.is-active {
-            background: #4a90e2;
+            background: #4a7c3e;
+            border-color: #3d6832;
             color: #fff;
         }
-        .dict-sort select {
-            padding: 6px 10px;
-            font-size: 14px;
+
+        .dict-toggle.is-active:hover {
+            background: #3d6832;
         }
-        .hidden {
-            display: none;
-        }
-        .dict-entry {
-            margin-bottom: 16px;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 12px;
-            display: grid;
-            grid-template-columns: 28px 110px 1fr auto;
-            gap: 10px;
+
+        .dict-sort {
+            display: flex;
             align-items: center;
-            position: relative;
+            gap: 8px;
         }
-        .dict-entry:last-child {
-            border-bottom: none;
+
+        .dict-sort label {
+            font-size: 13px;
+            color: #5a4a44;
+            font-weight: 600;
         }
-        .dict-entry input[type="text"] {
-            width: 100%;
-            padding: 5px;
+
+        .dict-sort select {
+            padding: 8px 12px;
+            font-size: 13px;
+            border: 1px solid #d8d0c8;
+            border-radius: 6px;
+            background: #fff;
+            color: #3d2a26;
+            cursor: pointer;
         }
-        .dict-entry button {
-            margin-right: 0;
+
+        .dict-sort select:focus {
+            outline: none;
+            border-color: #a08878;
         }
+
+        /* ===== Bulk Actions ===== */
+        .bulk-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .bulk-actions .button--sm {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .selection-count {
+            font-size: 13px;
+            color: #6b5a54;
+            font-weight: 500;
+            padding: 4px 10px;
+            background: #e8e0d8;
+            border-radius: 12px;
+        }
+
+        /* ===== Hidden Class - High Specificity ===== */
+        .dict-entry.hidden {
+            display: none !important;
+        }
+
+        /* ===== Entry Grid ===== */
+        #dict-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .dict-entry {
+            display: grid;
+            grid-template-columns: 36px 120px 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px 14px;
+            background: #fff;
+            border: 1px solid #e8e0d8;
+            border-radius: 8px;
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .dict-entry:hover {
+            background: #fdfbf9;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .dict-entry.is-selected {
+            background: #f0f7ee;
+            border-color: #b8d4b0;
+        }
+
+        /* ===== Entry Checkbox ===== */
         .entry-select-label {
             display: flex;
             align-items: center;
             justify-content: center;
         }
+
         .entry-select {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #4a7c3e;
         }
+
+        /* ===== Entry Inputs ===== */
+        .dict-entry input[type="text"] {
+            padding: 8px 10px;
+            border: 1px solid #e0d8d0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fdfbf9;
+        }
+
+        .dict-entry input[type="text"]:read-only {
+            background: #f0ebe6;
+            color: #5a4a44;
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .dict-entry input[type="text"]:not(:read-only):focus {
+            outline: none;
+            border-color: #a08878;
+            background: #fff;
+        }
+
+        .translation-input {
+            width: 100%;
+        }
+
+        /* ===== Entry Menu ===== */
+        .entry-menu {
+            position: relative;
+        }
+
+        .action-toggle {
+            border: 1px solid #d8d0c8;
+            background: #f7f0e9;
+            color: #5a4a44;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            min-width: 40px;
+            min-height: 36px;
+            transition: all 0.15s ease;
+        }
+
+        .action-toggle:hover {
+            background: #efe6dd;
+            border-color: #c0b8b0;
+        }
+
+        .action-toggle:focus {
+            outline: 2px solid #7d4b36;
+            outline-offset: 2px;
+        }
+
+        .dict-entry.actions-open .action-toggle {
+            background: #7d4b36;
+            border-color: #6b3d2a;
+            color: #fff;
+        }
+
+        .entry-actions {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            background: #fff;
+            border: 1px solid #e0d8d0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 280px;
+            z-index: 20;
+        }
+
+        .entry-actions[hidden] {
+            display: none;
+        }
+
+        .entry-actions__row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .entry-actions__row label {
+            font-size: 13px;
+            color: #5a4a44;
+            font-weight: 600;
+        }
+
+        .entry-actions input[type="color"] {
+            width: 48px;
+            height: 36px;
+            border: 1px solid #d8d0c8;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 2px;
+        }
+
+        .entry-actions__buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .entry-actions .button {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        /* ===== Add Form ===== */
+        .add-form-section {
+            background: #f9f6f3;
+            border: 1px solid #e8e0d8;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .add-form-section h2 {
+            margin: 0 0 12px;
+            border: none;
+            padding: 0;
+        }
+
+        #add-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        #add-form input[type="text"] {
+            padding: 10px 12px;
+            border: 1px solid #d8d0c8;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 160px;
+        }
+
+        #add-form input[type="text"]:focus {
+            outline: none;
+            border-color: #a08878;
+            box-shadow: 0 0 0 3px rgba(125, 75, 54, 0.12);
+        }
+
+        #add-form input[type="color"] {
+            width: 48px;
+            height: 40px;
+            border: 1px solid #d8d0c8;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 2px;
+        }
+
+        /* ===== Upload Section ===== */
+        .upload-section {
+            background: #fff;
+            border: 1px solid #e8e0d8;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .upload-section h2 {
+            margin: 0 0 10px;
+            border: none;
+            padding: 0;
+        }
+
+        .upload-section p {
+            font-size: 14px;
+            color: #5a4a44;
+            margin: 0 0 12px;
+        }
+
+        .upload-section code {
+            background: #f0ebe6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #7d4b36;
+        }
+
+        /* ===== Accessibility ===== */
         .sr-only {
             position: absolute;
             width: 1px;
@@ -77,78 +407,79 @@
             clip: rect(0, 0, 0, 0);
             border: 0;
         }
-        .entry-menu {
-            display: flex;
-            justify-content: flex-end;
-            position: relative;
+
+        /* ===== Empty State ===== */
+        .dict-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b5a54;
+            font-size: 15px;
         }
-        .action-toggle {
-            border: 1px solid #cfd8e3;
-            background: #f7f9fc;
-            color: #374151;
-            padding: 6px 10px;
+
+        .dict-empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* ===== Filter Status ===== */
+        .filter-status {
+            font-size: 13px;
+            color: #6b5a54;
+            padding: 8px 12px;
+            background: #f0ebe6;
             border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
-            min-width: 36px;
-            min-height: 36px;
+            margin-bottom: 12px;
         }
-        .action-toggle:focus {
-            outline: 2px solid #4a90e2;
-            outline-offset: 2px;
+
+        .filter-status strong {
+            color: #3d2a26;
         }
-        .entry-actions {
-            position: absolute;
-            right: 0;
-            top: calc(100% + 8px);
-            background: #fff;
-            border: 1px solid #d7dde7;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-            border-radius: 8px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            min-width: 260px;
-            z-index: 10;
-        }
-        .entry-actions__row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .entry-actions__buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .entry-actions[hidden] {
-            display: none;
-        }
-        .dict-entry.actions-open .action-toggle {
-            border-color: #4a90e2;
-            background: #e8f1ff;
-        }
+
+        /* ===== Responsive ===== */
         @media (max-width: 700px) {
             .dict-entry {
-                grid-template-columns: 28px 90px 1fr auto;
+                grid-template-columns: 32px 90px 1fr auto;
+                gap: 8px;
+                padding: 10px 12px;
+            }
+
+            .dict-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .bulk-actions {
+                margin-left: 0;
+                justify-content: flex-start;
+            }
+
+            #add-form {
+                flex-direction: column;
+            }
+
+            #add-form input[type="text"] {
+                width: 100%;
+                min-width: auto;
             }
         }
     </style>
 </head>
-<body>
-    <h1>Your list of Strong's words</h1>
+<body class="dict-page">
+    <h1>Your Strong's Word List</h1>
 
-    <p>Add or remove the words to be transliterated by inputting their Strong's concordance value and their KJV translation(s). While there are many reference sites for searching Strong's, I like to use <a href="https://biblehub.com/strongs.htm" target="_blank">Biblehub</a>. If a certain word is sometimes translated as more than one word, like H1368, make sure to add those in the second column. You do not need to add every different one-word translation for the program to work.</p>
+    <p class="dict-intro">
+        Add or remove words to be transliterated by entering their Strong's concordance number and KJV translation(s).
+        You can find Strong's numbers on reference sites like <a href="https://biblehub.com/strongs.htm" target="_blank">BibleHub</a>.
+        If a word has multiple translations (like H1368), add them comma-separated.
+    </p>
 
     <div class="dict-actions" aria-label="Dictionary import and export controls">
         <a href="{{ url_for('home') }}" class="button button--sm">Return to Main Page</a>
-        <a href="{{ url_for('export_dict') }}" class="button button--sm">Export your list</a>
+        <a href="{{ url_for('export_dict') }}" class="button button--sm">Export List</a>
         <form method="POST" action="{{ url_for('upload_dict') }}" enctype="multipart/form-data" class="upload-form" id="dict-upload-form">
             <input type="file" id="dict-file-input" name="dict_file" accept="application/json" required class="upload-form__input">
-            <label for="dict-file-input" class="button button--sm" id="upload-trigger">Upload your list</label>
+            <label for="dict-file-input" class="button button--sm" id="upload-trigger">Import List</label>
         </form>
         {% if upload_error %}
         <p class="upload-feedback upload-feedback--error">{{ upload_error }}</p>
@@ -158,34 +489,35 @@
     </div>
 
     {% if upload_error or not upload_success %}
-    <div class="upload-help">
-        <h2>Upload your my_strongs_dict.json</h2>
+    <div class="upload-section">
+        <h2>Import Your Dictionary</h2>
         <p>
-            Use the "Upload your list" button to select your <code>my_strongs_dict.json</code> file. After selection, the upload will begin automatically.
+            Use "Import List" to upload your <code>my_strongs_dict.json</code> file. The upload will begin automatically.
         </p>
-        <p class="upload-help__hint">
-            Expected format: {"H7225": {"translations": ["beginning"], "color": "#ffaa00"}, ...}
+        <p>
+            Expected format: <code>{"H7225": {"translations": ["beginning"], "color": "#ffaa00"}, ...}</code>
         </p>
     </div>
     {% endif %}
 
-    <input type="text" id="search-box" placeholder="Search Strong's numbers or translations...">
-
-    <div>
+    <div class="add-form-section">
         <h2>Add New Entry</h2>
         <form id="add-form">
-            <input type="text" id="new-strong-number" placeholder="Strong's Number" required>
+            <input type="text" id="new-strong-number" placeholder="Strong's Number (e.g., H1234)" required>
             <input type="text" id="new-translations" placeholder="Translations (comma-separated)" required>
-            <input type="color" id="new-color" value="#000000">
-            <button type="submit" class="button">Add</button>
+            <input type="color" id="new-color" value="#000000" title="Highlight color">
+            <button type="submit" class="button">Add Entry</button>
         </form>
     </div>
 
     <h2>Current Entries</h2>
+
+    <input type="text" id="search-box" placeholder="Search by Strong's number or translation...">
+
     <div class="dict-toolbar" aria-label="Dictionary controls">
         <div class="dict-filters" role="group" aria-label="Filter entries by language">
-            <button type="button" class="dict-toggle is-active" id="toggle-hebrew">Hebrew (H)</button>
-            <button type="button" class="dict-toggle is-active" id="toggle-greek">Greek (G)</button>
+            <button type="button" class="dict-toggle is-active" id="toggle-hebrew" aria-pressed="true">Hebrew (H)</button>
+            <button type="button" class="dict-toggle is-active" id="toggle-greek" aria-pressed="true">Greek (G)</button>
         </div>
         <div class="dict-sort">
             <label for="sort-order">Sort:</label>
@@ -195,13 +527,18 @@
             </select>
         </div>
         <div class="bulk-actions" aria-label="Bulk actions">
-            <button type="button" class="button button--sm" id="select-visible">Select visible</button>
-            <button type="button" class="button button--sm" id="clear-selection">Clear selection</button>
-            <button type="button" class="button button--sm" id="bulk-reset" disabled>Reset color</button>
-            <button type="button" class="button button--sm" id="bulk-delete" disabled>Delete selected</button>
-            <span class="selection-count" id="selection-count" aria-live="polite">No items selected</span>
+            <button type="button" class="button button--sm" id="select-all">Select All</button>
+            <button type="button" class="button button--sm" id="clear-selection">Clear</button>
+            <button type="button" class="button button--sm" id="bulk-reset" disabled>Reset Colors</button>
+            <button type="button" class="button button--sm" id="bulk-delete" disabled>Delete</button>
+            <span class="selection-count" id="selection-count" aria-live="polite">0 selected</span>
         </div>
     </div>
+
+    <div id="filter-status" class="filter-status" style="display: none;">
+        Showing <strong id="visible-count">0</strong> of <strong id="total-count">0</strong> entries
+    </div>
+
     <div id="dict-entries">
         {% for strong_number, data in strongs_dict.items() %}
         <div class="dict-entry" data-strong="{{ strong_number }}" data-translations="{{ data.translations|join(',') }}">
@@ -214,12 +551,12 @@
                 <button type="button" class="action-toggle" aria-expanded="false" aria-haspopup="true" aria-label="Open actions for {{ strong_number }}">⋯</button>
                 <div class="entry-actions" hidden>
                     <div class="entry-actions__row">
-                        <label for="color-{{ strong_number }}" class="sr-only">Color for {{ strong_number }}</label>
+                        <label for="color-{{ strong_number }}">Highlight color:</label>
                         <input id="color-{{ strong_number }}" type="color" value="{{ data.color or '#000000' }}" aria-label="Color for {{ strong_number }}">
                     </div>
                     <div class="entry-actions__buttons">
-                        <button class="button" data-action="update">Update</button>
-                        <button class="button" data-action="reset-color">Reset highlight color</button>
+                        <button class="button" data-action="update">Save</button>
+                        <button class="button" data-action="reset-color">Reset Color</button>
                         <button class="button" data-action="delete">Delete</button>
                     </div>
                 </div>
@@ -228,8 +565,12 @@
         {% endfor %}
     </div>
 
-    <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <div id="dict-empty" class="dict-empty" style="display: none;">
+        <div class="dict-empty-icon">📚</div>
+        <p>No entries match your search or filters.</p>
+    </div>
 
+    <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <script src="{{ url_for('static', filename='js/dictionary-edit.js') }}"></script>
 </body>
