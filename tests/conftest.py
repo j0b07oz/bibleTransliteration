@@ -11,6 +11,7 @@ import tempfile
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import app as flask_app
+from app import routes  # Import routes to register them with Flask
 
 
 @pytest.fixture

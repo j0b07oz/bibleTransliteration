@@ -605,9 +605,9 @@ def about():
 
 
 @lru_cache(maxsize=128)
-def generate_heatmap(strong_number):
+def generate_heatmap_counts(strong_number):
     """
-    Generate heatmap data for a Strong's number across all Bible chapters.
+    Generate raw count data for a Strong's number across all Bible chapters.
 
     Results are cached to improve performance on repeated requests.
 
@@ -615,11 +615,11 @@ def generate_heatmap(strong_number):
         strong_number: Strong's number (e.g., "H7225" or "G2316")
 
     Returns:
-        dict: Heatmap data with counts and colors for each book/chapter
+        tuple: (counts dict, max_count) where counts is {book: {chapter: count}}
     """
     strong = (strong_number or '').strip('{}').upper()
     if not strong:
-        return {}
+        return {}, 0
 
     counts = {}
     max_count = 0
@@ -637,6 +637,23 @@ def generate_heatmap(strong_number):
             counts[book][ch] = cnt
             if cnt > max_count:
                 max_count = cnt
+
+    return counts, max_count
+
+
+def generate_heatmap(strong_number):
+    """
+    Generate heatmap data for a Strong's number across all Bible chapters.
+
+    Args:
+        strong_number: Strong's number (e.g., "H7225" or "G2316")
+
+    Returns:
+        dict: Heatmap data with counts and colors for each book/chapter
+    """
+    counts, max_count = generate_heatmap_counts(strong_number)
+    if not counts:
+        return {}
 
     heatmap = {}
     for book in book_order:
@@ -656,6 +673,84 @@ def generate_heatmap(strong_number):
     return heatmap
 
 
+# Color palette for cross-referenced words (distinct from red primary)
+CROSSREF_COLORS = [
+    (66, 133, 244),   # Blue
+    (52, 168, 83),    # Green
+    (251, 188, 4),    # Yellow/Gold
+    (234, 67, 53),    # Red (alternative shade)
+    (154, 66, 244),   # Purple
+]
+
+
+def generate_combined_heatmap(primary_strong, crossref_strongs):
+    """
+    Generate a combined heatmap with primary word and cross-referenced words.
+
+    Args:
+        primary_strong: Primary Strong's number
+        crossref_strongs: List of cross-referenced Strong's numbers
+
+    Returns:
+        dict: Combined heatmap with multiple bars per cell
+    """
+    # Get counts for primary word
+    primary_counts, primary_max = generate_heatmap_counts(primary_strong)
+
+    # Get counts for cross-referenced words
+    crossref_data = []
+    for i, ref_strong in enumerate(crossref_strongs[:4]):  # Limit to 4 crossrefs
+        ref_counts, ref_max = generate_heatmap_counts(ref_strong)
+        color_rgb = CROSSREF_COLORS[i % len(CROSSREF_COLORS)]
+        crossref_data.append({
+            'strong': ref_strong,
+            'counts': ref_counts,
+            'max_count': ref_max,
+            'base_color': color_rgb
+        })
+
+    # Build combined heatmap
+    heatmap = {}
+    for book in book_order:
+        max_chapter = book_chapter_count.get(book, 0)
+        row = []
+        primary_chapters = primary_counts.get(book, {})
+
+        for ch in range(1, max_chapter + 1):
+            # Primary word data
+            primary_cnt = primary_chapters.get(ch, 0)
+            primary_alpha = (primary_cnt / primary_max) if primary_max else 0
+            r, g, b = 255, int(255 * (1 - primary_alpha)), int(255 * (1 - primary_alpha))
+            primary_color = f'#{r:02x}{g:02x}{b:02x}'
+
+            # Cross-reference data
+            crossref_bars = []
+            for cref in crossref_data:
+                ref_cnt = cref['counts'].get(book, {}).get(ch, 0)
+                ref_alpha = (ref_cnt / cref['max_count']) if cref['max_count'] else 0
+                cr, cg, cb = cref['base_color']
+                # Blend with white based on alpha
+                br = int(255 - (255 - cr) * ref_alpha)
+                bg = int(255 - (255 - cg) * ref_alpha)
+                bb = int(255 - (255 - cb) * ref_alpha)
+                ref_color = f'#{br:02x}{bg:02x}{bb:02x}'
+                crossref_bars.append({
+                    'strong': cref['strong'],
+                    'count': ref_cnt,
+                    'color': ref_color
+                })
+
+            row.append({
+                'chapter': ch,
+                'count': primary_cnt,
+                'color': primary_color,
+                'crossrefs': crossref_bars
+            })
+        heatmap[book] = row
+
+    return heatmap
+
+
 @app.route('/heatmap')
 def heatmap():
     strong = request.args.get('strong', '').strip().upper()
@@ -664,20 +759,15 @@ def heatmap():
 
     data = None
     crossrefs = {'primary': [], 'secondary': []}
-    crossref_heatmaps = {}
     crossref_metadata = {}
+    active_crossrefs = []  # List of crossrefs being shown in combined view
 
     if strong:
-        # Generate main heatmap
-        data = generate_heatmap(strong)
-
         # Get cross-references for this Strong's number
         if strong.startswith('H'):
             source_map = hebrew_to_greek
-            crossref_language = 'greek'
         else:
             source_map = greek_to_hebrew
-            crossref_language = 'hebrew'
 
         entry = source_map.get(strong, {})
         crossrefs = {
@@ -699,10 +789,12 @@ def heatmap():
                 'gloss': ref_entry.get('gloss', '')
             }
 
-        # Generate heatmaps for cross-referenced words if toggled on
-        if show_crossrefs:
-            for ref_strong in crossrefs.get('primary', [])[:3]:  # Limit to top 3 primary refs
-                crossref_heatmaps[ref_strong] = generate_heatmap(ref_strong)
+        # Generate heatmap - combined if crossrefs toggled on
+        if show_crossrefs and crossrefs['primary']:
+            active_crossrefs = crossrefs['primary'][:4]  # Limit to 4 crossrefs in combined view
+            data = generate_combined_heatmap(strong, active_crossrefs)
+        else:
+            data = generate_heatmap(strong)
 
     ordered_books = [b for b, _ in sorted(book_order.items(), key=lambda x: x[1])]
     return render_template(
@@ -712,9 +804,10 @@ def heatmap():
         ordered_books=ordered_books,
         crossrefs=crossrefs,
         crossref_metadata=crossref_metadata,
-        crossref_heatmaps=crossref_heatmaps,
+        active_crossrefs=active_crossrefs,
         show_crossrefs=show_crossrefs,
-        from_crossref=from_crossref
+        from_crossref=from_crossref,
+        crossref_colors=['#4285f4', '#34a853', '#fbbc04', '#ea4335', '#9a42f4']  # For legend
     )
 
 
