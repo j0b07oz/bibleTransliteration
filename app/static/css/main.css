@@ -927,33 +927,100 @@ a:hover {
     margin-left: 8px;
 }
 
-.crossref-heatmaps-section {
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 2px solid #d8d6ce;
-}
-
-.crossref-heatmaps-title {
-    margin: 0 0 20px;
-    font-size: 18px;
-    color: #7d4b36;
-}
-
-.heatmap-wrapper--crossref {
-    margin-bottom: 24px;
-    padding: 16px;
+/* Heatmap legend */
+.heatmap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-bottom: 16px;
+    padding: 10px 14px;
     background: #fdfcfa;
     border: 1px solid #e8e4de;
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
-.heatmap-wrapper--crossref .heatmap-table {
+.heatmap-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.heatmap-legend-color {
+    width: 40px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid #d8d6ce;
+}
+
+.heatmap-legend-label {
     font-size: 12px;
+    color: #2f1f1c;
 }
 
-.heatmap-wrapper--crossref .heatmap-cell {
-    min-width: 18px;
-    height: 18px;
+/* Combined heatmap cells with multiple bars */
+.heatmap-cell--combined {
+    position: relative;
+    min-width: 28px;
+    height: auto !important;
+    min-height: 28px;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.heatmap-cell__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.heatmap-cell__bars {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 28px;
+}
+
+.heatmap-cell__bar {
+    flex: 1;
+    min-height: 6px;
+}
+
+.heatmap-cell__bar--primary {
+    min-height: 8px;
+}
+
+.heatmap-cell--combined .heatmap-cell__link {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.heatmap-cell--combined .heatmap-cell__count {
+    background: rgba(255, 255, 255, 0.85);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+}
+
+/* Active crossref chip styling */
+.heatmap-crossref-chip.is-active {
+    background: #fff;
+}
+
+.chip-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Combined table adjustments */
+.heatmap-table--combined .heatmap-row-table td {
+    padding: 1px;
 }
 
 .phonetic-card-panel {
