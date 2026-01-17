@@ -79,12 +79,12 @@ function buildEntryElement(strongNumber, translations, color) {
             <button type="button" class="action-toggle" aria-expanded="false" aria-haspopup="true" aria-label="Open actions for ${strongNumber}">⋯</button>
             <div class="entry-actions" hidden>
                 <div class="entry-actions__row">
-                    <label class="sr-only" for="color-${strongNumber}">Color for ${strongNumber}</label>
+                    <label for="color-${strongNumber}">Highlight color:</label>
                     <input id="color-${strongNumber}" type="color" value="${color || '#000000'}" aria-label="Color for ${strongNumber}">
                 </div>
                 <div class="entry-actions__buttons">
-                    <button class="button" data-action="update">Update</button>
-                    <button class="button" data-action="reset-color">Reset highlight color</button>
+                    <button class="button" data-action="update">Save</button>
+                    <button class="button" data-action="reset-color">Reset Color</button>
                     <button class="button" data-action="delete">Delete</button>
                 </div>
             </div>
@@ -104,16 +104,22 @@ function getTranslationsFromInput(inputValue) {
 
 (function() {
     const entriesContainer = document.getElementById('dict-entries');
+    if (!entriesContainer) return;
+
     let entries = Array.from(entriesContainer.querySelectorAll('.dict-entry'));
     const searchBox = document.getElementById('search-box');
     const toggleHebrew = document.getElementById('toggle-hebrew');
     const toggleGreek = document.getElementById('toggle-greek');
     const sortOrderSelect = document.getElementById('sort-order');
-    const selectVisibleButton = document.getElementById('select-visible');
+    const selectAllButton = document.getElementById('select-all');
     const clearSelectionButton = document.getElementById('clear-selection');
     const bulkDeleteButton = document.getElementById('bulk-delete');
     const bulkResetButton = document.getElementById('bulk-reset');
     const selectionCountLabel = document.getElementById('selection-count');
+    const filterStatus = document.getElementById('filter-status');
+    const visibleCountEl = document.getElementById('visible-count');
+    const totalCountEl = document.getElementById('total-count');
+    const emptyState = document.getElementById('dict-empty');
 
     let showHebrew = true;
     let showGreek = true;
@@ -150,9 +156,10 @@ function getTranslationsFromInput(inputValue) {
     }
 
     function matchesSearch(entry) {
-        const searchTerm = searchBox.value.toLowerCase();
+        if (!searchBox) return true;
+        const searchTerm = searchBox.value.toLowerCase().trim();
         if (!searchTerm) return true;
-        const strongNumber = entry.getAttribute('data-strong').toLowerCase();
+        const strongNumber = (entry.getAttribute('data-strong') || '').toLowerCase();
         const translations = (entry.getAttribute('data-translations') || '').toLowerCase();
         return strongNumber.includes(searchTerm) || translations.includes(searchTerm);
     }
@@ -167,9 +174,36 @@ function getTranslationsFromInput(inputValue) {
 
     function updateSelectionUI() {
         const count = selected.size;
-        selectionCountLabel.textContent = count ? `${count} selected` : 'No items selected';
-        bulkDeleteButton.disabled = count === 0;
-        bulkResetButton.disabled = count === 0;
+        if (selectionCountLabel) {
+            selectionCountLabel.textContent = `${count} selected`;
+        }
+        if (bulkDeleteButton) bulkDeleteButton.disabled = count === 0;
+        if (bulkResetButton) bulkResetButton.disabled = count === 0;
+
+        // Update visual selection state on entries
+        entries.forEach((entry) => {
+            const isSelected = selected.has(entry.dataset.strong);
+            entry.classList.toggle('is-selected', isSelected);
+        });
+    }
+
+    function updateFilterStatus(visibleCount, totalCount) {
+        if (!filterStatus || !visibleCountEl || !totalCountEl) return;
+
+        const hasFilters = searchBox.value.trim() || !showHebrew || !showGreek;
+
+        if (hasFilters && visibleCount !== totalCount) {
+            filterStatus.style.display = 'block';
+            visibleCountEl.textContent = visibleCount;
+            totalCountEl.textContent = totalCount;
+        } else {
+            filterStatus.style.display = 'none';
+        }
+
+        // Show empty state if no visible entries
+        if (emptyState) {
+            emptyState.style.display = visibleCount === 0 && totalCount > 0 ? 'block' : 'none';
+        }
     }
 
     // ===== Entry Event Handlers =====
@@ -203,7 +237,8 @@ function getTranslationsFromInput(inputValue) {
                 sendActions([{ action: 'update', strong_number: strongNumber, translations, color }]).then((data) => {
                     if (data.success) {
                         entry.dataset.translations = translations.join(',');
-                        showToast('Entry updated successfully', 'success');
+                        showToast('Entry saved', 'success');
+                        closeAllMenus();
                         renderEntries();
                     }
                 });
@@ -229,7 +264,7 @@ function getTranslationsFromInput(inputValue) {
                 sendActions([{ action: 'update', strong_number: strongNumber, color: null }]).then((data) => {
                     if (data.success) {
                         colorInput.value = '#000000';
-                        showToast('Highlight color reset', 'success');
+                        showToast('Color reset', 'success');
                     }
                 });
             });
@@ -267,15 +302,22 @@ function getTranslationsFromInput(inputValue) {
         });
 
         const fragment = document.createDocumentFragment();
+        let visibleCount = 0;
 
         sorted.forEach((entry) => {
             const strong = entry.dataset.strong;
             const checkbox = entry.querySelector('.entry-select');
             const shouldShow = matchesSearch(entry) && matchesLanguage(entry);
-            if (!shouldShow) {
+
+            if (shouldShow) {
+                visibleCount++;
+            } else {
                 selected.delete(strong);
             }
+
             entry.classList.toggle('hidden', !shouldShow);
+            entry.classList.toggle('is-selected', selected.has(strong) && shouldShow);
+
             if (checkbox) {
                 checkbox.checked = selected.has(strong) && shouldShow;
             }
@@ -285,6 +327,7 @@ function getTranslationsFromInput(inputValue) {
         entriesContainer.innerHTML = '';
         entriesContainer.appendChild(fragment);
         updateSelectionUI();
+        updateFilterStatus(visibleCount, entries.length);
         closeAllMenus();
     }
 
@@ -297,14 +340,15 @@ function getTranslationsFromInput(inputValue) {
     function handleBulkDelete() {
         const targets = Array.from(selected);
         if (!targets.length) return;
+
+        if (!confirm(`Delete ${targets.length} selected entries?`)) return;
+
         const actions = targets.map((strong) => ({ action: 'delete', strong_number: strong }));
         sendActions(actions).then((data) => {
             if (data.success) {
                 entries = entries.filter((entry) => !selected.has(entry.dataset.strong));
                 selected.clear();
-                entriesContainer.innerHTML = '';
-                entries.forEach((entry) => entriesContainer.appendChild(entry));
-                showToast('Selected entries deleted', 'success');
+                showToast(`${targets.length} entries deleted`, 'success');
                 renderEntries();
             }
         });
@@ -322,12 +366,13 @@ function getTranslationsFromInput(inputValue) {
                         if (colorInput) colorInput.value = '#000000';
                     }
                 });
-                showToast('Highlight colors reset', 'success');
+                showToast(`${targets.length} colors reset`, 'success');
             }
         });
     }
 
-    function selectVisibleEntries() {
+    function selectAllEntries() {
+        // Select all visible entries
         entries.forEach((entry) => {
             if (!entry.classList.contains('hidden')) {
                 selected.add(entry.dataset.strong);
@@ -343,56 +388,98 @@ function getTranslationsFromInput(inputValue) {
 
     // ===== Event Listeners =====
 
-    searchBox.addEventListener('input', renderEntries);
+    if (searchBox) {
+        searchBox.addEventListener('input', renderEntries);
+    }
 
-    toggleHebrew.addEventListener('click', () => {
-        showHebrew = !showHebrew;
-        toggleHebrew.classList.toggle('is-active', showHebrew);
-        renderEntries();
-    });
+    if (toggleHebrew) {
+        toggleHebrew.addEventListener('click', () => {
+            showHebrew = !showHebrew;
+            toggleHebrew.classList.toggle('is-active', showHebrew);
+            toggleHebrew.setAttribute('aria-pressed', String(showHebrew));
+            renderEntries();
+        });
+    }
 
-    toggleGreek.addEventListener('click', () => {
-        showGreek = !showGreek;
-        toggleGreek.classList.toggle('is-active', showGreek);
-        renderEntries();
-    });
+    if (toggleGreek) {
+        toggleGreek.addEventListener('click', () => {
+            showGreek = !showGreek;
+            toggleGreek.classList.toggle('is-active', showGreek);
+            toggleGreek.setAttribute('aria-pressed', String(showGreek));
+            renderEntries();
+        });
+    }
 
-    sortOrderSelect.addEventListener('change', (event) => {
-        sortOrder = event.target.value;
-        renderEntries();
-    });
+    if (sortOrderSelect) {
+        sortOrderSelect.addEventListener('change', (event) => {
+            sortOrder = event.target.value;
+            renderEntries();
+        });
+    }
 
-    selectVisibleButton.addEventListener('click', selectVisibleEntries);
-    clearSelectionButton.addEventListener('click', clearSelection);
-    bulkDeleteButton.addEventListener('click', handleBulkDelete);
-    bulkResetButton.addEventListener('click', handleBulkReset);
+    if (selectAllButton) {
+        selectAllButton.addEventListener('click', selectAllEntries);
+    }
+    if (clearSelectionButton) {
+        clearSelectionButton.addEventListener('click', clearSelection);
+    }
+    if (bulkDeleteButton) {
+        bulkDeleteButton.addEventListener('click', handleBulkDelete);
+    }
+    if (bulkResetButton) {
+        bulkResetButton.addEventListener('click', handleBulkReset);
+    }
 
     // ===== Add New Entry Form =====
 
-    document.getElementById('add-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const strongNumber = document.getElementById('new-strong-number').value.trim();
-        const translationsValue = document.getElementById('new-translations').value;
-        const translations = getTranslationsFromInput(translationsValue);
-        const color = document.getElementById('new-color').value;
+    const addForm = document.getElementById('add-form');
+    if (addForm) {
+        addForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const strongNumberInput = document.getElementById('new-strong-number');
+            const translationsInput = document.getElementById('new-translations');
+            const colorInput = document.getElementById('new-color');
 
-        if (!strongNumber) {
-            showToast("Strong's number is required", 'error');
-            return;
-        }
+            const strongNumber = strongNumberInput.value.trim().toUpperCase();
+            const translations = getTranslationsFromInput(translationsInput.value);
+            const color = colorInput.value;
 
-        sendActions([{ action: 'add', strong_number: strongNumber, translations, color }]).then((data) => {
-            if (data.success) {
-                const entry = buildEntryElement(strongNumber, translations, color);
-                entries.push(entry);
-                attachEntryHandlers(entry);
-                renderEntries();
-                showToast('New entry added', 'success');
-                document.getElementById('add-form').reset();
-                document.getElementById('new-color').value = '#000000';
+            if (!strongNumber) {
+                showToast("Strong's number is required", 'error');
+                return;
             }
+
+            // Validate Strong's number format
+            if (!/^[HG]\d+$/i.test(strongNumber)) {
+                showToast("Invalid format. Use H#### or G#### (e.g., H1234)", 'error');
+                return;
+            }
+
+            if (!translations.length) {
+                showToast("At least one translation is required", 'error');
+                return;
+            }
+
+            // Check for duplicate
+            const exists = entries.some((e) => e.dataset.strong.toUpperCase() === strongNumber);
+            if (exists) {
+                showToast(`${strongNumber} already exists`, 'error');
+                return;
+            }
+
+            sendActions([{ action: 'add', strong_number: strongNumber, translations, color }]).then((data) => {
+                if (data.success) {
+                    const entry = buildEntryElement(strongNumber, translations, color);
+                    entries.push(entry);
+                    attachEntryHandlers(entry);
+                    renderEntries();
+                    showToast(`${strongNumber} added`, 'success');
+                    addForm.reset();
+                    colorInput.value = '#000000';
+                }
+            });
         });
-    });
+    }
 
     // ===== Initialization =====
 
