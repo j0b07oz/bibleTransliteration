@@ -161,6 +161,19 @@ with open(kjv_path, 'r', encoding='utf-8') as f:
 with open(outlines_path, 'r', encoding='utf-8') as f:
     outline_data = json.load(f)
 
+# Load Hebrew-Greek cross-reference data
+crossref_path = os.path.join(STATIC_DATA_DIR, 'hebrew_greek_crossref.json')
+if os.path.exists(crossref_path):
+    with open(crossref_path, 'r', encoding='utf-8') as f:
+        crossref_data = json.load(f)
+    hebrew_to_greek = crossref_data.get('hebrew_to_greek', {})
+    greek_to_hebrew = crossref_data.get('greek_to_hebrew', {})
+    logger.info(f"Loaded {len(hebrew_to_greek)} Hebrew→Greek and {len(greek_to_hebrew)} Greek→Hebrew cross-references")
+else:
+    hebrew_to_greek = {}
+    greek_to_hebrew = {}
+    logger.warning(f"Cross-reference data not found at {crossref_path}")
+
 # Build mappings for book order and chapter counts
 book_order = {}
 book_chapter_count = {}
@@ -666,3 +679,80 @@ def api_books():
             for name, _ in ordered_books
         ]
     })
+
+
+@app.route('/api/crossref/<strong_number>')
+def api_crossref(strong_number):
+    """
+    Get cross-references for a Strong's number.
+    Returns Greek equivalents for Hebrew numbers and vice versa.
+    """
+    import re
+    strong_number = strong_number.upper().strip()
+
+    # Validate format
+    if not re.match(r'^[HG]\d+$', strong_number):
+        return jsonify({'error': "Invalid Strong's number format. Use H#### or G####"}), 400
+
+    # Determine direction and get cross-references
+    if strong_number.startswith('H'):
+        source_map = hebrew_to_greek
+        language = 'hebrew'
+    else:
+        source_map = greek_to_hebrew
+        language = 'greek'
+
+    crossref = source_map.get(strong_number, {})
+
+    # Build response with metadata
+    def enrich_strong(sn):
+        """Add metadata from strongs_data for a Strong's number."""
+        # Find entry in strongs_data
+        entry = next((s for s in strongs_data if s.get('number') == sn), {})
+        return {
+            'strong': sn,
+            'lemma': entry.get('lemma', crossref.get('lemma', '')),
+            'xlit': entry.get('xlit', crossref.get('xlit', '')),
+            'gloss': entry.get('description', '')[:80] + '...' if len(entry.get('description', '')) > 80 else entry.get('description', ''),
+        }
+
+    primary = [enrich_strong(sn) for sn in crossref.get('primary', [])]
+    secondary = [enrich_strong(sn) for sn in crossref.get('secondary', [])]
+
+    return jsonify({
+        'strong': strong_number,
+        'language': language,
+        'cross_refs': {
+            'primary': primary,
+            'secondary': secondary
+        },
+        'notes': crossref.get('notes', '')
+    })
+
+
+@app.route('/api/crossref/batch')
+def api_crossref_batch():
+    """
+    Get cross-references for multiple Strong's numbers at once.
+    Used by dictionary editor to show cross-refs for all entries.
+    """
+    import re
+    strongs_param = request.args.get('strongs', '')
+    strongs_list = [s.strip().upper() for s in strongs_param.split(',') if s.strip()]
+
+    if len(strongs_list) > 100:
+        return jsonify({'error': 'Maximum 100 Strong\'s numbers per request'}), 400
+
+    results = {}
+    for sn in strongs_list:
+        if not re.match(r'^[HG]\d+$', sn):
+            continue
+
+        source_map = hebrew_to_greek if sn.startswith('H') else greek_to_hebrew
+        crossref = source_map.get(sn, {})
+        results[sn] = {
+            'primary': crossref.get('primary', []),
+            'secondary': crossref.get('secondary', [])
+        }
+
+    return jsonify({'results': results})

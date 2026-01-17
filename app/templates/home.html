@@ -161,6 +161,16 @@
             <div class="word-popup__lemma"></div>
             <div class="word-popup__details"></div>
         </div>
+        <!-- Cross-reference section (Hebrew↔Greek LXX equivalents) -->
+        <div class="word-popup__crossref" id="word-popup-crossref" style="display: none;">
+            <div class="word-popup__crossref-header">
+                <span class="word-popup__crossref-icon">⇄</span>
+                <span class="word-popup__crossref-label" id="crossref-label">LXX Equivalents:</span>
+            </div>
+            <div class="word-popup__crossref-list" id="crossref-list">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
         <div class="word-popup__form">
             <label for="word-popup-translation" class="word-popup__label">Translation:</label>
             <input type="text" id="word-popup-translation" class="word-popup__input" placeholder="Enter translation...">

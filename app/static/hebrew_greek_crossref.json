@@ -1,0 +1,4056 @@
+{
+  "metadata": {
+    "source": "STEPBible TBESG/TBESH Lexicons (CC BY 4.0)",
+    "source_url": "https://github.com/STEPBible/STEPBible-Data",
+    "version": "1.0",
+    "created": "2026-01-17",
+    "description": "Hebrew-Greek LXX alignment mappings derived from STEPBible lexicon data"
+  },
+  "hebrew_to_greek": {
+    "H0175": {
+      "primary": [
+        "G0002"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אַהֲרֹן",
+      "xlit": "a.ha.ron",
+      "gloss": "Aaron"
+    },
+    "H3068": {
+      "primary": [
+        "G0005",
+        "G2241",
+        "G4519",
+        "G5310"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְהֹוָה",
+      "xlit": "ye.ho.vah",
+      "gloss": "LORD"
+    },
+    "H1893": {
+      "primary": [
+        "G0006"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "הֶ֫בֶל",
+      "xlit": "he.vel",
+      "gloss": "Abel"
+    },
+    "H0029": {
+      "primary": [
+        "G0007"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֲבִיָּה",
+      "xlit": "a.viy.yah",
+      "gloss": "Abijah"
+    },
+    "H0054": {
+      "primary": [
+        "G0008"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֶבְיָתָר",
+      "xlit": "ev.ya.tar",
+      "gloss": "Abiathar"
+    },
+    "H0085": {
+      "primary": [
+        "G0011"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אַבְרָהָם",
+      "xlit": "av.ra.ham",
+      "gloss": "Abraham"
+    },
+    "H1904": {
+      "primary": [
+        "G0028"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "הָגָר",
+      "xlit": "ha.gar",
+      "gloss": "Hagar"
+    },
+    "H6944": {
+      "primary": [
+        "G0039"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "קֹ֫דֶשׁ",
+      "xlit": "qo.desh",
+      "gloss": "holiness"
+    },
+    "H0121": {
+      "primary": [
+        "G0076"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אָדָם",
+      "xlit": "a.dam",
+      "gloss": "Adam"
+    },
+    "H0795": {
+      "primary": [
+        "G0108"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אַשְׁדּוֹד",
+      "xlit": "ash.dod",
+      "gloss": "Ashdod"
+    },
+    "H4714": {
+      "primary": [
+        "G0125"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מִצְרַ֫יִם",
+      "xlit": "mits.ra.yim",
+      "gloss": "Egypt"
+    },
+    "H3568": {
+      "primary": [
+        "G0128"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "כּוּשׁ",
+      "xlit": "kush",
+      "gloss": "Cush"
+    },
+    "H5992": {
+      "primary": [
+        "G0284"
+      ],
+      "secondary": [
+        "G6095"
+      ],
+      "notes": "",
+      "lemma": "עַמִּינָדָב",
+      "xlit": "am.mi.na.dav",
+      "gloss": "Amminadab"
+    },
+    "H0526": {
+      "primary": [
+        "G0300",
+        "G0301"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אָמוֹן",
+      "xlit": "a.mon",
+      "gloss": "Amon"
+    },
+    "H7725": {
+      "primary": [],
+      "secondary": [
+        "G0471"
+      ],
+      "notes": "",
+      "lemma": "שׁוּב",
+      "xlit": "shuv",
+      "gloss": "to return: return"
+    },
+    "H5110": {
+      "primary": [],
+      "secondary": [
+        "G0526"
+      ],
+      "notes": "",
+      "lemma": "נוּד",
+      "xlit": "nud",
+      "gloss": "to wander"
+    },
+    "H2308": {
+      "primary": [],
+      "secondary": [
+        "G0620"
+      ],
+      "notes": "",
+      "lemma": "חָדַל",
+      "xlit": "cha.dal",
+      "gloss": "to cease"
+    },
+    "H6152": {
+      "primary": [
+        "G0688"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עֲרַב",
+      "xlit": "a.rav",
+      "gloss": "Arabia"
+    },
+    "H7410": {
+      "primary": [
+        "G0689",
+        "G6002",
+        "G6095"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רָם",
+      "xlit": "ram",
+      "gloss": "Ram"
+    },
+    "H4709": {
+      "primary": [
+        "G0707"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מִצְפָּה",
+      "xlit": "mits.pah",
+      "gloss": "Mizpah"
+    },
+    "H4023": {
+      "primary": [
+        "G0717"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מְגִדּוֹ",
+      "xlit": "me.gid.don",
+      "gloss": "Megiddo"
+    },
+    "H0775": {
+      "primary": [
+        "G0742"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אַרְפַּכְשַׁד",
+      "xlit": "ar.pakh.shad",
+      "gloss": "Arpachshad"
+    },
+    "H0609": {
+      "primary": [
+        "G0760"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אָסָא",
+      "xlit": "a.sa",
+      "gloss": "Asa"
+    },
+    "H609": {
+      "primary": [],
+      "secondary": [
+        "G0760"
+      ],
+      "notes": "",
+      "lemma": "אָסָא",
+      "xlit": "ʼÂçâʼ",
+      "gloss": "of uncertain derivation; Asa, the name of a king a"
+    },
+    "H0836": {
+      "primary": [
+        "G0768"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אָשֵׁר",
+      "xlit": "a.sher",
+      "gloss": "Asher"
+    },
+    "H7311": {
+      "primary": [],
+      "secondary": [
+        "G0851"
+      ],
+      "notes": "",
+      "lemma": "רוּם",
+      "xlit": "rum",
+      "gloss": "to exalt"
+    },
+    "H0271": {
+      "primary": [
+        "G0881"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אָחָז",
+      "xlit": "a.chaz",
+      "gloss": "Ahaz"
+    },
+    "H1168": {
+      "primary": [
+        "G0896"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בַּעַל",
+      "xlit": "ba.al",
+      "gloss": "Baal"
+    },
+    "H0894": {
+      "primary": [
+        "G0897"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בָּבֶ֫ל, בָּבֶל",
+      "xlit": "ba.vel",
+      "gloss": "Babylon"
+    },
+    "H1109": {
+      "primary": [
+        "G0903"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בִּלְעָם",
+      "xlit": "bil.am",
+      "gloss": "Balaam"
+    },
+    "H1111": {
+      "primary": [
+        "G0904"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בָּלָק",
+      "xlit": "ba.laq",
+      "gloss": "Balak"
+    },
+    "H1301": {
+      "primary": [
+        "G0913"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בָּרָק",
+      "xlit": "ba.raq",
+      "gloss": "Barak"
+    },
+    "H3077": {
+      "primary": [
+        "G0914"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְהוֹיָדָע",
+      "xlit": "ye.ho.ya.da",
+      "gloss": "Jehoiada"
+    },
+    "H7854": {
+      "primary": [
+        "G0954",
+        "G0955",
+        "G4566"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שָׂטָן",
+      "xlit": "sa.tan",
+      "gloss": "Satan"
+    },
+    "H1144": {
+      "primary": [
+        "G0958"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בִּנְיָמִין",
+      "xlit": "bin.ya.min",
+      "gloss": "Benjamin"
+    },
+    "H1012": {
+      "primary": [
+        "G0962"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בֵּית בָּרָה",
+      "xlit": "bet ba.rah",
+      "gloss": "Beth-barah"
+    },
+    "H1035": {
+      "primary": [
+        "G0965"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בֵּית לֶ֫חֶם",
+      "xlit": "bet le.chem",
+      "gloss": "Bethlehem"
+    },
+    "H1162": {
+      "primary": [
+        "G1003"
+      ],
+      "secondary": [
+        "G4477"
+      ],
+      "notes": "",
+      "lemma": "בֹּ֫עַז",
+      "xlit": "bo.az",
+      "gloss": "Boaz"
+    },
+    "H1160": {
+      "primary": [
+        "G1007"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "בְּעוֹר",
+      "xlit": "be.or",
+      "gloss": "Beor"
+    },
+    "H1403": {
+      "primary": [
+        "G1043"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "גַּבְרִיאֵל",
+      "xlit": "gav.ri.el",
+      "gloss": "Gabriel"
+    },
+    "H1410": {
+      "primary": [
+        "G1045"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "גָּד",
+      "xlit": "gad",
+      "gloss": "Gad"
+    },
+    "H5804": {
+      "primary": [
+        "G1048"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עַזָּה",
+      "xlit": "az.zah",
+      "gloss": "Gaza"
+    },
+    "H1551": {
+      "primary": [
+        "G1056"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "גָּלִיל",
+      "xlit": "ga.lil",
+      "gloss": "Galilee"
+    },
+    "H3672": {
+      "primary": [
+        "G1056",
+        "G5085"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "כִּנֶּ֫רֶת",
+      "xlit": "kin.n.rot",
+      "gloss": "(Sea of) Chinnereth"
+    },
+    "H1439": {
+      "primary": [
+        "G1066"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "גִּדְעוֹן",
+      "xlit": "gid.on",
+      "gloss": "Gideon"
+    },
+    "H6017": {
+      "primary": [
+        "G1116"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עֲמֹרָה",
+      "xlit": "a.mo.rah",
+      "gloss": "Gomorrah"
+    },
+    "H1463": {
+      "primary": [
+        "G1136"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "גּוֹג",
+      "xlit": "gog",
+      "gloss": "Gog"
+    },
+    "H1732": {
+      "primary": [
+        "G1138"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "דָּוִד",
+      "xlit": "da.vid",
+      "gloss": "David"
+    },
+    "H1834": {
+      "primary": [
+        "G1153"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "דַּמֶּ֫שֶׂק",
+      "xlit": "dam.me.seq",
+      "gloss": "Damascus"
+    },
+    "H1840": {
+      "primary": [
+        "G1158"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "דָּנִיֵּאל, דָּנִאֵל",
+      "xlit": "da.niy.yel",
+      "gloss": "Daniel"
+    },
+    "H0224": {
+      "primary": [
+        "G1212"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אוּרִים",
+      "xlit": "u.rim",
+      "gloss": "Urim"
+    },
+    "H5677": {
+      "primary": [
+        "G1443"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עֵ֫בֶר",
+      "xlit": "e.ver",
+      "gloss": "Eber"
+    },
+    "H0762": {
+      "primary": [
+        "G1444"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֲרָמִית",
+      "xlit": "a.ra.mit",
+      "gloss": "Aramaic"
+    },
+    "H5680": {
+      "primary": [
+        "G1445"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עִבְרִי",
+      "xlit": "iv.ri",
+      "gloss": "Hebrew"
+    },
+    "H2396": {
+      "primary": [
+        "G1478"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "חִזְקִיָּהוּ",
+      "xlit": "chiz.qiy.yah",
+      "gloss": "Hezekiah"
+    },
+    "H1471": {
+      "primary": [
+        "G1484"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "גּוֹי",
+      "xlit": "goy",
+      "gloss": "nation"
+    },
+    "H2132": {
+      "primary": [
+        "G1638"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "זַ֫יִת",
+      "xlit": "za.yit",
+      "gloss": "(Mount of) Olives"
+    },
+    "H5867": {
+      "primary": [
+        "G1639"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עֵילָם",
+      "xlit": "e.lam",
+      "gloss": "Elam"
+    },
+    "H0477": {
+      "primary": [
+        "G1666"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֱלִישָׁע",
+      "xlit": "e.li.sah",
+      "gloss": "Elisha"
+    },
+    "H3120": {
+      "primary": [
+        "G1671",
+        "G1672"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יָוָן",
+      "xlit": "ya.van",
+      "gloss": "Javan"
+    },
+    "H6005": {
+      "primary": [
+        "G1694"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עִמָּנוּאֵל",
+      "xlit": "im.ma.nu.el",
+      "gloss": "Immanuel"
+    },
+    "H2544": {
+      "primary": [
+        "G1697"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "חֲמוֹר",
+      "xlit": "cha.mor",
+      "gloss": "Hamor"
+    },
+    "H0583": {
+      "primary": [
+        "G1800"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֱנוֹשׁ",
+      "xlit": "e.nosh",
+      "gloss": "Enosh"
+    },
+    "H2585": {
+      "primary": [
+        "G1802"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "חֲנוֹךְ",
+      "xlit": "cha.nokh",
+      "gloss": "Enoch"
+    },
+    "H2730": {
+      "primary": [],
+      "secondary": [
+        "G1839"
+      ],
+      "notes": "",
+      "lemma": "חָרֵד",
+      "xlit": "cha.red",
+      "gloss": "trembling"
+    },
+    "H7592": {
+      "primary": [],
+      "secondary": [
+        "G1871"
+      ],
+      "notes": "",
+      "lemma": "שָׁאַל",
+      "xlit": "sha.al",
+      "gloss": "to ask"
+    },
+    "H5488": {
+      "primary": [
+        "G2063"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "סוּף",
+      "xlit": "suph",
+      "gloss": "Red (Sea)"
+    },
+    "H2696": {
+      "primary": [
+        "G2074"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "חֶצְרוֹן",
+      "xlit": "chets.ron",
+      "gloss": "Hezron"
+    },
+    "H2332": {
+      "primary": [
+        "G2096"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "חַוָּה",
+      "xlit": "chav.vah",
+      "gloss": "Eve"
+    },
+    "H6578": {
+      "primary": [
+        "G2166"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "פְּרָת",
+      "xlit": "pe.rat",
+      "gloss": "Euphrates"
+    },
+    "H0669": {
+      "primary": [
+        "G2187"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֶפְרַ֫יִם",
+      "xlit": "eph.ra.yim",
+      "gloss": "Ephraim"
+    },
+    "H2074": {
+      "primary": [
+        "G2194"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "זְבוּלֻן",
+      "xlit": "ze.vu.lun",
+      "gloss": "Zebulun"
+    },
+    "H2226": {
+      "primary": [
+        "G2196"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "זֶ֫רַח",
+      "xlit": "ze.rach",
+      "gloss": "Zerah"
+    },
+    "H2148": {
+      "primary": [
+        "G2197"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "זְכַרְיָהוּ",
+      "xlit": "ze.khar.yah",
+      "gloss": "Zechariah"
+    },
+    "H2216": {
+      "primary": [
+        "G2216"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "זְרֻבָּבֶ֫ל",
+      "xlit": "ze.rub.ba.vel",
+      "gloss": "Zerubbabel"
+    },
+    "H0452": {
+      "primary": [
+        "G2243"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֵלִיָּה",
+      "xlit": "e.liy.yah",
+      "gloss": "Elijah"
+    },
+    "H3470": {
+      "primary": [
+        "G2268"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְשַׁעְיָ֫הוּ",
+      "xlit": "ye.sha.yah",
+      "gloss": "Isaiah"
+    },
+    "H6215": {
+      "primary": [
+        "G2269"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עֵשָׂו",
+      "xlit": "e.sav",
+      "gloss": "Esau"
+    },
+    "H8559": {
+      "primary": [
+        "G2283"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "תָּמָר",
+      "xlit": "ta.mar",
+      "gloss": "Tamar"
+    },
+    "H8646": {
+      "primary": [
+        "G2291"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "תֶּ֫רַח",
+      "xlit": "te.rach",
+      "gloss": "Terah"
+    },
+    "H3478": {
+      "primary": [
+        "G2384",
+        "G2474"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יִשְׂרָאֵל",
+      "xlit": "yis.ra.el",
+      "gloss": "Israel"
+    },
+    "H3382": {
+      "primary": [
+        "G2391"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יֶ֫רֶד",
+      "xlit": "ye.red",
+      "gloss": "Jared"
+    },
+    "H0348": {
+      "primary": [
+        "G2403"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אִיזֶבֶל",
+      "xlit": "i.ze.vel",
+      "gloss": "Jezebel"
+    },
+    "H3414": {
+      "primary": [
+        "G2408"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יִרְמְיָ֫הוּ",
+      "xlit": "yir.me.yah",
+      "gloss": "Jeremiah"
+    },
+    "H3405": {
+      "primary": [
+        "G2410"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְרִיחוֹ",
+      "xlit": "ye.ri.cho",
+      "gloss": "Jericho"
+    },
+    "H3389": {
+      "primary": [
+        "G2414",
+        "G4532",
+        "G4622"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְרוּשָׁלִַ֫ם, יְרוּשְׁלֵם",
+      "xlit": "ye.ru.sha.laim",
+      "gloss": "Jerusalem"
+    },
+    "H3448": {
+      "primary": [
+        "G2421"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יִשַׁי",
+      "xlit": "yi.shay",
+      "gloss": "Jesse"
+    },
+    "H3316": {
+      "primary": [
+        "G2422"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יִפְתָּח",
+      "xlit": "yiph.tach",
+      "gloss": "Iphtah"
+    },
+    "H3078": {
+      "primary": [
+        "G2423"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְהוֹיָכִין",
+      "xlit": "ye.ho.ya.khin",
+      "gloss": "Jehoiachin"
+    },
+    "H3091": {
+      "primary": [
+        "G2424"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְהוֹשׁוּעַ",
+      "xlit": "ye.ho.shu.a",
+      "gloss": "Joshua"
+    },
+    "H3305": {
+      "primary": [
+        "G2445"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יָפוֹ",
+      "xlit": "ya.pho",
+      "gloss": "Joppa"
+    },
+    "H3383": {
+      "primary": [
+        "G2446"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יַרְדֵּן",
+      "xlit": "yar.den",
+      "gloss": "Jordan"
+    },
+    "H3063": {
+      "primary": [
+        "G2448",
+        "G2449"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְהוּדָה",
+      "xlit": "ye.hu.dah",
+      "gloss": "Judah"
+    },
+    "H3064": {
+      "primary": [
+        "G2453"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְהוּדִי",
+      "xlit": "ye.hu.di",
+      "gloss": "Jew"
+    },
+    "H3327": {
+      "primary": [
+        "G2464"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יִצְחָק",
+      "xlit": "yits.chaq",
+      "gloss": "Isaac"
+    },
+    "H3485": {
+      "primary": [
+        "G2466"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יִשָּׂשכָר",
+      "xlit": "yis.sa.s.khar",
+      "gloss": "Issachar"
+    },
+    "H3195": {
+      "primary": [
+        "G2484"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְטוּר",
+      "xlit": "ye.tur",
+      "gloss": "Jetur"
+    },
+    "H3147": {
+      "primary": [
+        "G2488"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יוֹתָם",
+      "xlit": "yo.tam",
+      "gloss": "Jotham"
+    },
+    "H0347": {
+      "primary": [
+        "G2492"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אִיּוֹב",
+      "xlit": "iy.yov",
+      "gloss": "Job"
+    },
+    "H3100": {
+      "primary": [
+        "G2493"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יוֹאֵל",
+      "xlit": "yo.el",
+      "gloss": "Joel"
+    },
+    "H3124": {
+      "primary": [
+        "G2495"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יוֹנָה",
+      "xlit": "yo.nah",
+      "gloss": "Jonah"
+    },
+    "H3088": {
+      "primary": [
+        "G2496"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְהוֹרָם",
+      "xlit": "ye.ho.ram",
+      "gloss": "Jehoram"
+    },
+    "H3092": {
+      "primary": [
+        "G2498"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יְהוֹשָׁפָט",
+      "xlit": "ye.ho.sha.phat",
+      "gloss": "Jehoshaphat"
+    },
+    "H3130": {
+      "primary": [
+        "G2501"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יוֹסֵף",
+      "xlit": "yo.seph",
+      "gloss": "Joseph"
+    },
+    "H2977": {
+      "primary": [
+        "G2502"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "יֹאשִׁיָּ֫הוּ",
+      "xlit": "yo.shiy.yah",
+      "gloss": "Josiah"
+    },
+    "H7014": {
+      "primary": [
+        "G2535"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "קַ֫יִן",
+      "xlit": "qa.yin",
+      "gloss": "Kain"
+    },
+    "H7018": {
+      "primary": [
+        "G2536"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "קֵינָן",
+      "xlit": "qe.nan",
+      "gloss": "Kenan"
+    },
+    "H7071": {
+      "primary": [
+        "G2580"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "קָנָה",
+      "xlit": "qa.nah",
+      "gloss": "Kanah"
+    },
+    "H6939": {
+      "primary": [
+        "G2748"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "קִדְרוֹן",
+      "xlit": "qid.ron",
+      "gloss": "Kidron"
+    },
+    "H7027": {
+      "primary": [
+        "G2797"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "קִישׁ",
+      "xlit": "qish",
+      "gloss": "Kish"
+    },
+    "H7141": {
+      "primary": [
+        "G2879"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "קֹ֫רַח",
+      "xlit": "qo.rach",
+      "gloss": "Korah"
+    },
+    "H3731": {
+      "primary": [
+        "G2914"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "כַּפְתּוֹר",
+      "xlit": "kaph.tor",
+      "gloss": "Caphtor"
+    },
+    "H3794": {
+      "primary": [
+        "G2953"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "כִּתִּי",
+      "xlit": "kit.ti",
+      "gloss": "Kittim"
+    },
+    "H3929": {
+      "primary": [
+        "G2984"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "לֶ֫מֶךְ",
+      "xlit": "le.mekh",
+      "gloss": "Lamech"
+    },
+    "H3878": {
+      "primary": [
+        "G3017"
+      ],
+      "secondary": [
+        "G3017",
+        "G3018"
+      ],
+      "notes": "",
+      "lemma": "לֵוִי",
+      "xlit": "le.vi",
+      "gloss": "Levi"
+    },
+    "H3864": {
+      "primary": [
+        "G3033"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "לוּב",
+      "xlit": "lu.vi",
+      "gloss": "Libyan"
+    },
+    "H3850": {
+      "primary": [
+        "G3069"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "לֹד",
+      "xlit": "lod",
+      "gloss": "Lod"
+    },
+    "H3876": {
+      "primary": [
+        "G3091"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "לוֹט",
+      "xlit": "lot",
+      "gloss": "Lot"
+    },
+    "H4026": {
+      "primary": [],
+      "secondary": [
+        "G3093"
+      ],
+      "notes": "",
+      "lemma": "מִגְדָּל",
+      "xlit": "mig.dal",
+      "gloss": "(Hananel) Tower"
+    },
+    "H4031": {
+      "primary": [
+        "G3098"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מָגוֹג",
+      "xlit": "ma.gog",
+      "gloss": "Magog"
+    },
+    "H4080": {
+      "primary": [
+        "G3099"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מִדְיָן",
+      "xlit": "mid.yan",
+      "gloss": "Midian"
+    },
+    "H4968": {
+      "primary": [
+        "G3103"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מְתוּשֶׁ֫לַח",
+      "xlit": "me.tu.she.lach",
+      "gloss": "Methuselah"
+    },
+    "H4111": {
+      "primary": [
+        "G3121"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מַהֲלַלְאֵל",
+      "xlit": "ma.ha.lal.el",
+      "gloss": "Mahalalel"
+    },
+    "H4519": {
+      "primary": [
+        "G3128"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מְנַשֶּׁה",
+      "xlit": "me.nash.sheh",
+      "gloss": "Manasseh"
+    },
+    "H4442": {
+      "primary": [
+        "G3198"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מַלְכִּי־צֶ֫דֶק",
+      "xlit": "mal.ki-tse.deq",
+      "gloss": "Melchizedek"
+    },
+    "H0763": {
+      "primary": [
+        "G3318"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֲרַם נַהֲרַיִם",
+      "xlit": "a.ram na.ha.ra.yim",
+      "gloss": "Mesopotamia"
+    },
+    "H4091": {
+      "primary": [
+        "G3370"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מְדָן",
+      "xlit": "me.dan",
+      "gloss": "Medan"
+    },
+    "H4317": {
+      "primary": [
+        "G3413"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מִיכָאֵל",
+      "xlit": "mi.kha.el",
+      "gloss": "Michael"
+    },
+    "H4432": {
+      "primary": [
+        "G3434"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מֹ֫לֶךְ",
+      "xlit": "mo.lekh",
+      "gloss": "Molech"
+    },
+    "H4872": {
+      "primary": [
+        "G3475"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "מֹשֶׁה",
+      "xlit": "mo.sheh",
+      "gloss": "Moses"
+    },
+    "H5177": {
+      "primary": [
+        "G3476"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "נַחְשׁוֹן",
+      "xlit": "nach.shon",
+      "gloss": "Nahshon"
+    },
+    "H5416": {
+      "primary": [
+        "G3481"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "נָתָן",
+      "xlit": "na.tan",
+      "gloss": "Nathan"
+    },
+    "H5152": {
+      "primary": [
+        "G3493"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "נָחוֹר",
+      "xlit": "na.chor",
+      "gloss": "Nahor"
+    },
+    "H5283": {
+      "primary": [
+        "G3497"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "נַעֲמָן",
+      "xlit": "na.a.man",
+      "gloss": "Naaman"
+    },
+    "H5321": {
+      "primary": [
+        "G3508"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "נַפְתָּלִי",
+      "xlit": "naph.ta.li",
+      "gloss": "Naphtali"
+    },
+    "H5210": {
+      "primary": [
+        "G3535"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "נִינְוֵה",
+      "xlit": "nin.veh",
+      "gloss": "Nineveh"
+    },
+    "H7614": {
+      "primary": [
+        "G3558"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שְׁבָא",
+      "xlit": "she.va",
+      "gloss": "Sheba"
+    },
+    "H5146": {
+      "primary": [
+        "G3575"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "נֹחַ",
+      "xlit": "no.ach",
+      "gloss": "Noah"
+    },
+    "H5818": {
+      "primary": [
+        "G3604"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עֻזִּיָּהוּ",
+      "xlit": "uz.ziy.yah",
+      "gloss": "Uzziah"
+    },
+    "H0223": {
+      "primary": [
+        "G3774"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אוּרִיָּה",
+      "xlit": "u.riy.yah",
+      "gloss": "Uriah"
+    },
+    "H6453": {
+      "primary": [
+        "G3957"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "פֶּ֫סַח",
+      "xlit": "pe.sach",
+      "gloss": "Passover"
+    },
+    "H7620": {
+      "primary": [
+        "G4005"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שָׁבוּעַ",
+      "xlit": "sha.vu.a",
+      "gloss": "Weeks"
+    },
+    "H5362": {
+      "primary": [],
+      "secondary": [
+        "G4023"
+      ],
+      "notes": "",
+      "lemma": "נָקַף",
+      "xlit": "na.qaph",
+      "gloss": "to strike"
+    },
+    "H661": {
+      "primary": [],
+      "secondary": [
+        "G4023"
+      ],
+      "notes": "",
+      "lemma": "אָפַף",
+      "xlit": "ʼâphaph",
+      "gloss": "a primitive root; to surround; compass."
+    },
+    "H6822": {
+      "primary": [],
+      "secondary": [
+        "G4023"
+      ],
+      "notes": "",
+      "lemma": "צָפָה",
+      "xlit": "tsa.phah",
+      "gloss": "to watch"
+    },
+    "H6629": {
+      "primary": [
+        "G4262"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "צֹאן",
+      "xlit": "tson",
+      "gloss": "flock"
+    },
+    "H7676": {
+      "primary": [
+        "G4315",
+        "G4520"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שַׁבָּת",
+      "xlit": "shab.bat",
+      "gloss": "Sabbath"
+    },
+    "H5387": {
+      "primary": [],
+      "secondary": [
+        "G4383"
+      ],
+      "notes": "",
+      "lemma": "נָשִׂיא",
+      "xlit": "na.si",
+      "gloss": "leader"
+    },
+    "H5910": {
+      "primary": [
+        "G4424"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עַכּוֹ",
+      "xlit": "ak.ko",
+      "gloss": "Acco"
+    },
+    "H7343": {
+      "primary": [
+        "G4460"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רָחָב",
+      "xlit": "ra.chav",
+      "gloss": "Rahab"
+    },
+    "H7466": {
+      "primary": [
+        "G4466"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רְעוּ",
+      "xlit": "re.u",
+      "gloss": "Reu"
+    },
+    "H7386": {
+      "primary": [],
+      "secondary": [
+        "G4469"
+      ],
+      "notes": "",
+      "lemma": "רֵיק",
+      "xlit": "req",
+      "gloss": "worthless"
+    },
+    "H7414": {
+      "primary": [
+        "G4471"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רָמָה",
+      "xlit": "ra.mah",
+      "gloss": "Ramah"
+    },
+    "H7354": {
+      "primary": [
+        "G4478"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רָחֵל",
+      "xlit": "ra.chel",
+      "gloss": "Rachel"
+    },
+    "H7259": {
+      "primary": [
+        "G4479"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רִבְקָה",
+      "xlit": "riv.qah",
+      "gloss": "Rebekah"
+    },
+    "H7346": {
+      "primary": [
+        "G4497"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רְחַבְעָם",
+      "xlit": "re.chav.am",
+      "gloss": "Rehoboam"
+    },
+    "H7205": {
+      "primary": [
+        "G4502"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רְאוּבֵן",
+      "xlit": "re.u.ven",
+      "gloss": "Reuben"
+    },
+    "H7327": {
+      "primary": [
+        "G4503"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רוּת",
+      "xlit": "rut",
+      "gloss": "Ruth"
+    },
+    "H7974": {
+      "primary": [
+        "G4527"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שֶׁ֫לַח",
+      "xlit": "she.lach",
+      "gloss": "Shelah"
+    },
+    "H8007": {
+      "primary": [
+        "G4527",
+        "G4533"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שַׂלְמָא",
+      "xlit": "sal.ma",
+      "gloss": "Salmon"
+    },
+    "H7597": {
+      "primary": [
+        "G4528"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שְׁאַלְתִּיאֵל",
+      "xlit": "she.al.ti.el",
+      "gloss": "Shealtiel"
+    },
+    "H8111": {
+      "primary": [
+        "G4540"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שֹׁמְרוֹן",
+      "xlit": "sho.me.ron",
+      "gloss": "Samaria"
+    },
+    "H8050": {
+      "primary": [
+        "G4545"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שְׁמוּאֵל",
+      "xlit": "she.mu.el",
+      "gloss": "Samuel"
+    },
+    "H8123": {
+      "primary": [
+        "G4546"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שִׁמְשׁוֹן",
+      "xlit": "shim.shon",
+      "gloss": "Samson"
+    },
+    "H7586": {
+      "primary": [
+        "G4549"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שָׁאוּל",
+      "xlit": "sha.ul",
+      "gloss": "Saul"
+    },
+    "H5614": {
+      "primary": [
+        "G4554"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "סְפָרַ֑ד",
+      "xlit": "se.pha.rad",
+      "gloss": "Sepharad"
+    },
+    "H6886": {
+      "primary": [
+        "G4558"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "צָֽרְפַת",
+      "xlit": "tsa.re.phat",
+      "gloss": "Zarephath"
+    },
+    "H8286": {
+      "primary": [
+        "G4562"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שְׂרוּג",
+      "xlit": "se.rug",
+      "gloss": "Serug"
+    },
+    "H8283": {
+      "primary": [
+        "G4564"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שָׂרָה",
+      "xlit": "sa.rah",
+      "gloss": "Sarah"
+    },
+    "H8289": {
+      "primary": [
+        "G4565"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שָׁרוֹן",
+      "xlit": "sha.ron",
+      "gloss": "Lasharon"
+    },
+    "H8352": {
+      "primary": [
+        "G4589"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שֵׁת",
+      "xlit": "shet",
+      "gloss": "Seth"
+    },
+    "H8035": {
+      "primary": [
+        "G4590"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שֵׁם",
+      "xlit": "shem",
+      "gloss": "Shem"
+    },
+    "H6721": {
+      "primary": [
+        "G4605"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "צִידוֹן",
+      "xlit": "tsi.don",
+      "gloss": "Sidon"
+    },
+    "H7975": {
+      "primary": [
+        "G4611"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שֶׁ֫לַח",
+      "xlit": "she.lach",
+      "gloss": "Shelah"
+    },
+    "H5514": {
+      "primary": [
+        "G4614"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "סִינַי",
+      "xlit": "si.nay",
+      "gloss": "Sinai"
+    },
+    "H5467": {
+      "primary": [
+        "G4670"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "סְדֹם",
+      "xlit": "se.dom",
+      "gloss": "Sodom"
+    },
+    "H8010": {
+      "primary": [
+        "G4672"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שְׁלֹמֹה",
+      "xlit": "she.lo.moh",
+      "gloss": "Solomon"
+    },
+    "H8095": {
+      "primary": [
+        "G4826"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שִׁמְעוֹן",
+      "xlit": "shim.on",
+      "gloss": "Simeon"
+    },
+    "H225": {
+      "primary": [],
+      "secondary": [
+        "G4856"
+      ],
+      "notes": "",
+      "lemma": "אוּת",
+      "xlit": "ʼûwth",
+      "gloss": "a primitive root; properly, to come, i.e. (implied"
+    },
+    "H2266": {
+      "primary": [],
+      "secondary": [
+        "G4856"
+      ],
+      "notes": "",
+      "lemma": "חָבַר",
+      "xlit": "cha.var",
+      "gloss": "to unite"
+    },
+    "H5117": {
+      "primary": [],
+      "secondary": [
+        "G4856"
+      ],
+      "notes": "",
+      "lemma": "נוּחַ",
+      "xlit": "nu.ach",
+      "gloss": "to rest"
+    },
+    "H0758": {
+      "primary": [
+        "G4947"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "אֲרָם",
+      "xlit": "a.ram",
+      "gloss": "Aram"
+    },
+    "H7927": {
+      "primary": [
+        "G4966"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "שְׁכֶם",
+      "xlit": "she.khem",
+      "gloss": "Shechem"
+    },
+    "H7557": {
+      "primary": [
+        "G5085"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "רַקַּת",
+      "xlit": "raq.qat",
+      "gloss": "Rakkath"
+    },
+    "H6865": {
+      "primary": [
+        "G5183"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "צֹר",
+      "xlit": "tsor",
+      "gloss": "Tyre"
+    },
+    "H6389": {
+      "primary": [
+        "G5317"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "פֶּ֫לֶג",
+      "xlit": "pe.leg",
+      "gloss": "Peleg"
+    },
+    "H6547": {
+      "primary": [
+        "G5328"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "פַּרְעֹה",
+      "xlit": "par.oh",
+      "gloss": "Pharaoh"
+    },
+    "H6557": {
+      "primary": [
+        "G5329"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "פֶּ֫רֶץ",
+      "xlit": "pe.rets",
+      "gloss": "Perez"
+    },
+    "H3778": {
+      "primary": [
+        "G5466"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "כַּשְׂדִּים",
+      "xlit": "kas.di",
+      "gloss": "Chaldea"
+    },
+    "H3667": {
+      "primary": [
+        "G5477"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "כְּנַ֫עַן",
+      "xlit": "ke.na.an",
+      "gloss": "Canaan"
+    },
+    "H2771": {
+      "primary": [
+        "G5488"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "חָרָן",
+      "xlit": "cha.ran",
+      "gloss": "Haran"
+    },
+    "H3743": {
+      "primary": [
+        "G5502"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "כְּרוּב",
+      "xlit": "ke.ruv",
+      "gloss": "Cherub"
+    },
+    "H5744": {
+      "primary": [
+        "G5601"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "עוֹבֵד",
+      "xlit": "o.ved",
+      "gloss": "Obed"
+    },
+    "H1954": {
+      "primary": [
+        "G5617"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "הוֹשֵׁעַ",
+      "xlit": "ho.she.a",
+      "gloss": "Hoshea"
+    },
+    "H0806": {
+      "primary": [],
+      "secondary": [
+        "G6095"
+      ],
+      "notes": "",
+      "lemma": "אַשְׁחוּר",
+      "xlit": "ash.chur",
+      "gloss": "Ashhur"
+    },
+    "H3396": {
+      "primary": [],
+      "secondary": [
+        "G6095"
+      ],
+      "notes": "",
+      "lemma": "יְרַחְמְאֵל",
+      "xlit": "ye.rach.me.el",
+      "gloss": "Jerahmeel"
+    }
+  },
+  "greek_to_hebrew": {
+    "G0002": {
+      "primary": [
+        "H0175"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀαρών",
+      "xlit": "Aarōn",
+      "gloss": "Aaron"
+    },
+    "G0005": {
+      "primary": [
+        "H3068"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "ἀββά",
+      "xlit": "abba",
+      "gloss": "Abba"
+    },
+    "G0006": {
+      "primary": [
+        "H1893"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἄβελ",
+      "xlit": "Abel",
+      "gloss": "Abel"
+    },
+    "G0007": {
+      "primary": [
+        "H0029"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀβιά",
+      "xlit": "Abia",
+      "gloss": "Abijah"
+    },
+    "G0008": {
+      "primary": [
+        "H0054"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀβιαθάρ",
+      "xlit": "Abiathar",
+      "gloss": "Abiathar"
+    },
+    "G0011": {
+      "primary": [
+        "H0085"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀβραάμ",
+      "xlit": "Abraam",
+      "gloss": "Abraham"
+    },
+    "G0028": {
+      "primary": [
+        "H1904"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἄγαρ",
+      "xlit": "Agar",
+      "gloss": "Hagar"
+    },
+    "G0039": {
+      "primary": [
+        "H6944"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "ἅγιον",
+      "xlit": "hagion",
+      "gloss": "Holy Place"
+    },
+    "G0076": {
+      "primary": [
+        "H0121"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀδάμ",
+      "xlit": "Adam",
+      "gloss": "Adam"
+    },
+    "G0108": {
+      "primary": [
+        "H0795"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἄζωτος",
+      "xlit": "Azōtos",
+      "gloss": "Azotus"
+    },
+    "G0125": {
+      "primary": [
+        "H4714"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Αἴγυπτος",
+      "xlit": "Aiguptos",
+      "gloss": "Egypt"
+    },
+    "G0128": {
+      "primary": [
+        "H3568"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Αἰθίοψ",
+      "xlit": "Aithiops",
+      "gloss": "Ethiopian"
+    },
+    "G0284": {
+      "primary": [
+        "H5992"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀμιναδάβ",
+      "xlit": "Aminadab",
+      "gloss": "Amminadab"
+    },
+    "G0300": {
+      "primary": [
+        "H0526"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀμών",
+      "xlit": "Amōn",
+      "gloss": "Amos"
+    },
+    "G0301": {
+      "primary": [
+        "H0526"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀμώς",
+      "xlit": "Amōs",
+      "gloss": "Amos"
+    },
+    "G0471": {
+      "primary": [],
+      "secondary": [
+        "H7725"
+      ],
+      "notes": "",
+      "lemma": "ἀντεῖπον",
+      "xlit": "anteipon",
+      "gloss": "to contradict"
+    },
+    "G0526": {
+      "primary": [],
+      "secondary": [
+        "H5110"
+      ],
+      "notes": "",
+      "lemma": "ἀπαλλοτριόω",
+      "xlit": "apallotrioō",
+      "gloss": "to alienate"
+    },
+    "G0620": {
+      "primary": [],
+      "secondary": [
+        "H2308"
+      ],
+      "notes": "",
+      "lemma": "ἀπολείπω",
+      "xlit": "apoleipō",
+      "gloss": "to leave"
+    },
+    "G0688": {
+      "primary": [
+        "H6152"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀραβία",
+      "xlit": "Arabia",
+      "gloss": "Arabia"
+    },
+    "G0689": {
+      "primary": [
+        "H7410"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀράμ",
+      "xlit": "Aram",
+      "gloss": "Ram"
+    },
+    "G0707": {
+      "primary": [
+        "H4709"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀριμαθαία",
+      "xlit": "Arimathaia",
+      "gloss": "Arimathea"
+    },
+    "G0717": {
+      "primary": [
+        "H4023"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀρμαγεδδών",
+      "xlit": "Armageddōn",
+      "gloss": "Armageddon"
+    },
+    "G0742": {
+      "primary": [
+        "H0775"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀρφαξάδ",
+      "xlit": "Arphaxad",
+      "gloss": "Arphaxad"
+    },
+    "G0760": {
+      "primary": [
+        "H0609"
+      ],
+      "secondary": [
+        "H609"
+      ],
+      "notes": "",
+      "lemma": "Ἀσά",
+      "xlit": "Asa",
+      "gloss": "Asaph"
+    },
+    "G0768": {
+      "primary": [
+        "H0836"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀσήρ",
+      "xlit": "Asēr",
+      "gloss": "Asher"
+    },
+    "G0851": {
+      "primary": [],
+      "secondary": [
+        "H7311"
+      ],
+      "notes": "",
+      "lemma": "ἀφαιρέω",
+      "xlit": "aphaireō",
+      "gloss": "to remove"
+    },
+    "G0881": {
+      "primary": [
+        "H0271"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀχάζ",
+      "xlit": "Achaz",
+      "gloss": "Ahaz"
+    },
+    "G0896": {
+      "primary": [
+        "H1168"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βάαλ",
+      "xlit": "Baal",
+      "gloss": "Baal"
+    },
+    "G0897": {
+      "primary": [
+        "H0894"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βαβυλών",
+      "xlit": "Babulōn",
+      "gloss": "Babylon"
+    },
+    "G0903": {
+      "primary": [
+        "H1109"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βαλαάμ",
+      "xlit": "Balaam",
+      "gloss": "Balaam"
+    },
+    "G0904": {
+      "primary": [
+        "H1111"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βαλάκ",
+      "xlit": "Balak",
+      "gloss": "Balak"
+    },
+    "G0913": {
+      "primary": [
+        "H1301"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βαράκ",
+      "xlit": "Barak",
+      "gloss": "Barak"
+    },
+    "G0914": {
+      "primary": [
+        "H3077"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βαραχίας",
+      "xlit": "Barachias",
+      "gloss": "Barachiah"
+    },
+    "G0954": {
+      "primary": [
+        "H7854"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βεελζεβούλ",
+      "xlit": "Beelzeboul",
+      "gloss": "Beelzebul"
+    },
+    "G0955": {
+      "primary": [
+        "H7854"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βελίαλ",
+      "xlit": "Belial",
+      "gloss": "Belial"
+    },
+    "G0958": {
+      "primary": [
+        "H1144"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βενιαμίν",
+      "xlit": "Beniamin",
+      "gloss": "Benjamin"
+    },
+    "G0962": {
+      "primary": [
+        "H1012"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βηθαβαρά,Βηθανία",
+      "xlit": "Bēthabara",
+      "gloss": "Bethany"
+    },
+    "G0965": {
+      "primary": [
+        "H1035"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βηθλεέμ",
+      "xlit": "Bēthleem",
+      "gloss": "Bethlehem"
+    },
+    "G1003": {
+      "primary": [
+        "H1162"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βοόζ",
+      "xlit": "Booz",
+      "gloss": "Boaz"
+    },
+    "G1007": {
+      "primary": [
+        "H1160"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Βοσόρ, Βεώρ",
+      "xlit": "Bosor, Beōr",
+      "gloss": "Beor"
+    },
+    "G1043": {
+      "primary": [
+        "H1403"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Γαβριήλ",
+      "xlit": "Gabriēl",
+      "gloss": "Gabriel"
+    },
+    "G1045": {
+      "primary": [
+        "H1410"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Γάδ",
+      "xlit": "Gad",
+      "gloss": "Gad"
+    },
+    "G1048": {
+      "primary": [
+        "H5804"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Γάζα",
+      "xlit": "Gaza",
+      "gloss": "Gaza"
+    },
+    "G1056": {
+      "primary": [
+        "H1551",
+        "H3672"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Γαλιλαία",
+      "xlit": "Galilaia",
+      "gloss": "Galilee"
+    },
+    "G1066": {
+      "primary": [
+        "H1439"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Γεδεών",
+      "xlit": "Gedeōn",
+      "gloss": "Gideon"
+    },
+    "G1116": {
+      "primary": [
+        "H6017"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Γόμορρα",
+      "xlit": "Gomorra",
+      "gloss": "Gomorrah"
+    },
+    "G1136": {
+      "primary": [
+        "H1463"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Γώγ",
+      "xlit": "Gōg",
+      "gloss": "Gog"
+    },
+    "G1138": {
+      "primary": [
+        "H1732"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Δαυείδ, Δαυίδ, Δαβίδ",
+      "xlit": "Daueid, Dauid, Dabid",
+      "gloss": "David"
+    },
+    "G1153": {
+      "primary": [
+        "H1834"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Δαμασκηνός",
+      "xlit": "Damaskēnos",
+      "gloss": "Damascus"
+    },
+    "G1158": {
+      "primary": [
+        "H1840"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Δανιήλ",
+      "xlit": "Daniēl",
+      "gloss": "Daniel"
+    },
+    "G1212": {
+      "primary": [
+        "H0224"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "δῆλος",
+      "xlit": "dēlos",
+      "gloss": "Urim"
+    },
+    "G1443": {
+      "primary": [
+        "H5677"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐβέρ",
+      "xlit": "Eber",
+      "gloss": "Eber"
+    },
+    "G1444": {
+      "primary": [
+        "H0762"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἑβραϊκός",
+      "xlit": "Hebraikos",
+      "gloss": "Hebrew"
+    },
+    "G1445": {
+      "primary": [
+        "H5680"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἑβραῖος",
+      "xlit": "Hebraios",
+      "gloss": "Hebrew"
+    },
+    "G1478": {
+      "primary": [
+        "H2396"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐζεκίας",
+      "xlit": "Ezekias",
+      "gloss": "Hezekiah"
+    },
+    "G1484": {
+      "primary": [
+        "H1471"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "ἔθνος",
+      "xlit": "ethnos",
+      "gloss": "Gentiles"
+    },
+    "G1638": {
+      "primary": [
+        "H2132"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "ἐλαιών",
+      "xlit": "elaiōn",
+      "gloss": "Olivet"
+    },
+    "G1639": {
+      "primary": [
+        "H5867"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐλαμίτης",
+      "xlit": "Elamitēs",
+      "gloss": "Elamite"
+    },
+    "G1666": {
+      "primary": [
+        "H0477"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐλισσαῖος",
+      "xlit": "Elissaios",
+      "gloss": "Elisha"
+    },
+    "G1671": {
+      "primary": [
+        "H3120"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἑλλάς",
+      "xlit": "Hellas",
+      "gloss": "Greece"
+    },
+    "G1672": {
+      "primary": [
+        "H3120"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἕλλην=Ἕλλην",
+      "xlit": "Hellēn",
+      "gloss": "Greek, Gentile"
+    },
+    "G1694": {
+      "primary": [
+        "H6005"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐμμανουήλ",
+      "xlit": "Emmanouēl",
+      "gloss": "Immanuel"
+    },
+    "G1697": {
+      "primary": [
+        "H2544"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐμμόρ",
+      "xlit": "Emmor",
+      "gloss": "Hamor"
+    },
+    "G1800": {
+      "primary": [
+        "H0583"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐνώς",
+      "xlit": "Enōs",
+      "gloss": "Enos"
+    },
+    "G1802": {
+      "primary": [
+        "H2585"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐνώχ",
+      "xlit": "Enōch",
+      "gloss": "Enoch"
+    },
+    "G1839": {
+      "primary": [],
+      "secondary": [
+        "H2730"
+      ],
+      "notes": "",
+      "lemma": "ἐξίστημι",
+      "xlit": "existēmi",
+      "gloss": "to amaze"
+    },
+    "G1871": {
+      "primary": [],
+      "secondary": [
+        "H7592"
+      ],
+      "notes": "",
+      "lemma": "ἐπαιτέω",
+      "xlit": "epaiteō",
+      "gloss": "to ask/beg"
+    },
+    "G2063": {
+      "primary": [
+        "H5488"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "ἐρυθρός",
+      "xlit": "eruthros",
+      "gloss": "Red (Sea)"
+    },
+    "G2074": {
+      "primary": [
+        "H2696"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐσρώμ",
+      "xlit": "Esrōm",
+      "gloss": "Hezron"
+    },
+    "G2096": {
+      "primary": [
+        "H2332"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Εὖα",
+      "xlit": "Eua",
+      "gloss": "Eve"
+    },
+    "G2166": {
+      "primary": [
+        "H6578"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Εὐφράτης",
+      "xlit": "Euphratēs",
+      "gloss": "Euphrates"
+    },
+    "G2187": {
+      "primary": [
+        "H0669"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἐφραίμ",
+      "xlit": "Ephraim",
+      "gloss": "Ephraim"
+    },
+    "G2194": {
+      "primary": [
+        "H2074"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ζαβουλών",
+      "xlit": "Zaboulōn",
+      "gloss": "Zebulun"
+    },
+    "G2196": {
+      "primary": [
+        "H2226"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ζαρά",
+      "xlit": "Zara",
+      "gloss": "Zerah"
+    },
+    "G2197": {
+      "primary": [
+        "H2148"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ζαχαρίας",
+      "xlit": "Zacharias",
+      "gloss": "Zechariah"
+    },
+    "G2216": {
+      "primary": [
+        "H2216"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ζοροβάβελ",
+      "xlit": "Zorobabel",
+      "gloss": "Zerubbabel"
+    },
+    "G2241": {
+      "primary": [
+        "H3068"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "ἠλί",
+      "xlit": "ēli",
+      "gloss": "Eli"
+    },
+    "G2243": {
+      "primary": [
+        "H0452"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἡλίας",
+      "xlit": "Hēlias",
+      "gloss": "Elijah"
+    },
+    "G2268": {
+      "primary": [
+        "H3470"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἡσαΐας",
+      "xlit": "Hēsaias",
+      "gloss": "Isaiah"
+    },
+    "G2269": {
+      "primary": [
+        "H6215"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἠσαῦ",
+      "xlit": "Ēsau",
+      "gloss": "Esau"
+    },
+    "G2283": {
+      "primary": [
+        "H8559"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Θάμαρ",
+      "xlit": "Thamar",
+      "gloss": "Tamar"
+    },
+    "G2291": {
+      "primary": [
+        "H8646"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Θάρα",
+      "xlit": "Thara",
+      "gloss": "Terah"
+    },
+    "G2384": {
+      "primary": [
+        "H3478"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰακώβ",
+      "xlit": "Iakōb",
+      "gloss": "Jacob"
+    },
+    "G2391": {
+      "primary": [
+        "H3382"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰάρεδ",
+      "xlit": "Iared",
+      "gloss": "Jared"
+    },
+    "G2403": {
+      "primary": [
+        "H0348"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰεζαβήλ",
+      "xlit": "Iezabēl",
+      "gloss": "Jezebel"
+    },
+    "G2408": {
+      "primary": [
+        "H3414"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἱερεμίας",
+      "xlit": "Hieremias",
+      "gloss": "Jeremiah"
+    },
+    "G2410": {
+      "primary": [
+        "H3405"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἱεριχώ",
+      "xlit": "Hierichō",
+      "gloss": "Jericho"
+    },
+    "G2414": {
+      "primary": [
+        "H3389"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἱεροσόλυμα",
+      "xlit": "Hierosoluma",
+      "gloss": "Jerusalem"
+    },
+    "G2421": {
+      "primary": [
+        "H3448"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰεσσαί",
+      "xlit": "Iessai",
+      "gloss": "Jesse"
+    },
+    "G2422": {
+      "primary": [
+        "H3316"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰεφθάε",
+      "xlit": "Iephthae",
+      "gloss": "Jephthah"
+    },
+    "G2423": {
+      "primary": [
+        "H3078"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰεχονίας",
+      "xlit": "Iechonias",
+      "gloss": "Jechoniah"
+    },
+    "G2424": {
+      "primary": [
+        "H3091"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰησοῦς",
+      "xlit": "Iēsous",
+      "gloss": "Jesus"
+    },
+    "G2445": {
+      "primary": [
+        "H3305"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰόππη",
+      "xlit": "Ioppē",
+      "gloss": "Joppa"
+    },
+    "G2446": {
+      "primary": [
+        "H3383"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰορδάνης",
+      "xlit": "Iordanēs",
+      "gloss": "Jordan"
+    },
+    "G2448": {
+      "primary": [
+        "H3063"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰουδά",
+      "xlit": "Iouda",
+      "gloss": "Judah"
+    },
+    "G2449": {
+      "primary": [
+        "H3063"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰουδαία",
+      "xlit": "Ioudaia",
+      "gloss": "Judea"
+    },
+    "G2453": {
+      "primary": [
+        "H3064"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰουδαῖος",
+      "xlit": "Ioudaios",
+      "gloss": "Jew"
+    },
+    "G2464": {
+      "primary": [
+        "H3327"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰσαάκ",
+      "xlit": "Isaak",
+      "gloss": "Isaac"
+    },
+    "G2466": {
+      "primary": [
+        "H3485"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰσαχάρ",
+      "xlit": "Isachar",
+      "gloss": "Issachar"
+    },
+    "G2474": {
+      "primary": [
+        "H3478"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰσραήλ",
+      "xlit": "Israēl",
+      "gloss": "Israel"
+    },
+    "G2484": {
+      "primary": [
+        "H3195"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰτουραΐα",
+      "xlit": "Itouraia",
+      "gloss": "Ituraea"
+    },
+    "G2488": {
+      "primary": [
+        "H3147"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰωάθαμ",
+      "xlit": "Iōatham",
+      "gloss": "Jotham"
+    },
+    "G2492": {
+      "primary": [
+        "H0347"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰώβ",
+      "xlit": "Iōb",
+      "gloss": "Job"
+    },
+    "G2493": {
+      "primary": [
+        "H3100"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰωήλ",
+      "xlit": "Iōēl",
+      "gloss": "Joel"
+    },
+    "G2495": {
+      "primary": [
+        "H3124"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰωνᾶς",
+      "xlit": "Iōnas",
+      "gloss": "John"
+    },
+    "G2496": {
+      "primary": [
+        "H3088"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰωράμ",
+      "xlit": "Iōram",
+      "gloss": "Joram"
+    },
+    "G2498": {
+      "primary": [
+        "H3092"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰωσαφάτ",
+      "xlit": "Iōsaphat",
+      "gloss": "Jehoshaphat"
+    },
+    "G2501": {
+      "primary": [
+        "H3130"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰωσήφ",
+      "xlit": "Iōsēph",
+      "gloss": "Joseph"
+    },
+    "G2502": {
+      "primary": [
+        "H2977"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἰωσίας",
+      "xlit": "Iōsias",
+      "gloss": "Josiah"
+    },
+    "G2535": {
+      "primary": [
+        "H7014"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Κάϊν",
+      "xlit": "Kain",
+      "gloss": "Cain"
+    },
+    "G2536": {
+      "primary": [
+        "H7018"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Καϊνάν, Καϊνάμ",
+      "xlit": "Kainan, Kainam",
+      "gloss": "Cainan"
+    },
+    "G2580": {
+      "primary": [
+        "H7071"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Κανᾶ",
+      "xlit": "Kana",
+      "gloss": "Cana"
+    },
+    "G2748": {
+      "primary": [
+        "H6939"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "κέδρος",
+      "xlit": "kedros",
+      "gloss": "Kidron"
+    },
+    "G2797": {
+      "primary": [
+        "H7027"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Κίς",
+      "xlit": "Kis",
+      "gloss": "Kish"
+    },
+    "G2879": {
+      "primary": [
+        "H7141"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Κορέ",
+      "xlit": "Kore",
+      "gloss": "Korah"
+    },
+    "G2914": {
+      "primary": [
+        "H3731"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Κρήτη",
+      "xlit": "Krētē",
+      "gloss": "Crete"
+    },
+    "G2953": {
+      "primary": [
+        "H3794"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Κύπριος",
+      "xlit": "Kuprios",
+      "gloss": "Cyprus"
+    },
+    "G2984": {
+      "primary": [
+        "H3929"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Λάμεχ",
+      "xlit": "Lamech",
+      "gloss": "Lamech"
+    },
+    "G3017": {
+      "primary": [
+        "H3878"
+      ],
+      "secondary": [
+        "H3878"
+      ],
+      "notes": "",
+      "lemma": "Λευΐ",
+      "xlit": "Leui",
+      "gloss": "Levi"
+    },
+    "G3018": {
+      "primary": [],
+      "secondary": [
+        "H3878"
+      ],
+      "notes": "",
+      "lemma": "Λευΐς",
+      "xlit": "Leuis",
+      "gloss": "Levi"
+    },
+    "G3033": {
+      "primary": [
+        "H3864"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Λιβύη",
+      "xlit": "Libuē",
+      "gloss": "Libya"
+    },
+    "G3069": {
+      "primary": [
+        "H3850"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Λύδδα",
+      "xlit": "Ludda",
+      "gloss": "Lydda"
+    },
+    "G3091": {
+      "primary": [
+        "H3876"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Λώτ",
+      "xlit": "Lōt",
+      "gloss": "Lot"
+    },
+    "G3093": {
+      "primary": [],
+      "secondary": [
+        "H4026"
+      ],
+      "notes": "",
+      "lemma": "Μαγδαλά, Μαγαδάν",
+      "xlit": "Magdala, Magadan",
+      "gloss": "Magadan"
+    },
+    "G3098": {
+      "primary": [
+        "H4031"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μαγώγ",
+      "xlit": "Magōg",
+      "gloss": "Magog"
+    },
+    "G3099": {
+      "primary": [
+        "H4080"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μαδιάν",
+      "xlit": "Madian",
+      "gloss": "Midian"
+    },
+    "G3103": {
+      "primary": [
+        "H4968"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μαθουσάλα",
+      "xlit": "Mathousala",
+      "gloss": "Methuselah"
+    },
+    "G3121": {
+      "primary": [
+        "H4111"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μαλελεήλ",
+      "xlit": "Maleleēl",
+      "gloss": "Mahalaleel"
+    },
+    "G3128": {
+      "primary": [
+        "H4519"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μανασσῆς",
+      "xlit": "Manassēs",
+      "gloss": "Manasseh"
+    },
+    "G3198": {
+      "primary": [
+        "H4442"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μελχισεδέκ",
+      "xlit": "Melchisedek",
+      "gloss": "Melchizedek"
+    },
+    "G3318": {
+      "primary": [
+        "H0763"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μεσοποταμία",
+      "xlit": "Mesopotamia",
+      "gloss": "Mesopotamia"
+    },
+    "G3370": {
+      "primary": [
+        "H4091"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μῆδος",
+      "xlit": "Mēdos",
+      "gloss": "Mede"
+    },
+    "G3413": {
+      "primary": [
+        "H4317"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μιχαήλ",
+      "xlit": "Michaēl",
+      "gloss": "Michael"
+    },
+    "G3434": {
+      "primary": [
+        "H4432"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μολόχ",
+      "xlit": "Moloch",
+      "gloss": "Moloch"
+    },
+    "G3475": {
+      "primary": [
+        "H4872"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Μωϋσῆς, Μωσῆς",
+      "xlit": "Mōusēs, Mōsēs",
+      "gloss": "Moses"
+    },
+    "G3476": {
+      "primary": [
+        "H5177"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ναασσών",
+      "xlit": "Naassōn",
+      "gloss": "Nahshon"
+    },
+    "G3481": {
+      "primary": [
+        "H5416"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ναθάν",
+      "xlit": "Nathan",
+      "gloss": "Nathan"
+    },
+    "G3493": {
+      "primary": [
+        "H5152"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ναχώρ",
+      "xlit": "Nachōr",
+      "gloss": "Nahor"
+    },
+    "G3497": {
+      "primary": [
+        "H5283"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Νεεμάν, Ναιμάν",
+      "xlit": "Neeman, Naiman",
+      "gloss": "Naaman"
+    },
+    "G3508": {
+      "primary": [
+        "H5321"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Νεφθαλείμ",
+      "xlit": "Nephthaleim",
+      "gloss": "Naphtali"
+    },
+    "G3535": {
+      "primary": [
+        "H5210"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Νινευΐ",
+      "xlit": "Nineui",
+      "gloss": "Nineveh"
+    },
+    "G3558": {
+      "primary": [
+        "H7614"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "νότος",
+      "xlit": "notos",
+      "gloss": "south"
+    },
+    "G3575": {
+      "primary": [
+        "H5146"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Νῶε",
+      "xlit": "Nōe",
+      "gloss": "Noah"
+    },
+    "G3604": {
+      "primary": [
+        "H5818"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ὀζίας",
+      "xlit": "Ozias",
+      "gloss": "Uzziah"
+    },
+    "G3774": {
+      "primary": [
+        "H0223"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Οὐρίας",
+      "xlit": "Ourias",
+      "gloss": "Uriah"
+    },
+    "G3957": {
+      "primary": [
+        "H6453"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "πάσχα",
+      "xlit": "pascha",
+      "gloss": "Passover lamb"
+    },
+    "G4005": {
+      "primary": [
+        "H7620"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "πεντηκοστή",
+      "xlit": "pentēkostē",
+      "gloss": "Pentecost"
+    },
+    "G4023": {
+      "primary": [],
+      "secondary": [
+        "H5362",
+        "H661",
+        "H6822"
+      ],
+      "notes": "",
+      "lemma": "περιέχω",
+      "xlit": "periechō",
+      "gloss": "to contain"
+    },
+    "G4262": {
+      "primary": [
+        "H6629"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "προβατικός",
+      "xlit": "probatikos",
+      "gloss": "Sheep Gate"
+    },
+    "G4315": {
+      "primary": [
+        "H7676"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "προσάββατον",
+      "xlit": "prosabbaton",
+      "gloss": "Friday"
+    },
+    "G4383": {
+      "primary": [],
+      "secondary": [
+        "H5387"
+      ],
+      "notes": "",
+      "lemma": "πρόσωπον",
+      "xlit": "prosōpon",
+      "gloss": "face"
+    },
+    "G4424": {
+      "primary": [
+        "H5910"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Πτολεμαΐς",
+      "xlit": "Ptolemais",
+      "gloss": "Ptolemais"
+    },
+    "G4460": {
+      "primary": [
+        "H7343"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ῥαάβ",
+      "xlit": "Rhaab",
+      "gloss": "Rahab"
+    },
+    "G4466": {
+      "primary": [
+        "H7466"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ῥαγαῦ",
+      "xlit": "Rhagau",
+      "gloss": "Reu"
+    },
+    "G4469": {
+      "primary": [],
+      "secondary": [
+        "H7386"
+      ],
+      "notes": "",
+      "lemma": "ῥακά",
+      "xlit": "rhaka",
+      "gloss": "fool"
+    },
+    "G4471": {
+      "primary": [
+        "H7414"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ῥαμᾶ",
+      "xlit": "Rhama",
+      "gloss": "Ramah"
+    },
+    "G4477": {
+      "primary": [],
+      "secondary": [
+        "H1162"
+      ],
+      "notes": "",
+      "lemma": "Ῥαχάβ",
+      "xlit": "Rhachab",
+      "gloss": "Rahab"
+    },
+    "G4478": {
+      "primary": [
+        "H7354"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ῥαχήλ",
+      "xlit": "Rhachēl",
+      "gloss": "Rachel"
+    },
+    "G4479": {
+      "primary": [
+        "H7259"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ῥεβέκκα",
+      "xlit": "Rhebekka",
+      "gloss": "Rebekah"
+    },
+    "G4497": {
+      "primary": [
+        "H7346"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ῥοβοάμ",
+      "xlit": "Rhoboam",
+      "gloss": "Rehoboam"
+    },
+    "G4502": {
+      "primary": [
+        "H7205"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ῥουβήν",
+      "xlit": "Rhoubēn",
+      "gloss": "Reuben"
+    },
+    "G4503": {
+      "primary": [
+        "H7327"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ῥούθ",
+      "xlit": "Rhouth",
+      "gloss": "Ruth"
+    },
+    "G4519": {
+      "primary": [
+        "H3068"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "σαβαώθ",
+      "xlit": "sabaōth",
+      "gloss": "hosts"
+    },
+    "G4520": {
+      "primary": [
+        "H7676"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "σαββατισμός",
+      "xlit": "sabbatismos",
+      "gloss": "Sabbath rest"
+    },
+    "G4527": {
+      "primary": [
+        "H7974",
+        "H8007"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαλά",
+      "xlit": "Sala",
+      "gloss": "Sala"
+    },
+    "G4528": {
+      "primary": [
+        "H7597"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαλαθιήλ",
+      "xlit": "Salathiēl",
+      "gloss": "Shealtiel"
+    },
+    "G4532": {
+      "primary": [
+        "H3389"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαλήμ",
+      "xlit": "Salēm",
+      "gloss": "Salem"
+    },
+    "G4533": {
+      "primary": [
+        "H8007"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαλμών",
+      "xlit": "Salmōn",
+      "gloss": "Salmon"
+    },
+    "G4540": {
+      "primary": [
+        "H8111"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαμάρεια",
+      "xlit": "Samareia",
+      "gloss": "Samaria"
+    },
+    "G4545": {
+      "primary": [
+        "H8050"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαμουήλ",
+      "xlit": "Samouēl",
+      "gloss": "Samuel"
+    },
+    "G4546": {
+      "primary": [
+        "H8123"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαμψών",
+      "xlit": "Sampsōn",
+      "gloss": "Samson"
+    },
+    "G4549": {
+      "primary": [
+        "H7586"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαούλ",
+      "xlit": "Saoul",
+      "gloss": "Saul"
+    },
+    "G4554": {
+      "primary": [
+        "H5614"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σάρδεις",
+      "xlit": "Sardeis",
+      "gloss": "Sardis"
+    },
+    "G4558": {
+      "primary": [
+        "H6886"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σάρεπτα",
+      "xlit": "Sarepta",
+      "gloss": "Zarephath"
+    },
+    "G4562": {
+      "primary": [
+        "H8286"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σαρούχ",
+      "xlit": "Sarouch",
+      "gloss": "Serug"
+    },
+    "G4564": {
+      "primary": [
+        "H8283"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σάρρα",
+      "xlit": "Sarra",
+      "gloss": "Sarah"
+    },
+    "G4565": {
+      "primary": [
+        "H8289"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σάρων",
+      "xlit": "Sarōn",
+      "gloss": "Sharon"
+    },
+    "G4566": {
+      "primary": [
+        "H7854"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σατάν",
+      "xlit": "Satan",
+      "gloss": "Satan"
+    },
+    "G4589": {
+      "primary": [
+        "H8352"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σήθ",
+      "xlit": "Sēth",
+      "gloss": "Seth"
+    },
+    "G4590": {
+      "primary": [
+        "H8035"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σήμ",
+      "xlit": "Sēm",
+      "gloss": "Shem"
+    },
+    "G4605": {
+      "primary": [
+        "H6721"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σιδών",
+      "xlit": "Sidōn",
+      "gloss": "Sidon"
+    },
+    "G4611": {
+      "primary": [
+        "H7975"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σιλωάμ",
+      "xlit": "Silōam",
+      "gloss": "Siloam"
+    },
+    "G4614": {
+      "primary": [
+        "H5514"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σινᾶ",
+      "xlit": "Sina",
+      "gloss": "(Mount) Sinai"
+    },
+    "G4622": {
+      "primary": [
+        "H3389"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σιών",
+      "xlit": "Siōn",
+      "gloss": "Zion"
+    },
+    "G4670": {
+      "primary": [
+        "H5467"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σόδομα",
+      "xlit": "Sodoma",
+      "gloss": "Sodom"
+    },
+    "G4672": {
+      "primary": [
+        "H8010"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Σολομών, Σαλωμών",
+      "xlit": "Solomōn, Salōmōn",
+      "gloss": "Solomon"
+    },
+    "G4826": {
+      "primary": [
+        "H8095"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Συμεών",
+      "xlit": "Sumeōn",
+      "gloss": "Simeon"
+    },
+    "G4856": {
+      "primary": [],
+      "secondary": [
+        "H225",
+        "H2266",
+        "H5117"
+      ],
+      "notes": "",
+      "lemma": "συμφωνέω",
+      "xlit": "sumphōneō",
+      "gloss": "to agree with"
+    },
+    "G4947": {
+      "primary": [
+        "H0758"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Συρία",
+      "xlit": "Suria",
+      "gloss": "Syria"
+    },
+    "G4966": {
+      "primary": [
+        "H7927"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Συχέμ",
+      "xlit": "Suchem",
+      "gloss": "Shechem"
+    },
+    "G5085": {
+      "primary": [
+        "H3672",
+        "H7557"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Τιβεριάς",
+      "xlit": "Tiberias",
+      "gloss": "(Sea of) Tiberias"
+    },
+    "G5183": {
+      "primary": [
+        "H6865"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Τύριος",
+      "xlit": "Turios",
+      "gloss": "Tyre"
+    },
+    "G5310": {
+      "primary": [
+        "H3068"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "ὕψιστος",
+      "xlit": "hupsistos",
+      "gloss": "Highest"
+    },
+    "G5317": {
+      "primary": [
+        "H6389"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Φάλεκ",
+      "xlit": "Phalek",
+      "gloss": "Peleg"
+    },
+    "G5328": {
+      "primary": [
+        "H6547"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Φαραώ",
+      "xlit": "Pharaō",
+      "gloss": "Pharaoh"
+    },
+    "G5329": {
+      "primary": [
+        "H6557"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Φάρες",
+      "xlit": "Phares",
+      "gloss": "Perez"
+    },
+    "G5466": {
+      "primary": [
+        "H3778"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Χαλδαῖος",
+      "xlit": "Chaldaios",
+      "gloss": "Chaldean"
+    },
+    "G5477": {
+      "primary": [
+        "H3667"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Χαναάν",
+      "xlit": "Chanaan",
+      "gloss": "Canaan"
+    },
+    "G5488": {
+      "primary": [
+        "H2771"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Χαρράν",
+      "xlit": "Charran",
+      "gloss": "Haran"
+    },
+    "G5502": {
+      "primary": [
+        "H3743"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "χερουβίμ",
+      "xlit": "cheroubim",
+      "gloss": "Cherub"
+    },
+    "G5601": {
+      "primary": [
+        "H5744"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ὠβήδ",
+      "xlit": "Ōbēd",
+      "gloss": "Obed"
+    },
+    "G5617": {
+      "primary": [
+        "H1954"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ὡσηέ",
+      "xlit": "Hōsēe",
+      "gloss": "Hosea"
+    },
+    "G6002": {
+      "primary": [
+        "H7410"
+      ],
+      "secondary": [],
+      "notes": "",
+      "lemma": "Ἀδμίν",
+      "xlit": "Admin",
+      "gloss": "Admin"
+    },
+    "G6095": {
+      "primary": [
+        "H7410"
+      ],
+      "secondary": [
+        "H0806",
+        "H3396",
+        "H5992"
+      ],
+      "notes": "",
+      "lemma": "Ἀρνὶ",
+      "xlit": "Arni",
+      "gloss": "Arni"
+    }
+  },
+  "statistics": {
+    "total_hebrew_mapped": 196,
+    "total_greek_mapped": 204,
+    "total_mappings": 216
+  }
+}
