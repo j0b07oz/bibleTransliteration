@@ -1200,6 +1200,79 @@ a:hover {
     border-color: #2d5026;
 }
 
+/* Cross-reference section in popup */
+.word-popup__crossref {
+    padding: 8px 14px 4px;
+    border-top: 1px solid #e8e0d8;
+    background: #faf8f5;
+}
+
+.word-popup__crossref-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #6b5c54;
+    margin-bottom: 6px;
+}
+
+.word-popup__crossref-icon {
+    font-size: 13px;
+    opacity: 0.7;
+}
+
+.word-popup__crossref-label {
+    font-weight: 500;
+}
+
+.word-popup__crossref-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.word-popup__crossref-item {
+    font-size: 12px;
+}
+
+.word-popup__crossref-item.secondary {
+    opacity: 0.7;
+}
+
+.crossref-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #2c5aa0;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.crossref-link:hover {
+    background-color: #e8f0fa;
+}
+
+.crossref-strong {
+    font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    font-weight: 600;
+    font-size: 11px;
+    color: #2c5aa0;
+}
+
+.crossref-lemma {
+    font-family: "SBL Hebrew", "SBL Greek", "Times New Roman", serif;
+    font-size: 14px;
+    color: #3d2a26;
+}
+
+.crossref-xlit {
+    font-size: 11px;
+    font-style: italic;
+    color: #8b7a70;
+}
+
 /* Responsive adjustments for word popup */
 @media (max-width: 400px) {
     .word-popup {

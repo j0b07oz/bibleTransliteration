@@ -1064,6 +1064,71 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         currentPopupStrongs = tokenData.strongs;
+
+        // Load cross-references asynchronously
+        loadCrossReferences(tokenData.strongs);
+    }
+
+    /**
+     * Fetch and display Hebrew-Greek cross-references for a Strong's number.
+     * Shows LXX equivalents for Hebrew words and Hebrew sources for Greek words.
+     */
+    async function loadCrossReferences(strongNumber) {
+        const crossrefSection = document.getElementById('word-popup-crossref');
+        const crossrefList = document.getElementById('crossref-list');
+        const crossrefLabel = document.getElementById('crossref-label');
+
+        if (!crossrefSection || !crossrefList || !crossrefLabel) return;
+
+        // Hide while loading
+        crossrefSection.style.display = 'none';
+        crossrefList.innerHTML = '';
+
+        try {
+            const response = await fetch(`/api/crossref/${strongNumber}`);
+            if (!response.ok) return;
+
+            const data = await response.json();
+            const allRefs = [...(data.cross_refs?.primary || []), ...(data.cross_refs?.secondary || [])];
+
+            if (allRefs.length === 0) {
+                crossrefSection.style.display = 'none';
+                return;
+            }
+
+            // Set label based on language
+            crossrefLabel.textContent = data.language === 'hebrew'
+                ? 'LXX typically uses:'
+                : 'Hebrew equivalent:';
+
+            // Build list HTML (limit to 4 entries)
+            const primaryCount = data.cross_refs?.primary?.length || 0;
+            crossrefList.innerHTML = allRefs.slice(0, 4).map((ref, idx) => {
+                const isPrimary = idx < primaryCount;
+                const lemmaDisplay = ref.lemma || '';
+                const xlitDisplay = ref.xlit ? `(${ref.xlit})` : '';
+
+                return `
+                    <div class="word-popup__crossref-item ${isPrimary ? 'primary' : 'secondary'}">
+                        <a href="${window.HEATMAP_URL}?strong=${ref.strong}&from_crossref=1"
+                           class="crossref-link"
+                           data-strong="${ref.strong}"
+                           title="View heatmap for ${ref.strong}">
+                            <span class="crossref-strong">${ref.strong}</span>
+                            <span class="crossref-lemma">${lemmaDisplay}</span>
+                            <span class="crossref-xlit">${xlitDisplay}</span>
+                        </a>
+                    </div>
+                `;
+            }).join('');
+
+            // Show the section
+            crossrefSection.style.display = 'block';
+
+        } catch (err) {
+            console.error('Failed to load cross-references:', err);
+            crossrefSection.style.display = 'none';
+        }
     }
 
     function showWordPopup(event, tokenEl) {
