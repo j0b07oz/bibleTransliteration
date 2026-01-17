@@ -7,9 +7,9 @@
     "description": "Hebrew-Greek LXX alignment mappings derived from STEPBible lexicon data"
   },
   "hebrew_to_greek": {
-    "H0175": {
+    "H175": {
       "primary": [
-        "G0002"
+        "G2"
       ],
       "secondary": [],
       "notes": "",
@@ -19,9 +19,9 @@
     },
     "H3068": {
       "primary": [
-        "G0005",
         "G2241",
         "G4519",
+        "G5",
         "G5310"
       ],
       "secondary": [],
@@ -32,7 +32,7 @@
     },
     "H1893": {
       "primary": [
-        "G0006"
+        "G6"
       ],
       "secondary": [],
       "notes": "",
@@ -40,9 +40,9 @@
       "xlit": "he.vel",
       "gloss": "Abel"
     },
-    "H0029": {
+    "H29": {
       "primary": [
-        "G0007"
+        "G7"
       ],
       "secondary": [],
       "notes": "",
@@ -50,9 +50,9 @@
       "xlit": "a.viy.yah",
       "gloss": "Abijah"
     },
-    "H0054": {
+    "H54": {
       "primary": [
-        "G0008"
+        "G8"
       ],
       "secondary": [],
       "notes": "",
@@ -60,9 +60,9 @@
       "xlit": "ev.ya.tar",
       "gloss": "Abiathar"
     },
-    "H0085": {
+    "H85": {
       "primary": [
-        "G0011"
+        "G11"
       ],
       "secondary": [],
       "notes": "",
@@ -72,7 +72,7 @@
     },
     "H1904": {
       "primary": [
-        "G0028"
+        "G28"
       ],
       "secondary": [],
       "notes": "",
@@ -82,7 +82,7 @@
     },
     "H6944": {
       "primary": [
-        "G0039"
+        "G39"
       ],
       "secondary": [],
       "notes": "",
@@ -90,9 +90,9 @@
       "xlit": "qo.desh",
       "gloss": "holiness"
     },
-    "H0121": {
+    "H121": {
       "primary": [
-        "G0076"
+        "G76"
       ],
       "secondary": [],
       "notes": "",
@@ -100,9 +100,9 @@
       "xlit": "a.dam",
       "gloss": "Adam"
     },
-    "H0795": {
+    "H795": {
       "primary": [
-        "G0108"
+        "G108"
       ],
       "secondary": [],
       "notes": "",
@@ -112,7 +112,7 @@
     },
     "H4714": {
       "primary": [
-        "G0125"
+        "G125"
       ],
       "secondary": [],
       "notes": "",
@@ -122,7 +122,7 @@
     },
     "H3568": {
       "primary": [
-        "G0128"
+        "G128"
       ],
       "secondary": [],
       "notes": "",
@@ -132,7 +132,7 @@
     },
     "H5992": {
       "primary": [
-        "G0284"
+        "G284"
       ],
       "secondary": [
         "G6095"
@@ -142,10 +142,10 @@
       "xlit": "am.mi.na.dav",
       "gloss": "Amminadab"
     },
-    "H0526": {
+    "H526": {
       "primary": [
-        "G0300",
-        "G0301"
+        "G300",
+        "G301"
       ],
       "secondary": [],
       "notes": "",
@@ -156,7 +156,7 @@
     "H7725": {
       "primary": [],
       "secondary": [
-        "G0471"
+        "G471"
       ],
       "notes": "",
       "lemma": "שׁוּב",
@@ -166,7 +166,7 @@
     "H5110": {
       "primary": [],
       "secondary": [
-        "G0526"
+        "G526"
       ],
       "notes": "",
       "lemma": "נוּד",
@@ -176,7 +176,7 @@
     "H2308": {
       "primary": [],
       "secondary": [
-        "G0620"
+        "G620"
       ],
       "notes": "",
       "lemma": "חָדַל",
@@ -185,7 +185,7 @@
     },
     "H6152": {
       "primary": [
-        "G0688"
+        "G688"
       ],
       "secondary": [],
       "notes": "",
@@ -195,9 +195,9 @@
     },
     "H7410": {
       "primary": [
-        "G0689",
         "G6002",
-        "G6095"
+        "G6095",
+        "G689"
       ],
       "secondary": [],
       "notes": "",
@@ -207,7 +207,7 @@
     },
     "H4709": {
       "primary": [
-        "G0707"
+        "G707"
       ],
       "secondary": [],
       "notes": "",
@@ -217,7 +217,7 @@
     },
     "H4023": {
       "primary": [
-        "G0717"
+        "G717"
       ],
       "secondary": [],
       "notes": "",
@@ -225,9 +225,9 @@
       "xlit": "me.gid.don",
       "gloss": "Megiddo"
     },
-    "H0775": {
+    "H775": {
       "primary": [
-        "G0742"
+        "G742"
       ],
       "secondary": [],
       "notes": "",
@@ -235,9 +235,9 @@
       "xlit": "ar.pakh.shad",
       "gloss": "Arpachshad"
     },
-    "H0609": {
+    "H609": {
       "primary": [
-        "G0760"
+        "G760"
       ],
       "secondary": [],
       "notes": "",
@@ -245,19 +245,9 @@
       "xlit": "a.sa",
       "gloss": "Asa"
     },
-    "H609": {
-      "primary": [],
-      "secondary": [
-        "G0760"
-      ],
-      "notes": "",
-      "lemma": "אָסָא",
-      "xlit": "ʼÂçâʼ",
-      "gloss": "of uncertain derivation; Asa, the name of a king a"
-    },
-    "H0836": {
+    "H836": {
       "primary": [
-        "G0768"
+        "G768"
       ],
       "secondary": [],
       "notes": "",
@@ -268,16 +258,16 @@
     "H7311": {
       "primary": [],
       "secondary": [
-        "G0851"
+        "G851"
       ],
       "notes": "",
       "lemma": "רוּם",
       "xlit": "rum",
       "gloss": "to exalt"
     },
-    "H0271": {
+    "H271": {
       "primary": [
-        "G0881"
+        "G881"
       ],
       "secondary": [],
       "notes": "",
@@ -287,7 +277,7 @@
     },
     "H1168": {
       "primary": [
-        "G0896"
+        "G896"
       ],
       "secondary": [],
       "notes": "",
@@ -295,9 +285,9 @@
       "xlit": "ba.al",
       "gloss": "Baal"
     },
-    "H0894": {
+    "H894": {
       "primary": [
-        "G0897"
+        "G897"
       ],
       "secondary": [],
       "notes": "",
@@ -307,7 +297,7 @@
     },
     "H1109": {
       "primary": [
-        "G0903"
+        "G903"
       ],
       "secondary": [],
       "notes": "",
@@ -317,7 +307,7 @@
     },
     "H1111": {
       "primary": [
-        "G0904"
+        "G904"
       ],
       "secondary": [],
       "notes": "",
@@ -327,7 +317,7 @@
     },
     "H1301": {
       "primary": [
-        "G0913"
+        "G913"
       ],
       "secondary": [],
       "notes": "",
@@ -337,7 +327,7 @@
     },
     "H3077": {
       "primary": [
-        "G0914"
+        "G914"
       ],
       "secondary": [],
       "notes": "",
@@ -347,9 +337,9 @@
     },
     "H7854": {
       "primary": [
-        "G0954",
-        "G0955",
-        "G4566"
+        "G4566",
+        "G954",
+        "G955"
       ],
       "secondary": [],
       "notes": "",
@@ -359,7 +349,7 @@
     },
     "H1144": {
       "primary": [
-        "G0958"
+        "G958"
       ],
       "secondary": [],
       "notes": "",
@@ -369,7 +359,7 @@
     },
     "H1012": {
       "primary": [
-        "G0962"
+        "G962"
       ],
       "secondary": [],
       "notes": "",
@@ -379,7 +369,7 @@
     },
     "H1035": {
       "primary": [
-        "G0965"
+        "G965"
       ],
       "secondary": [],
       "notes": "",
@@ -520,7 +510,7 @@
       "xlit": "da.niy.yel",
       "gloss": "Daniel"
     },
-    "H0224": {
+    "H224": {
       "primary": [
         "G1212"
       ],
@@ -540,7 +530,7 @@
       "xlit": "e.ver",
       "gloss": "Eber"
     },
-    "H0762": {
+    "H762": {
       "primary": [
         "G1444"
       ],
@@ -600,7 +590,7 @@
       "xlit": "e.lam",
       "gloss": "Elam"
     },
-    "H0477": {
+    "H477": {
       "primary": [
         "G1666"
       ],
@@ -641,7 +631,7 @@
       "xlit": "cha.mor",
       "gloss": "Hamor"
     },
-    "H0583": {
+    "H583": {
       "primary": [
         "G1800"
       ],
@@ -721,7 +711,7 @@
       "xlit": "pe.rat",
       "gloss": "Euphrates"
     },
-    "H0669": {
+    "H669": {
       "primary": [
         "G2187"
       ],
@@ -771,7 +761,7 @@
       "xlit": "ze.rub.ba.vel",
       "gloss": "Zerubbabel"
     },
-    "H0452": {
+    "H452": {
       "primary": [
         "G2243"
       ],
@@ -842,7 +832,7 @@
       "xlit": "ye.red",
       "gloss": "Jared"
     },
-    "H0348": {
+    "H348": {
       "primary": [
         "G2403"
       ],
@@ -1005,7 +995,7 @@
       "xlit": "yo.tam",
       "gloss": "Jotham"
     },
-    "H0347": {
+    "H347": {
       "primary": [
         "G2492"
       ],
@@ -1278,7 +1268,7 @@
       "xlit": "mal.ki-tse.deq",
       "gloss": "Melchizedek"
     },
-    "H0763": {
+    "H763": {
       "primary": [
         "G3318"
       ],
@@ -1418,7 +1408,7 @@
       "xlit": "uz.ziy.yah",
       "gloss": "Uzziah"
     },
-    "H0223": {
+    "H223": {
       "primary": [
         "G3774"
       ],
@@ -1465,8 +1455,8 @@
       ],
       "notes": "",
       "lemma": "אָפַף",
-      "xlit": "ʼâphaph",
-      "gloss": "a primitive root; to surround; compass."
+      "xlit": "a.phaph",
+      "gloss": "to surround"
     },
     "H6822": {
       "primary": [],
@@ -1817,8 +1807,8 @@
       ],
       "notes": "",
       "lemma": "אוּת",
-      "xlit": "ʼûwth",
-      "gloss": "a primitive root; properly, to come, i.e. (implied"
+      "xlit": "ut",
+      "gloss": "to consent"
     },
     "H2266": {
       "primary": [],
@@ -1840,7 +1830,7 @@
       "xlit": "nu.ach",
       "gloss": "to rest"
     },
-    "H0758": {
+    "H758": {
       "primary": [
         "G4947"
       ],
@@ -1976,9 +1966,9 @@
         "G6095"
       ],
       "notes": "",
-      "lemma": "אַשְׁחוּר",
-      "xlit": "ash.chur",
-      "gloss": "Ashhur"
+      "lemma": "",
+      "xlit": "",
+      "gloss": ""
     },
     "H3396": {
       "primary": [],
@@ -1992,9 +1982,9 @@
     }
   },
   "greek_to_hebrew": {
-    "G0002": {
+    "G2": {
       "primary": [
-        "H0175"
+        "H175"
       ],
       "secondary": [],
       "notes": "",
@@ -2002,7 +1992,7 @@
       "xlit": "Aarōn",
       "gloss": "Aaron"
     },
-    "G0005": {
+    "G5": {
       "primary": [
         "H3068"
       ],
@@ -2012,7 +2002,7 @@
       "xlit": "abba",
       "gloss": "Abba"
     },
-    "G0006": {
+    "G6": {
       "primary": [
         "H1893"
       ],
@@ -2022,9 +2012,9 @@
       "xlit": "Abel",
       "gloss": "Abel"
     },
-    "G0007": {
+    "G7": {
       "primary": [
-        "H0029"
+        "H29"
       ],
       "secondary": [],
       "notes": "",
@@ -2032,9 +2022,9 @@
       "xlit": "Abia",
       "gloss": "Abijah"
     },
-    "G0008": {
+    "G8": {
       "primary": [
-        "H0054"
+        "H54"
       ],
       "secondary": [],
       "notes": "",
@@ -2042,9 +2032,9 @@
       "xlit": "Abiathar",
       "gloss": "Abiathar"
     },
-    "G0011": {
+    "G11": {
       "primary": [
-        "H0085"
+        "H85"
       ],
       "secondary": [],
       "notes": "",
@@ -2052,7 +2042,7 @@
       "xlit": "Abraam",
       "gloss": "Abraham"
     },
-    "G0028": {
+    "G28": {
       "primary": [
         "H1904"
       ],
@@ -2062,7 +2052,7 @@
       "xlit": "Agar",
       "gloss": "Hagar"
     },
-    "G0039": {
+    "G39": {
       "primary": [
         "H6944"
       ],
@@ -2072,9 +2062,9 @@
       "xlit": "hagion",
       "gloss": "Holy Place"
     },
-    "G0076": {
+    "G76": {
       "primary": [
-        "H0121"
+        "H121"
       ],
       "secondary": [],
       "notes": "",
@@ -2082,9 +2072,9 @@
       "xlit": "Adam",
       "gloss": "Adam"
     },
-    "G0108": {
+    "G108": {
       "primary": [
-        "H0795"
+        "H795"
       ],
       "secondary": [],
       "notes": "",
@@ -2092,7 +2082,7 @@
       "xlit": "Azōtos",
       "gloss": "Azotus"
     },
-    "G0125": {
+    "G125": {
       "primary": [
         "H4714"
       ],
@@ -2102,7 +2092,7 @@
       "xlit": "Aiguptos",
       "gloss": "Egypt"
     },
-    "G0128": {
+    "G128": {
       "primary": [
         "H3568"
       ],
@@ -2112,7 +2102,7 @@
       "xlit": "Aithiops",
       "gloss": "Ethiopian"
     },
-    "G0284": {
+    "G284": {
       "primary": [
         "H5992"
       ],
@@ -2122,9 +2112,9 @@
       "xlit": "Aminadab",
       "gloss": "Amminadab"
     },
-    "G0300": {
+    "G300": {
       "primary": [
-        "H0526"
+        "H526"
       ],
       "secondary": [],
       "notes": "",
@@ -2132,9 +2122,9 @@
       "xlit": "Amōn",
       "gloss": "Amos"
     },
-    "G0301": {
+    "G301": {
       "primary": [
-        "H0526"
+        "H526"
       ],
       "secondary": [],
       "notes": "",
@@ -2142,7 +2132,7 @@
       "xlit": "Amōs",
       "gloss": "Amos"
     },
-    "G0471": {
+    "G471": {
       "primary": [],
       "secondary": [
         "H7725"
@@ -2152,7 +2142,7 @@
       "xlit": "anteipon",
       "gloss": "to contradict"
     },
-    "G0526": {
+    "G526": {
       "primary": [],
       "secondary": [
         "H5110"
@@ -2162,7 +2152,7 @@
       "xlit": "apallotrioō",
       "gloss": "to alienate"
     },
-    "G0620": {
+    "G620": {
       "primary": [],
       "secondary": [
         "H2308"
@@ -2172,7 +2162,7 @@
       "xlit": "apoleipō",
       "gloss": "to leave"
     },
-    "G0688": {
+    "G688": {
       "primary": [
         "H6152"
       ],
@@ -2182,7 +2172,7 @@
       "xlit": "Arabia",
       "gloss": "Arabia"
     },
-    "G0689": {
+    "G689": {
       "primary": [
         "H7410"
       ],
@@ -2192,7 +2182,7 @@
       "xlit": "Aram",
       "gloss": "Ram"
     },
-    "G0707": {
+    "G707": {
       "primary": [
         "H4709"
       ],
@@ -2202,7 +2192,7 @@
       "xlit": "Arimathaia",
       "gloss": "Arimathea"
     },
-    "G0717": {
+    "G717": {
       "primary": [
         "H4023"
       ],
@@ -2212,9 +2202,9 @@
       "xlit": "Armageddōn",
       "gloss": "Armageddon"
     },
-    "G0742": {
+    "G742": {
       "primary": [
-        "H0775"
+        "H775"
       ],
       "secondary": [],
       "notes": "",
@@ -2222,21 +2212,19 @@
       "xlit": "Arphaxad",
       "gloss": "Arphaxad"
     },
-    "G0760": {
+    "G760": {
       "primary": [
-        "H0609"
-      ],
-      "secondary": [
         "H609"
       ],
+      "secondary": [],
       "notes": "",
       "lemma": "Ἀσά",
       "xlit": "Asa",
       "gloss": "Asaph"
     },
-    "G0768": {
+    "G768": {
       "primary": [
-        "H0836"
+        "H836"
       ],
       "secondary": [],
       "notes": "",
@@ -2244,7 +2232,7 @@
       "xlit": "Asēr",
       "gloss": "Asher"
     },
-    "G0851": {
+    "G851": {
       "primary": [],
       "secondary": [
         "H7311"
@@ -2254,9 +2242,9 @@
       "xlit": "aphaireō",
       "gloss": "to remove"
     },
-    "G0881": {
+    "G881": {
       "primary": [
-        "H0271"
+        "H271"
       ],
       "secondary": [],
       "notes": "",
@@ -2264,7 +2252,7 @@
       "xlit": "Achaz",
       "gloss": "Ahaz"
     },
-    "G0896": {
+    "G896": {
       "primary": [
         "H1168"
       ],
@@ -2274,9 +2262,9 @@
       "xlit": "Baal",
       "gloss": "Baal"
     },
-    "G0897": {
+    "G897": {
       "primary": [
-        "H0894"
+        "H894"
       ],
       "secondary": [],
       "notes": "",
@@ -2284,7 +2272,7 @@
       "xlit": "Babulōn",
       "gloss": "Babylon"
     },
-    "G0903": {
+    "G903": {
       "primary": [
         "H1109"
       ],
@@ -2294,7 +2282,7 @@
       "xlit": "Balaam",
       "gloss": "Balaam"
     },
-    "G0904": {
+    "G904": {
       "primary": [
         "H1111"
       ],
@@ -2304,7 +2292,7 @@
       "xlit": "Balak",
       "gloss": "Balak"
     },
-    "G0913": {
+    "G913": {
       "primary": [
         "H1301"
       ],
@@ -2314,7 +2302,7 @@
       "xlit": "Barak",
       "gloss": "Barak"
     },
-    "G0914": {
+    "G914": {
       "primary": [
         "H3077"
       ],
@@ -2324,7 +2312,7 @@
       "xlit": "Barachias",
       "gloss": "Barachiah"
     },
-    "G0954": {
+    "G954": {
       "primary": [
         "H7854"
       ],
@@ -2334,7 +2322,7 @@
       "xlit": "Beelzeboul",
       "gloss": "Beelzebul"
     },
-    "G0955": {
+    "G955": {
       "primary": [
         "H7854"
       ],
@@ -2344,7 +2332,7 @@
       "xlit": "Belial",
       "gloss": "Belial"
     },
-    "G0958": {
+    "G958": {
       "primary": [
         "H1144"
       ],
@@ -2354,7 +2342,7 @@
       "xlit": "Beniamin",
       "gloss": "Benjamin"
     },
-    "G0962": {
+    "G962": {
       "primary": [
         "H1012"
       ],
@@ -2364,7 +2352,7 @@
       "xlit": "Bēthabara",
       "gloss": "Bethany"
     },
-    "G0965": {
+    "G965": {
       "primary": [
         "H1035"
       ],
@@ -2497,7 +2485,7 @@
     },
     "G1212": {
       "primary": [
-        "H0224"
+        "H224"
       ],
       "secondary": [],
       "notes": "",
@@ -2517,7 +2505,7 @@
     },
     "G1444": {
       "primary": [
-        "H0762"
+        "H762"
       ],
       "secondary": [],
       "notes": "",
@@ -2577,7 +2565,7 @@
     },
     "G1666": {
       "primary": [
-        "H0477"
+        "H477"
       ],
       "secondary": [],
       "notes": "",
@@ -2627,7 +2615,7 @@
     },
     "G1800": {
       "primary": [
-        "H0583"
+        "H583"
       ],
       "secondary": [],
       "notes": "",
@@ -2707,7 +2695,7 @@
     },
     "G2187": {
       "primary": [
-        "H0669"
+        "H669"
       ],
       "secondary": [],
       "notes": "",
@@ -2767,7 +2755,7 @@
     },
     "G2243": {
       "primary": [
-        "H0452"
+        "H452"
       ],
       "secondary": [],
       "notes": "",
@@ -2837,7 +2825,7 @@
     },
     "G2403": {
       "primary": [
-        "H0348"
+        "H348"
       ],
       "secondary": [],
       "notes": "",
@@ -3017,7 +3005,7 @@
     },
     "G2492": {
       "primary": [
-        "H0347"
+        "H347"
       ],
       "secondary": [],
       "notes": "",
@@ -3299,7 +3287,7 @@
     },
     "G3318": {
       "primary": [
-        "H0763"
+        "H763"
       ],
       "secondary": [],
       "notes": "",
@@ -3439,7 +3427,7 @@
     },
     "G3774": {
       "primary": [
-        "H0223"
+        "H223"
       ],
       "secondary": [],
       "notes": "",
@@ -3884,7 +3872,7 @@
     },
     "G4947": {
       "primary": [
-        "H0758"
+        "H758"
       ],
       "secondary": [],
       "notes": "",
@@ -4049,8 +4037,8 @@
     }
   },
   "statistics": {
-    "total_hebrew_mapped": 196,
+    "total_hebrew_mapped": 195,
     "total_greek_mapped": 204,
-    "total_mappings": 216
+    "total_mappings": 215
   }
 }
