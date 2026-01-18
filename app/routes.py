@@ -776,6 +776,7 @@ def heatmap():
     crossrefs = {'primary': [], 'secondary': []}
     crossref_metadata = {}
     active_crossrefs = []  # List of crossrefs being shown in combined view
+    top_books = []  # Precomputed list of (book, count) tuples sorted by count
 
     if strong:
         # Get cross-references for this Strong's number
@@ -813,6 +814,16 @@ def heatmap():
         else:
             data = generate_heatmap(strong)
 
+        # Compute top books by total count (moved from template to avoid Jinja2 limitations)
+        if data:
+            book_totals = {}
+            for book, chapters in data.items():
+                total = sum(cell.get('count', 0) for cell in chapters)
+                if total > 0:
+                    book_totals[book] = total
+            # Sort by count descending and take top 8
+            top_books = sorted(book_totals.items(), key=lambda x: x[1], reverse=True)[:8]
+
     ordered_books = [b for b, _ in sorted(book_order.items(), key=lambda x: x[1])]
     return render_template(
         'heatmap.html',
@@ -824,6 +835,7 @@ def heatmap():
         active_crossrefs=active_crossrefs,
         show_crossrefs=show_crossrefs,
         from_crossref=from_crossref,
+        top_books=top_books,
         crossref_colors=['#4285f4', '#34a853', '#fbbc04', '#ea4335', '#9a42f4']  # For legend
     )
 
