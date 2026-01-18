@@ -927,9 +927,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyHeatmapFocus() {
         if (!focusStrong) return;
-        const targets = document.querySelectorAll(`.strongs-token[data-strongs="${focusStrong}"]`);
-        targets.forEach((el) => {
-            el.classList.add('heatmap-focus-word');
+        // Find all tokens where focusStrong matches either data-strongs or data-alt-strongs
+        const allTokens = document.querySelectorAll('.strongs-token[data-strongs]');
+        allTokens.forEach((el) => {
+            const primaryStrongs = el.dataset.strongs;
+            const altStrongs = el.dataset.altStrongs;
+            if (primaryStrongs === focusStrong || altStrongs === focusStrong) {
+                el.classList.add('heatmap-focus-word');
+            }
         });
     }
 
