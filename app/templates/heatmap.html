@@ -79,6 +79,38 @@
     </div>
     {% endif %}
 
+    <!-- Top books summary -->
+    {% if data %}
+    {% set book_totals = {} %}
+    {% for book in ordered_books %}
+        {% set chapters = data.get(book) %}
+        {% if chapters %}
+            {% set total = namespace(count=0) %}
+            {% for cell in chapters %}
+                {% set _ = total.__setattr__('count', total.count + cell.count) %}
+            {% endfor %}
+            {% if total.count > 0 %}
+                {% set _ = book_totals.__setitem__(book, total.count) %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    {% if book_totals %}
+    <div class="heatmap-top-books">
+        <div class="heatmap-top-books__header">Top books:</div>
+        <div class="heatmap-top-books__list">
+            {% for book, count in book_totals|dictsort(by='value', reverse=True) %}
+            {% if loop.index <= 8 %}
+            <button class="heatmap-book-chip" data-book="{{ book }}" onclick="scrollToBook('{{ book }}')">
+                <span class="heatmap-book-chip__name">{{ book }}</span>
+                <span class="heatmap-book-chip__count">{{ count }}</span>
+            </button>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
     <!-- Main heatmap -->
     <div class="heatmap-wrapper">
         <h3 class="heatmap-title">{{ strong }}</h3>
@@ -93,12 +125,13 @@
             {% for book in ordered_books %}
                 {% set chapters = data.get(book) %}
                 {% if chapters %}
-                <tr>
+                <tr data-book-row="{{ book }}">
                     <th scope="row">{{ book }}</th>
                     <td>
-                        <table class="heatmap-row-table">
-                            <tr>
-                            {% for cell in chapters %}
+                        <div class="heatmap-chapters-scroll">
+                            <table class="heatmap-row-table">
+                                <tr>
+                                {% for cell in chapters %}
                                 {% set chapter_num = cell.chapter|default(loop.index) %}
                                 {% set has_any_count = cell.count > 0 or (cell.crossrefs and cell.crossrefs|selectattr('count', 'gt', 0)|list|length > 0) %}
                                 {% set show_split = show_crossrefs and active_crossrefs and cell.has_overlap %}
@@ -135,9 +168,11 @@
                                     {% endif %}
                                     {% endif %}
                                 </td>
-                            {% endfor %}
-                            </tr>
-                        </table>
+                                {% endfor %}
+                                </tr>
+                            </table>
+                            <div class="heatmap-chapters-fade"></div>
+                        </div>
                     </td>
                 </tr>
                 {% endif %}
@@ -160,6 +195,33 @@
             form.appendChild(hiddenInput);
             form.submit();
         });
+
+        // Detect overflow and show fade overlay
+        function checkOverflow() {
+            const scrollContainers = document.querySelectorAll('.heatmap-chapters-scroll');
+            scrollContainers.forEach(container => {
+                const hasOverflow = container.scrollWidth > container.clientWidth;
+                container.classList.toggle('has-overflow', hasOverflow);
+            });
+        }
+
+        // Smooth scroll to book row
+        function scrollToBook(bookName) {
+            const row = document.querySelector(`[data-book-row="${bookName}"]`);
+            if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Brief highlight effect
+                row.style.transition = 'background-color 0.3s ease';
+                row.style.backgroundColor = 'rgba(125, 75, 54, 0.1)';
+                setTimeout(() => {
+                    row.style.backgroundColor = '';
+                }, 600);
+            }
+        }
+
+        // Check overflow on load and resize
+        window.addEventListener('load', checkOverflow);
+        window.addEventListener('resize', checkOverflow);
     </script>
 </body>
 </html>
