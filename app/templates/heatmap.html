@@ -80,35 +80,18 @@
     {% endif %}
 
     <!-- Top books summary -->
-    {% if data %}
-    {% set book_totals = {} %}
-    {% for book in ordered_books %}
-        {% set chapters = data.get(book) %}
-        {% if chapters %}
-            {% set total = namespace(count=0) %}
-            {% for cell in chapters %}
-                {% set _ = total.__setattr__('count', total.count + cell.count) %}
-            {% endfor %}
-            {% if total.count > 0 %}
-                {% set _ = book_totals.__setitem__(book, total.count) %}
-            {% endif %}
-        {% endif %}
-    {% endfor %}
-    {% if book_totals %}
+    {% if top_books %}
     <div class="heatmap-top-books">
         <div class="heatmap-top-books__header">Top books:</div>
         <div class="heatmap-top-books__list">
-            {% for book, count in book_totals|dictsort(by='value', reverse=True) %}
-            {% if loop.index <= 8 %}
+            {% for book, count in top_books %}
             <button class="heatmap-book-chip" data-book="{{ book }}" onclick="scrollToBook('{{ book }}')">
                 <span class="heatmap-book-chip__name">{{ book }}</span>
                 <span class="heatmap-book-chip__count">{{ count }}</span>
             </button>
-            {% endif %}
             {% endfor %}
         </div>
     </div>
-    {% endif %}
     {% endif %}
 
     <!-- Main heatmap -->
