@@ -684,8 +684,8 @@ CROSSREF_COLORS = [
     (66, 133, 244),   # Blue
     (52, 168, 83),    # Green
     (251, 188, 4),    # Yellow/Gold
-    (234, 67, 53),    # Red (alternative shade)
-    (154, 66, 244),   # Purple
+    (168, 85, 247),   # Purple (violet)
+    (236, 72, 153),   # Pink
 ]
 
 
@@ -836,7 +836,7 @@ def heatmap():
         show_crossrefs=show_crossrefs,
         from_crossref=from_crossref,
         top_books=top_books,
-        crossref_colors=['#4285f4', '#34a853', '#fbbc04', '#ea4335', '#9a42f4']  # For legend
+        crossref_colors=['#4285f4', '#34a853', '#fbbc04', '#a855f7', '#ec4899']  # For legend
     )
 
 

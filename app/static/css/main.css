@@ -718,6 +718,29 @@ a:hover {
 .heatmap-wrapper {
     margin: 10px 0 18px;
     overflow-x: auto;
+    position: relative;
+}
+
+/* Fade overlay for heatmap scroll - appears when there's more content to the right */
+.heatmap-wrapper::after {
+    content: '';
+    position: sticky;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 50px;
+    background: linear-gradient(to left, rgba(253, 252, 249, 0.95), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 3;
+    display: block;
+    position: absolute;
+    height: 100%;
+}
+
+.heatmap-wrapper.has-overflow::after {
+    opacity: 1;
 }
 
 .heatmap-table {
@@ -820,28 +843,14 @@ a:hover {
     }
 }
 
-/* Scroll container for chapter rows with fade overlay */
+/* Chapter row container - no individual scrollbars */
 .heatmap-chapters-scroll {
     position: relative;
-    overflow-x: auto;
-    overflow-y: hidden;
 }
 
+/* Fade effect element (no longer used per-row, kept for backwards compat) */
 .heatmap-chapters-fade {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 40px;
-    background: linear-gradient(to left, rgba(253, 252, 249, 0.95), transparent);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    z-index: 1;
-}
-
-.heatmap-chapters-scroll.has-overflow .heatmap-chapters-fade {
-    opacity: 1;
+    display: none;
 }
 
 /* Top books summary section */

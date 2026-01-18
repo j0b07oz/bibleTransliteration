@@ -179,13 +179,16 @@
             form.submit();
         });
 
-        // Detect overflow and show fade overlay
+        // Detect overflow and show fade overlay on wrapper
         function checkOverflow() {
-            const scrollContainers = document.querySelectorAll('.heatmap-chapters-scroll');
-            scrollContainers.forEach(container => {
-                const hasOverflow = container.scrollWidth > container.clientWidth;
-                container.classList.toggle('has-overflow', hasOverflow);
-            });
+            const wrapper = document.querySelector('.heatmap-wrapper');
+            if (!wrapper) return;
+
+            const hasOverflow = wrapper.scrollWidth > wrapper.clientWidth;
+            const scrolledToEnd = wrapper.scrollLeft + wrapper.clientWidth >= wrapper.scrollWidth - 5;
+
+            // Show fade only when there's overflow AND not scrolled to the end
+            wrapper.classList.toggle('has-overflow', hasOverflow && !scrolledToEnd);
         }
 
         // Smooth scroll to book row
@@ -202,8 +205,14 @@
             }
         }
 
-        // Check overflow on load and resize
-        window.addEventListener('load', checkOverflow);
+        // Check overflow on load, resize, and scroll
+        window.addEventListener('load', function() {
+            checkOverflow();
+            const wrapper = document.querySelector('.heatmap-wrapper');
+            if (wrapper) {
+                wrapper.addEventListener('scroll', checkOverflow);
+            }
+        });
         window.addEventListener('resize', checkOverflow);
     </script>
 </body>
