@@ -94,16 +94,17 @@
             {% endif %}
         {% endif %}
     {% endfor %}
-    {% set top_books = book_totals.items()|sort(attribute='1', reverse=True)[:8] %}
-    {% if top_books %}
+    {% if book_totals %}
     <div class="heatmap-top-books">
         <div class="heatmap-top-books__header">Top books:</div>
         <div class="heatmap-top-books__list">
-            {% for book, count in top_books %}
+            {% for book, count in book_totals|dictsort(by='value', reverse=True) %}
+            {% if loop.index <= 8 %}
             <button class="heatmap-book-chip" data-book="{{ book }}" onclick="scrollToBook('{{ book }}')">
                 <span class="heatmap-book-chip__name">{{ book }}</span>
                 <span class="heatmap-book-chip__count">{{ count }}</span>
             </button>
+            {% endif %}
             {% endfor %}
         </div>
     </div>
