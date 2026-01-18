@@ -431,6 +431,11 @@ def navigate():
     verses = build_verses_for_render(result, active_units) if result else []
 
     user_strongs_keys = list(user_strongs_dict.keys())
+
+    # Generate book data for autocomplete (same as home route)
+    ordered_books = sorted(book_order.items(), key=lambda x: x[1])
+    book_data = [{'name': name, 'chapters': book_chapter_count.get(name, 0)} for name, _ in ordered_books]
+
     return render_template(
         'home.html',
         result=result,
@@ -445,6 +450,7 @@ def navigate():
         from_heatmap=False,
         context_defaults=DEFAULT_CONTEXT_OPTIONS,
         user_strongs_keys=user_strongs_keys,
+        book_data=book_data,
     )
 
 
