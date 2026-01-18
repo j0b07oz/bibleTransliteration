@@ -259,7 +259,7 @@ def transliterate_chapter(
             or normalized in english_stopwords
         )
 
-    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None, uncommon_meta=None):
+    def build_span(strongs_number, display_text, original_text, base_color, has_transliteration, metadata=None, uncommon_meta=None, alt_strongs=None):
         is_uncommon = bool(has_transliteration and uncommon_meta and uncommon_meta.get('is_uncommon'))
         tag_name = "button" if is_uncommon else "span"
         classes = ["strongs-token"]
@@ -275,6 +275,8 @@ def transliterate_chapter(
             classes.append("uncommon-word")
 
         data_attrs = [f'data-strongs="{safe_attr(strongs_number)}"']
+        if alt_strongs and isinstance(alt_strongs, str) and alt_strongs.strip():
+            data_attrs.append(f'data-alt-strongs="{safe_attr(alt_strongs)}"')
         if is_uncommon:
             data_attrs.append('data-uncommon="true"')
             counts_suffix = ""
@@ -336,6 +338,19 @@ def transliterate_chapter(
                 sorted_translations = sorted(translations, key=lambda x: len(x.split()), reverse=True)
                 xlit_info = replacement_mapping.get(strongs_number)
 
+                # Detect alternative Strong's number (G5625 pattern)
+                alt_strongs_number = None
+                try:
+                    alt_pattern = re.search(
+                        r'\{' + re.escape(strongs_number) + r'\}(?:\{[^}]+\})*\{\([HG]5625\)\}\{([HG]\d+)\}',
+                        verse['text']
+                    )
+                    if alt_pattern:
+                        alt_strongs_number = alt_pattern.group(1)
+                except Exception:
+                    # If regex fails for any reason, continue without alternative Strong's number
+                    pass
+
                 replaced = False
                 for translation in sorted_translations:
                     translation = translation.lower()
@@ -370,6 +385,7 @@ def transliterate_chapter(
                             bool(xlit_info),
                             meta,
                             uncommon_lookup.get(strongs_number),
+                            alt_strongs_number,
                         )
                         verse['text'] = verse['text'].replace(matched_text, replacement)
                         replaced = True
@@ -399,6 +415,7 @@ def transliterate_chapter(
                         bool(xlit_info),
                         meta,
                         uncommon_lookup.get(strongs_number),
+                        alt_strongs_number,
                     )
                     verse['text'] = verse['text'].replace(word + f"{{{strongs_number}}}", replacement)
         verse['text'] = re.sub(r'\{[HG]\d+\}', '', verse['text'])
