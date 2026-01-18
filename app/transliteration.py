@@ -275,7 +275,7 @@ def transliterate_chapter(
             classes.append("uncommon-word")
 
         data_attrs = [f'data-strongs="{safe_attr(strongs_number)}"']
-        if alt_strongs:
+        if alt_strongs and isinstance(alt_strongs, str) and alt_strongs.strip():
             data_attrs.append(f'data-alt-strongs="{safe_attr(alt_strongs)}"')
         if is_uncommon:
             data_attrs.append('data-uncommon="true"')
@@ -340,12 +340,16 @@ def transliterate_chapter(
 
                 # Detect alternative Strong's number (G5625 pattern)
                 alt_strongs_number = None
-                alt_pattern = re.search(
-                    r'\{' + re.escape(strongs_number) + r'\}(?:\{[^}]+\})*\{\([HG]5625\)\}\{([HG]\d+)\}',
-                    verse['text']
-                )
-                if alt_pattern:
-                    alt_strongs_number = alt_pattern.group(1)
+                try:
+                    alt_pattern = re.search(
+                        r'\{' + re.escape(strongs_number) + r'\}(?:\{[^}]+\})*\{\([HG]5625\)\}\{([HG]\d+)\}',
+                        verse['text']
+                    )
+                    if alt_pattern:
+                        alt_strongs_number = alt_pattern.group(1)
+                except Exception:
+                    # If regex fails for any reason, continue without alternative Strong's number
+                    pass
 
                 replaced = False
                 for translation in sorted_translations:
