@@ -734,13 +734,19 @@ a:hover {
     background: #fdfcf9;
 }
 
-.heatmap-table th:first-child {
+.heatmap-table th:first-child,
+.heatmap-table tbody tr > th:first-child {
     white-space: nowrap;
+    position: sticky;
+    left: 0;
+    background: #fdfcf9;
+    z-index: 2;
+    box-shadow: 1px 0 2px rgba(0, 0, 0, 0.05);
 }
 
 .heatmap-row-table {
     border-collapse: collapse;
-    width: 100%;
+    /* Removed width: 100% to allow short books to be short */
 }
 
 .heatmap-row-table td {
@@ -771,6 +777,7 @@ a:hover {
 
 .heatmap-cell__count--empty {
     font-weight: 400;
+    opacity: 0.25;
 }
 
 .heatmap-cell.is-clickable .heatmap-cell__link {
@@ -811,6 +818,85 @@ a:hover {
     .heatmap-table {
         min-width: 0;
     }
+}
+
+/* Scroll container for chapter rows with fade overlay */
+.heatmap-chapters-scroll {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.heatmap-chapters-fade {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to left, rgba(253, 252, 249, 0.95), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1;
+}
+
+.heatmap-chapters-scroll.has-overflow .heatmap-chapters-fade {
+    opacity: 1;
+}
+
+/* Top books summary section */
+.heatmap-top-books {
+    margin: 16px 0 20px;
+    padding: 12px 16px;
+    background: #f7f7f5;
+    border: 1px solid #e0dfda;
+    border-radius: 8px;
+}
+
+.heatmap-top-books__header {
+    font-weight: 600;
+    font-size: 14px;
+    color: #2f1f1c;
+    margin-bottom: 10px;
+}
+
+.heatmap-top-books__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.heatmap-book-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #d8d6ce;
+    color: #2f1f1c;
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.heatmap-book-chip:hover {
+    background: #f0ebe5;
+    border-color: #7d4b36;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.heatmap-book-chip__name {
+    font-weight: 600;
+}
+
+.heatmap-book-chip__count {
+    font-size: 12px;
+    color: #7a6b64;
+    background: #f7f0e9;
+    padding: 2px 6px;
+    border-radius: 10px;
 }
 
 /* Heatmap cross-reference styles */
