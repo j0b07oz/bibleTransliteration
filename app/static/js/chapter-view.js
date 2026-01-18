@@ -933,23 +933,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ===== Uncommon Word Links =====
-
-    function bindUncommonWordLinks() {
-        const nodes = document.querySelectorAll('.uncommon-word[data-strongs]');
-        nodes.forEach((node) => {
-            if (node.dataset.uncommonBound) return;
-            node.dataset.uncommonBound = '1';
-            node.addEventListener('click', (event) => {
-                event.stopPropagation();
-                const strong = node.dataset.strongs;
-                if (!strong) return;
-                const targetUrl = `${heatmapBase}?strong=${encodeURIComponent(strong)}`;
-                window.location.href = targetUrl;
-            });
-        });
-    }
-
     // ===== Word Context Menu =====
 
     const userStrongsSet = window.USER_STRONGS_SET || new Set();
@@ -1292,7 +1275,6 @@ document.addEventListener('DOMContentLoaded', function() {
     renderPhoneticDevices();
     renderOverlay();
     applyHeatmapFocus();
-    bindUncommonWordLinks();
     bindWordPopup();
     bindStrongsTokenClicks();
 });

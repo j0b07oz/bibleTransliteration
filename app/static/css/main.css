@@ -315,8 +315,13 @@ a:hover {
 }
 
 .heatmap-focus-word {
+    background-color: #ffe6e6 !important;
     color: #b21b12 !important;
     text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.25);
+    border: 2px solid #b21b12 !important;
+    border-radius: 3px;
+    padding: 1px 2px !important;
+    box-shadow: 0 0 8px rgba(178, 27, 18, 0.4) !important;
 }
 
 
