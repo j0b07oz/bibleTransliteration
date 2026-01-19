@@ -1675,6 +1675,7 @@ a:hover {
     border: 1px solid #d8d0c8;
     border-radius: 6px;
     font-size: 14px;
+    box-sizing: border-box;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
