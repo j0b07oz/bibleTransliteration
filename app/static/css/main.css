@@ -1713,6 +1713,11 @@ a:hover {
     max-width: 220px;
 }
 
+.bible-form .autocomplete-wrapper {
+    display: block;
+    width: 100%;
+}
+
 .bible-form #go-button {
     margin-top: 4px;
 }
@@ -1732,6 +1737,16 @@ a:hover {
     .bible-form .form-group {
         max-width: none;
         width: auto;
+        flex-shrink: 0;
+    }
+
+    .bible-form .form-group input {
+        width: 180px;
+    }
+
+    .bible-form .autocomplete-wrapper {
+        display: block;
+        width: 180px;
     }
 
     .bible-form #go-button {
