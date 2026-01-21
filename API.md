@@ -5,7 +5,7 @@ This document provides comprehensive documentation for all API endpoints in the 
 ## Base URL
 
 - **Development**: `http://localhost:5000`
-- **Production**: Configured via deployment
+- **Production**: `https://uncoverthebible.com`
 
 ---
 
@@ -528,3 +528,4 @@ No explicit versioning implemented. Breaking changes should increment version an
 For issues, questions, or contributions:
 - **GitHub**: https://github.com/j0b07oz/bibleTransliteration/issues
 - **Documentation**: README.md, ARCHITECTURE.md
+
