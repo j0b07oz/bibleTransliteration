@@ -208,65 +208,67 @@
   <text x="600" y="665" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#333" text-anchor="middle">DATA FLOW</text>
 
   <!-- Flow Step 1 -->
-  <g transform="translate(60, 690)">
-    <circle cx="25" cy="25" r="25" fill="#1976D2"/>
-    <text x="25" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">1</text>
-    <text x="70" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">User Request</text>
-    <text x="70" y="38" font-family="Arial, sans-serif" font-size="10" fill="#666">Select book/chapter or</text>
-    <text x="70" y="52" font-family="Arial, sans-serif" font-size="10" fill="#666">manage dictionary</text>
+  <g transform="translate(60, 685)">
+    <circle cx="25" cy="25" r="22" fill="#1976D2"/>
+    <text x="25" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">1</text>
+    <text x="25" y="62" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">User Request</text>
+    <text x="25" y="75" font-family="Arial, sans-serif" font-size="8" fill="#666" text-anchor="middle">Select book/chapter</text>
   </g>
+
+  <!-- Flow Arrow 1-2 -->
+  <path d="M 115 710 L 155 710" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
 
   <!-- Flow Step 2 -->
-  <g transform="translate(240, 690)">
-    <circle cx="25" cy="25" r="25" fill="#388E3C"/>
-    <text x="25" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">2</text>
-    <text x="70" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">Flask Routes</text>
-    <text x="70" y="38" font-family="Arial, sans-serif" font-size="10" fill="#666">Validate input, load</text>
-    <text x="70" y="52" font-family="Arial, sans-serif" font-size="10" fill="#666">session/user dict</text>
+  <g transform="translate(170, 685)">
+    <circle cx="25" cy="25" r="22" fill="#388E3C"/>
+    <text x="25" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">2</text>
+    <text x="25" y="62" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">Flask Routes</text>
+    <text x="25" y="75" font-family="Arial, sans-serif" font-size="8" fill="#666" text-anchor="middle">Validate &amp; load</text>
   </g>
+
+  <!-- Flow Arrow 2-3 -->
+  <path d="M 225 710 L 265 710" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
 
   <!-- Flow Step 3 -->
-  <g transform="translate(420, 690)">
-    <circle cx="25" cy="25" r="25" fill="#F57C00"/>
-    <text x="25" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">3</text>
-    <text x="70" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">Transliteration</text>
-    <text x="70" y="38" font-family="Arial, sans-serif" font-size="10" fill="#666">Extract Strong's, apply</text>
-    <text x="70" y="52" font-family="Arial, sans-serif" font-size="10" fill="#666">translations, add markup</text>
+  <g transform="translate(280, 685)">
+    <circle cx="25" cy="25" r="22" fill="#F57C00"/>
+    <text x="25" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">3</text>
+    <text x="25" y="62" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">Transliterate</text>
+    <text x="25" y="75" font-family="Arial, sans-serif" font-size="8" fill="#666" text-anchor="middle">Apply Strong's</text>
   </g>
+
+  <!-- Flow Arrow 3-4 -->
+  <path d="M 335 710 L 375 710" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
 
   <!-- Flow Step 4 -->
-  <g transform="translate(600, 690)">
-    <circle cx="25" cy="25" r="25" fill="#7B1FA2"/>
-    <text x="25" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">4</text>
-    <text x="70" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">Jinja2 Render</text>
-    <text x="70" y="38" font-family="Arial, sans-serif" font-size="10" fill="#666">Inject data, config,</text>
-    <text x="70" y="52" font-family="Arial, sans-serif" font-size="10" fill="#666">generate HTML page</text>
+  <g transform="translate(390, 685)">
+    <circle cx="25" cy="25" r="22" fill="#7B1FA2"/>
+    <text x="25" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">4</text>
+    <text x="25" y="62" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">Jinja2 Render</text>
+    <text x="25" y="75" font-family="Arial, sans-serif" font-size="8" fill="#666" text-anchor="middle">Generate HTML</text>
   </g>
+
+  <!-- Flow Arrow 4-5 -->
+  <path d="M 445 710 L 485 710" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
 
   <!-- Flow Step 5 -->
-  <g transform="translate(780, 690)">
-    <circle cx="25" cy="25" r="25" fill="#C62828"/>
-    <text x="25" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">5</text>
-    <text x="70" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">JS Enhancement</text>
-    <text x="70" y="38" font-family="Arial, sans-serif" font-size="10" fill="#666">Overlays, phonetics,</text>
-    <text x="70" y="52" font-family="Arial, sans-serif" font-size="10" fill="#666">context menu, events</text>
+  <g transform="translate(500, 685)">
+    <circle cx="25" cy="25" r="22" fill="#C62828"/>
+    <text x="25" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">5</text>
+    <text x="25" y="62" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">JS Enhance</text>
+    <text x="25" y="75" font-family="Arial, sans-serif" font-size="8" fill="#666" text-anchor="middle">Overlays &amp; events</text>
   </g>
+
+  <!-- Flow Arrow 5-6 -->
+  <path d="M 555 710 L 595 710" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
 
   <!-- Flow Step 6 -->
-  <g transform="translate(960, 690)">
-    <circle cx="25" cy="25" r="25" fill="#00838F"/>
-    <text x="25" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">6</text>
-    <text x="70" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#333">User Display</text>
-    <text x="70" y="38" font-family="Arial, sans-serif" font-size="10" fill="#666">Interactive Bible text</text>
-    <text x="70" y="52" font-family="Arial, sans-serif" font-size="10" fill="#666">with all features</text>
+  <g transform="translate(610, 685)">
+    <circle cx="25" cy="25" r="22" fill="#00838F"/>
+    <text x="25" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">6</text>
+    <text x="25" y="62" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#333" text-anchor="middle">User Display</text>
+    <text x="25" y="75" font-family="Arial, sans-serif" font-size="8" fill="#666" text-anchor="middle">Interactive view</text>
   </g>
-
-  <!-- Flow Arrows -->
-  <path d="M 175 715 L 230 715" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
-  <path d="M 355 715 L 410 715" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
-  <path d="M 535 715 L 590 715" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
-  <path d="M 715 715 L 770 715" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
-  <path d="M 895 715 L 950 715" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
 
   <!-- Session Flow Box -->
   <g transform="translate(60, 770)">
@@ -281,12 +283,12 @@
   <g transform="translate(580, 770)">
     <rect width="280" height="90" rx="8" fill="#FCE4EC" stroke="#C2185B" stroke-width="1.5"/>
     <text x="140" y="22" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#C2185B" text-anchor="middle">TECHNOLOGY STACK</text>
-    <text x="20" y="45" font-family="Arial, sans-serif" font-size="10" fill="#333">Backend: Flask + Python 3.10+</text>
-    <text x="20" y="62" font-family="Arial, sans-serif" font-size="10" fill="#333">Frontend: HTML5 + Vanilla JS</text>
-    <text x="20" y="79" font-family="Arial, sans-serif" font-size="10" fill="#333">Data: JSON (14.3MB at startup)</text>
-    <text x="150" y="45" font-family="Arial, sans-serif" font-size="10" fill="#333">Templates: Jinja2</text>
-    <text x="150" y="62" font-family="Arial, sans-serif" font-size="10" fill="#333">Storage: LocalStorage</text>
-    <text x="150" y="79" font-family="Arial, sans-serif" font-size="10" fill="#333">Cache: LRU (heatmap)</text>
+    <text x="15" y="45" font-family="Arial, sans-serif" font-size="9" fill="#333">Backend: Flask + Python</text>
+    <text x="15" y="60" font-family="Arial, sans-serif" font-size="9" fill="#333">Frontend: HTML5 + JS</text>
+    <text x="15" y="75" font-family="Arial, sans-serif" font-size="9" fill="#333">Data: JSON (14.3MB)</text>
+    <text x="150" y="45" font-family="Arial, sans-serif" font-size="9" fill="#333">Templates: Jinja2</text>
+    <text x="150" y="60" font-family="Arial, sans-serif" font-size="9" fill="#333">Storage: LocalStorage</text>
+    <text x="150" y="75" font-family="Arial, sans-serif" font-size="9" fill="#333">Cache: LRU (heatmap)</text>
   </g>
 
   <!-- Stats Box -->
