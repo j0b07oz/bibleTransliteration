@@ -125,6 +125,41 @@ class TestUserDictValidation:
         assert is_valid is True
         assert error is None
 
+    def test_reject_color_with_injection_payload(self):
+        """A color that tries to break out of the style attribute is rejected."""
+        malicious_dict = {
+            "H7225": {
+                "translations": ["beginning"],
+                "color": 'red" onmouseover="alert(1)'
+            }
+        }
+        is_valid, error = _validate_user_dict(malicious_dict)
+        assert is_valid is False
+        assert "color" in error.lower()
+
+    def test_reject_named_color(self):
+        """A CSS named color (not #RRGGBB) is rejected."""
+        is_valid, error = _validate_user_dict(
+            {"H7225": {"translations": ["beginning"], "color": "red"}}
+        )
+        assert is_valid is False
+        assert "color" in error.lower()
+
+    def test_reject_short_hex_color(self):
+        """A 3-digit shorthand hex color is rejected (would crash is_light_color)."""
+        is_valid, error = _validate_user_dict(
+            {"H7225": {"translations": ["beginning"], "color": "#fff"}}
+        )
+        assert is_valid is False
+
+    def test_accept_lowercase_hex_color(self):
+        """A valid lowercase #rrggbb hex color is accepted."""
+        is_valid, error = _validate_user_dict(
+            {"H7225": {"translations": ["beginning"], "color": "#ff5733"}}
+        )
+        assert is_valid is True
+        assert error is None
+
     def test_multiple_entries(self):
         """Test validation with multiple valid entries."""
         valid_dict = {

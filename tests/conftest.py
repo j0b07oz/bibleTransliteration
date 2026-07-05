@@ -116,3 +116,24 @@ def temp_session_file():
     # Cleanup
     if os.path.exists(path):
         os.remove(path)
+
+
+@pytest.fixture(autouse=True)
+def clean_uploads():
+    """Remove any per-user dictionary files a test writes to app/uploads/.
+
+    With the dictionary now persisted to disk (not the session cookie),
+    routes like /edit_dict and /upload_dict create {user_id}.json files.
+    Snapshot the directory before the test and delete anything new after,
+    so the suite doesn't accumulate stray upload files between runs.
+    """
+    from app.routes import UPLOAD_DATA_DIR
+    before = set(os.listdir(UPLOAD_DATA_DIR)) if os.path.isdir(UPLOAD_DATA_DIR) else set()
+    yield
+    if os.path.isdir(UPLOAD_DATA_DIR):
+        for name in os.listdir(UPLOAD_DATA_DIR):
+            if name not in before:
+                try:
+                    os.remove(os.path.join(UPLOAD_DATA_DIR, name))
+                except OSError:
+                    pass

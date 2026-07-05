@@ -1,9 +1,12 @@
 """
 Tests for the Flask routes and API endpoints.
 """
+import io
 import pytest
 import json
 from flask import session
+
+from app.routes import _validate_user_dict
 
 
 class TestHomeRoute:
@@ -184,6 +187,93 @@ class TestExportImport:
             content_type='application/json'
         )
         assert response.status_code == 400
+
+
+class TestSessionArchitecture:
+    """B1: the dictionary lives in a per-user file, not the session cookie."""
+
+    def _add_word(self, client):
+        return client.post(
+            '/edit_dict',
+            data=json.dumps({"actions": [{
+                "action": "add",
+                "strong_number": "H9999",
+                "translations": ["testword"],
+                "color": "#123456",
+            }]}),
+            content_type='application/json',
+        )
+
+    def test_dict_not_stored_in_session_cookie(self, client):
+        """After saving, the session holds only user_id — never the dictionary."""
+        with client:
+            resp = self._add_word(client)
+            assert resp.status_code == 200
+            with client.session_transaction() as sess:
+                assert 'user_id' in sess
+                assert 'user_strongs_dict' not in sess
+
+    def test_dict_persists_across_requests_via_file(self, client):
+        """A word saved in one request is visible in a later request."""
+        with client:
+            self._add_word(client)
+            # A separate request (same session cookie) must still see the word,
+            # which can only come from the on-disk file now.
+            exported = json.loads(client.get('/export_dict').data)
+            assert "H9999" in exported
+            assert exported["H9999"]["translations"] == ["testword"]
+
+
+class TestExportImportRoundtrip:
+    """Tests for the real /export_dict and /upload_dict endpoints (B3)."""
+
+    def test_export_dict_returns_json(self, client):
+        """Export returns a JSON attachment even for a fresh session."""
+        response = client.get('/export_dict')
+        assert response.status_code == 200
+        assert response.mimetype == 'application/json'
+
+    def test_fresh_export_has_importable_shape(self, client):
+        """A fresh-session export must pass the app's own validation.
+
+        Previously export used the raw {"H7225": [...]} shape, which
+        _validate_user_dict (and thus /upload_dict) rejected.
+        """
+        with client:
+            response = client.get('/export_dict')
+            data = json.loads(response.data)
+            valid, error = _validate_user_dict(data)
+            assert valid, f"exported dict failed validation: {error}"
+
+    def test_export_then_upload_roundtrip(self, client):
+        """Export the fresh dict, then re-upload it: must succeed, not error."""
+        with client:
+            exported = client.get('/export_dict').data
+            response = client.post(
+                '/upload_dict',
+                data={'dict_file': (io.BytesIO(exported), 'my_strongs_dict.json')},
+                content_type='multipart/form-data',
+            )
+            assert response.status_code == 302
+            location = response.headers['Location']
+            assert 'upload_success' in location
+            assert 'upload_error' not in location
+
+    def test_upload_rejects_malicious_color(self, client):
+        """A dictionary with a style-injection color is rejected on upload."""
+        payload = json.dumps({
+            "H7225": {
+                "translations": ["beginning"],
+                "color": 'red" onmouseover="alert(1)'
+            }
+        }).encode('utf-8')
+        response = client.post(
+            '/upload_dict',
+            data={'dict_file': (io.BytesIO(payload), 'bad.json')},
+            content_type='multipart/form-data',
+        )
+        assert response.status_code == 302
+        assert 'upload_error' in response.headers['Location']
 
 
 class TestHeatmapRoute:
