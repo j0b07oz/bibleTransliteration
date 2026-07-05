@@ -379,6 +379,121 @@ GET /heatmap
 
 ---
 
+### 8. Word Occurrences (Concordance)
+
+**Endpoint**: `GET /occurrences`
+
+Lists every verse containing a Strong's number, grouped by book in canonical
+order, with the matched English word highlighted. Each verse reference links
+into the chapter view with `focus` highlighting.
+
+#### Request Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `strong` | string | No | Strong's number (e.g., "H2617"). Blank shows the search form. |
+
+#### Example Usage
+
+```
+# All occurrences of hesed
+GET /occurrences?strong=H2617
+
+# Jump straight to one book's section (anchors are #book-<Name>)
+GET /occurrences?strong=H2617#book-Psalms
+```
+
+Results are cached per Strong's number (LRU, 32 entries), so repeated lookups
+are instant.
+
+---
+
+### 9. English Word Lookup
+
+**Endpoint**: `GET /api/word_lookup`
+
+Reverse lookup from an English KJV word to ranked Strong's number candidates.
+Exact word match first; if no exact match, words starting with the query are
+aggregated.
+
+#### Request Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `q` | string | Yes | English word, minimum 2 characters |
+
+#### Response
+
+```json
+{
+  "query": "mercy",
+  "exact": true,
+  "results": [
+    {
+      "strong": "H2617",
+      "count": 137,
+      "word": "mercy",
+      "lemma": "חֵסֵד",
+      "xlit": "chêçêd",
+      "gloss": "from חָסַד; kindness; ..."
+    }
+  ]
+}
+```
+
+Results are sorted by how often the Strong's number is rendered as the queried
+word (max 8). Queries under 2 characters return HTTP 400.
+
+---
+
+### 10. Share Word List
+
+**Endpoint**: `POST /share_dict`
+
+Publishes the caller's current word list as a shareable link. The list is
+stored content-addressed (SHA-256 of its canonical JSON, first 12 hex chars),
+so sharing the same list twice returns the same link. Requires the CSRF token
+via the `X-CSRFToken` header.
+
+#### Response
+
+```json
+{
+  "success": true,
+  "code": "c5d009aa0669",
+  "url": "/import?code=c5d009aa0669"
+}
+```
+
+Errors (empty list, list larger than 256 KB, invalid entries) return HTTP 400
+with `{"success": false, "error": "..."}`.
+
+Shared lists expire after 90 days without access; opening a share link
+refreshes its timer.
+
+---
+
+### 11. Import Shared List
+
+**Endpoints**: `GET /import`, `POST /import`
+
+`GET /import?code=<code>` renders a preview of the shared list (words,
+transliterations, colors, and which entries you already have) with
+**Merge into My List** and **Replace My List** actions. Unknown or expired
+codes return HTTP 404.
+
+`POST /import` applies the list:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `code` | string | Yes | 12-hex-char share code |
+| `mode` | string | No | `merge` (default) or `replace` |
+| `csrf_token` | string | Yes | CSRF token |
+
+Redirects to the dictionary editor with a success (or error) message.
+
+---
+
 ## Data Models
 
 ### User Dictionary Entry
@@ -432,17 +547,19 @@ Full list available via `book_chapter_count` dictionary in backend.
 
 ### Session Data
 
-- **Storage**: Flask server-side sessions
-- **Cookie**: Secure session cookie sent to client
-- **Persistence**: User dictionary saved to `app/uploads/{session_id}.json`
-- **Cleanup**: Files older than 30 days automatically deleted on startup
+- **Storage**: The signed session cookie holds only the user's ID; the
+  dictionary itself lives on disk (the cookie's ~4 KB limit cannot hold it)
+- **Cookie**: HttpOnly, SameSite=Lax; `Secure` when `SESSION_COOKIE_SECURE=true`
+- **Persistence**: User dictionary saved to `app/uploads/{user_id}.json`
+- **Cleanup**: Files older than 30 days deleted on startup and at most once
+  per day thereafter (piggybacked on save traffic); shared lists expire after
+  90 days without access
 
 ### Session Schema
 
 ```python
 {
-  'user_id': str,              # UUID v4
-  'user_strongs_dict': dict    # User's dictionary entries
+  'user_id': str,  # UUID v4 — key into app/uploads/{user_id}.json
 }
 ```
 
