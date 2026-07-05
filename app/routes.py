@@ -1,14 +1,19 @@
 import hashlib
+import io
 import os
 import json
 import uuid
-import tempfile
 import time
 from datetime import datetime, timedelta
 from functools import lru_cache
-from flask import render_template, request, jsonify, session, send_file, redirect, url_for
+from flask import render_template, request, jsonify, session, send_file, redirect, url_for, g
 from app import app
-from .transliteration import transliterate_chapter, count_strongs_in_verses, get_verses_by_book
+from .transliteration import (
+    transliterate_chapter,
+    count_strongs_in_verses,
+    get_verses_by_book,
+    is_valid_hex_color,
+)
 
 # Get logger
 logger = app.logger
@@ -75,6 +80,8 @@ def _validate_user_dict(data):
         color = val.get("color", None)
         if color is not None and not isinstance(color, str):
             return False, f"Color for {key} must be a string (hex) or null."
+        if color is not None and not is_valid_hex_color(color):
+            return False, f"Color for {key} must be a valid hex color like #RRGGBB or null."
     return True, None
 
 
@@ -83,12 +90,17 @@ def _user_dict_path():
 
 
 def save_user_dict(user_dict: dict):
-    session['user_strongs_dict'] = user_dict
+    # The per-user JSON file is the source of truth. Only the user_id lives in
+    # the session cookie (see get_session_id); the dictionary itself is far too
+    # large for the ~4KB signed-cookie limit and would be silently dropped by
+    # the browser, taking the user_id with it. Cache on flask.g for the rest of
+    # this request so repeated reads don't re-hit disk.
+    g.user_strongs_dict = user_dict
     try:
         with open(_user_dict_path(), 'w', encoding='utf-8') as f:
             json.dump(user_dict, f, ensure_ascii=False, indent=2)
     except OSError as e:
-        # If persisting to disk fails, we still keep the session copy.
+        # If persisting to disk fails, we still keep the in-request copy.
         logger.warning(f"Failed to persist user dictionary to disk: {e}")
 
 
@@ -126,9 +138,11 @@ def validate_book_chapter(book, chapter):
 
 
 def get_user_strongs_dict():
+    # Serve from the per-request cache if we've already loaded/saved this request.
+    if 'user_strongs_dict' in g:
+        return g.user_strongs_dict
+
     default_dict = {k: {"translations": v, "color": None} for k, v in default_strongs_dict.items()}
-    if 'user_strongs_dict' in session:
-        return session['user_strongs_dict']
 
     user_file = _user_dict_path()
     if os.path.exists(user_file):
@@ -137,14 +151,14 @@ def get_user_strongs_dict():
                 data = json.load(f)
             valid, error = _validate_user_dict(data)
             if valid:
-                session['user_strongs_dict'] = data
+                g.user_strongs_dict = data
                 return data
             else:
                 logger.warning(f"Invalid user dictionary file: {error}")
         except (OSError, json.JSONDecodeError) as e:
             logger.error(f"Failed to load user dictionary from {user_file}: {e}")
 
-    session['user_strongs_dict'] = default_dict
+    g.user_strongs_dict = default_dict
     return default_dict
 
 strongs_dict_path = os.path.join(STATIC_DATA_DIR, 'strongs_dict.json')
@@ -503,7 +517,10 @@ def edit_dict():
         def _normalize_color(raw):
             if raw is None or raw == 'null':
                 return None
-            return raw
+            # Silently drop anything that isn't a strict #RRGGBB hex value so a
+            # bad color can never be persisted or later rendered into a style
+            # attribute.
+            return raw if is_valid_hex_color(raw) else None
 
         def _process_action(item: dict):
             strong_number = (item.get('strong_number') or '').strip()
@@ -596,14 +613,19 @@ def upload_dict():
 # Route for exporting your current list
 @app.route('/export_dict')
 def export_dict():
-    user_strongs_dict = session.get('user_strongs_dict', default_strongs_dict.copy())
-    
-    # Create a temporary file
-    with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.json') as temp_file:
-        json.dump(user_strongs_dict, temp_file, indent=2)
-    
-    # Send the file
-    return send_file(temp_file.name, as_attachment=True, download_name='my_strongs_dict.json')
+    # Use the canonical accessor so the exported file always has the wrapped
+    # {"translations": [...], "color": ...} shape that _validate_user_dict (and
+    # therefore /upload_dict) expects. Reading the raw default dict here used to
+    # produce a file the app's own importer rejected. Stream from memory rather
+    # than a NamedTemporaryFile(delete=False) that was never cleaned up.
+    user_strongs_dict = get_user_strongs_dict()
+    payload = json.dumps(user_strongs_dict, ensure_ascii=False, indent=2).encode('utf-8')
+    return send_file(
+        io.BytesIO(payload),
+        mimetype='application/json',
+        as_attachment=True,
+        download_name='my_strongs_dict.json',
+    )
 
 @app.route('/about')
 def about():

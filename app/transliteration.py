@@ -7,8 +7,19 @@ import unicodedata
 from collections import Counter
 
 STRONGS_REGEX = re.compile(r'{([HG]\d+)}')
+HEX_COLOR_REGEX = re.compile(r'#[0-9a-fA-F]{6}')
 _global_strongs_counts = None
 _verses_by_book = None
+
+
+def is_valid_hex_color(color) -> bool:
+    """Return True only for strict #RRGGBB hex color strings.
+
+    Used to guard color styling: any other value (a named color, a short
+    hex, or an injection attempt) is treated as "no color" rather than
+    interpolated into a style attribute or fed to is_light_color().
+    """
+    return isinstance(color, str) and bool(HEX_COLOR_REGEX.fullmatch(color))
 
 
 def extract_strongs_numbers(text: str):
@@ -306,7 +317,11 @@ def transliterate_chapter(
         data_attr_str = f" {' '.join(data_attrs)}" if data_attrs else ""
         style_parts = []
 
-        if base_color and has_transliteration:
+        # Only apply a user/entry color when it is a strict #RRGGBB hex value.
+        # Anything else (named colors, malformed hex, injection attempts) is
+        # ignored so it can neither crash is_light_color() nor break out of the
+        # style attribute.
+        if base_color and has_transliteration and is_valid_hex_color(base_color):
             text_color = '#ffffff' if not is_light_color(base_color[1:]) else '#000000'
             style_parts.append(f"background-color: {base_color}; color: {text_color};")
 
@@ -317,7 +332,9 @@ def transliterate_chapter(
                 f"color: #1f0f0b; background-color: {shadow_color}; border: 1px solid {repeat_color};",
             )
 
-        style_attr = f' style="{" ".join(style_parts)}"' if style_parts else ''
+        # Escape the assembled style value as defense in depth even though the
+        # inputs above are validated hex.
+        style_attr = f' style="{safe_attr(" ".join(style_parts))}"' if style_parts else ''
         type_attr = ' type="button"' if tag_name == "button" else ""
         return f'<{tag_name} class="{" ".join(classes)}"{data_original_attr}{data_attr_str}{style_attr}{type_attr}>{display_text}</{tag_name}>'
     #----------------------------------------------------------------------

@@ -6,6 +6,7 @@ from app.transliteration import (
     extract_strongs_numbers,
     generate_color_from_strongs,
     generate_repeat_colors,
+    is_valid_hex_color,
     transliterate_chapter
 )
 
@@ -190,3 +191,47 @@ class TestTransliterateChapter:
         # Should return valid HTML
         assert isinstance(result, str)
         assert len(result) > 0
+
+    def test_malformed_color_does_not_crash_or_inject(self, sample_strongs_data, sample_kjv_data):
+        """A bad color left over in a dict must not 500 or break out of the style attr.
+
+        Strict validation now blocks such colors at the door, but an older
+        upload file could still hold one; build_span's guard is the safety net.
+        """
+        malicious_dict = {
+            "H7225": {
+                "translations": ["beginning"],
+                "color": 'red" onmouseover="alert(1)'
+            }
+        }
+        # Must not raise ValueError from is_light_color on the non-hex string.
+        result = transliterate_chapter(
+            book="Genesis",
+            chapter=1,
+            strongs_dict=malicious_dict,
+            strongs_data=sample_strongs_data,
+            kjv_data=sample_kjv_data,
+        )
+        assert isinstance(result, str)
+        # The injected handler must not appear in the rendered HTML.
+        assert "onmouseover" not in result
+
+
+class TestHexColorValidation:
+    """Tests for the is_valid_hex_color guard."""
+
+    def test_accepts_six_digit_hex(self):
+        assert is_valid_hex_color("#FF5733")
+        assert is_valid_hex_color("#ff5733")
+
+    def test_rejects_non_hex(self):
+        assert not is_valid_hex_color("red")
+        assert not is_valid_hex_color("#fff")
+        assert not is_valid_hex_color('#fff" onmouseover="x')
+        assert not is_valid_hex_color(None)
+        assert not is_valid_hex_color(123)
+
+    def test_rejects_trailing_content(self):
+        # fullmatch must reject a valid prefix followed by an injection.
+        assert not is_valid_hex_color("#ff5733; background: url(x)")
+        assert not is_valid_hex_color("#ff5733\n")
