@@ -2,7 +2,7 @@
 
 The Strong's lookups should be performed against the local KJV dataset:
 
-- **Path**: `app/static/kjv_strongs.json`
+- **Path**: `app/data/kjv_strongs.json`
 - **Shape**:
 
 ```json

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>The King James Bible</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
@@ -47,6 +48,7 @@
     </div>
     
     <form method="POST" action="{{ url_for('home') }}" class="bible-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="book">Book:</label>
             <div class="autocomplete-wrapper">
@@ -139,6 +141,7 @@
         
         <div class="navigation">
             <form method="POST" action="{{ url_for('navigate') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="book" value="{{ book }}">
                 <input type="hidden" name="chapter" value="{{ chapter }}">
                 <button type="submit" name="direction" value="prev" class="button">Previous Chapter</button>

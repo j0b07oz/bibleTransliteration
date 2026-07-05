@@ -35,11 +35,17 @@ function showToast(message, type = 'info') {
 
 // ===== API Communication =====
 
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
 function sendActions(actions) {
     return fetch('/edit_dict', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         },
         body: JSON.stringify({ actions }),
     })

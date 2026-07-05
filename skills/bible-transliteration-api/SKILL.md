@@ -12,7 +12,7 @@ Use this skill to help an agent resolve Strong's numbers from KJV context and ca
 1. **Parse the user intent.** Identify the book, chapter, and target word(s).
 2. **Resolve Strong's numbers (KJV-only).**
    - If the user provides a Strong's ID, use it directly.
-   - If the user provides a book/chapter context (e.g., "Genesis 1"), resolve Strong's by scanning the KJV data in `app/static/kjv_strongs.json`.
+   - If the user provides a book/chapter context (e.g., "Genesis 1"), resolve Strong's by scanning the KJV data in `app/data/kjv_strongs.json`.
    - If no context is provided, ask for a specific KJV reference (book/chapter/verse) or ask for the Strong's ID explicitly.
 3. **Update the dictionary.** Call `POST /edit_dict` with `action: add|update` and `translations` set to the desired transliteration.
 4. **Render the chapter.** Call `GET /?book=<Book>&chapter=<N>` (optionally add `focus=<Strong>` for highlighting).
@@ -22,7 +22,7 @@ Use this skill to help an agent resolve Strong's numbers from KJV context and ca
 
 Follow this procedure when the user gives a word plus a KJV reference:
 
-1. Load `app/static/kjv_strongs.json` and filter `verses` to the specified book + chapter.
+1. Load `app/data/kjv_strongs.json` and filter `verses` to the specified book + chapter.
 2. For each verse `text`, parse word tokens and attached Strong's markers (e.g., `light{H216}`).
 3. Match the user's word case-insensitively (strip punctuation). Capture the Strong's tag immediately attached to the matching word.
 4. If multiple Strong's values appear for the same word in the chapter, report the verse references and ask the user to pick the correct one.

@@ -92,107 +92,99 @@ class TestColorGeneration:
 class TestTransliterateChapter:
     """Tests for the main transliterate_chapter function."""
 
-    def test_basic_transliteration(self, sample_strongs_dict, sample_strongs_data, sample_kjv_data):
+    def test_basic_transliteration(self, sample_strongs_dict, sample_bible_data):
         """Test basic chapter transliteration."""
         result = transliterate_chapter(
             book="Genesis",
             chapter=1,
             strongs_dict=sample_strongs_dict,
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data
+            bible_data=sample_bible_data
         )
         # Should return HTML string
         assert isinstance(result, str)
         assert len(result) > 0
 
-    def test_transliteration_contains_verses(self, sample_strongs_dict, sample_strongs_data, sample_kjv_data):
+    def test_transliteration_contains_verses(self, sample_strongs_dict, sample_bible_data):
         """Test that transliteration includes verse content."""
         result = transliterate_chapter(
             book="Genesis",
             chapter=1,
             strongs_dict=sample_strongs_dict,
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data
+            bible_data=sample_bible_data
         )
         # Should contain verse numbers and text
         assert "1" in result  # Verse 1
         assert "beginning" in result.lower() or "re'shiyth" in result.lower()
 
-    def test_invalid_book(self, sample_strongs_dict, sample_strongs_data, sample_kjv_data):
+    def test_invalid_book(self, sample_strongs_dict, sample_bible_data):
         """Test transliteration with invalid book name."""
         result = transliterate_chapter(
             book="InvalidBook",
             chapter=1,
             strongs_dict=sample_strongs_dict,
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data
+            bible_data=sample_bible_data
         )
         # Should return empty or minimal HTML
         assert isinstance(result, str)
 
-    def test_invalid_chapter(self, sample_strongs_dict, sample_strongs_data, sample_kjv_data):
+    def test_invalid_chapter(self, sample_strongs_dict, sample_bible_data):
         """Test transliteration with invalid chapter number."""
         result = transliterate_chapter(
             book="Genesis",
             chapter=999,
             strongs_dict=sample_strongs_dict,
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data
+            bible_data=sample_bible_data
         )
         # Should return empty or minimal HTML
         assert isinstance(result, str)
 
-    def test_empty_strongs_dict(self, sample_strongs_data, sample_kjv_data):
+    def test_empty_strongs_dict(self, sample_bible_data):
         """Test transliteration with empty Strong's dictionary."""
         result = transliterate_chapter(
             book="Genesis",
             chapter=1,
             strongs_dict={},
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data
+            bible_data=sample_bible_data
         )
         # Should still return valid HTML
         assert isinstance(result, str)
         assert len(result) > 0
 
-    def test_max_repeated_highlights(self, sample_strongs_dict, sample_strongs_data, sample_kjv_data):
+    def test_max_repeated_highlights(self, sample_strongs_dict, sample_bible_data):
         """Test that max_repeated_highlights parameter works."""
         result1 = transliterate_chapter(
             book="Genesis",
             chapter=1,
             strongs_dict=sample_strongs_dict,
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data,
+            bible_data=sample_bible_data,
             max_repeated_highlights=5
         )
         result2 = transliterate_chapter(
             book="Genesis",
             chapter=1,
             strongs_dict=sample_strongs_dict,
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data,
+            bible_data=sample_bible_data,
             max_repeated_highlights=10
         )
         # Both should return valid HTML
         assert isinstance(result1, str)
         assert isinstance(result2, str)
 
-    def test_active_units_parameter(self, sample_strongs_dict, sample_strongs_data, sample_kjv_data):
+    def test_active_units_parameter(self, sample_strongs_dict, sample_bible_data):
         """Test transliteration with active units."""
         # Active units should be a list of dicts or empty list
         result = transliterate_chapter(
             book="Genesis",
             chapter=1,
             strongs_dict=sample_strongs_dict,
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data,
+            bible_data=sample_bible_data,
             active_units=[]
         )
         # Should return valid HTML
         assert isinstance(result, str)
         assert len(result) > 0
 
-    def test_malformed_color_does_not_crash_or_inject(self, sample_strongs_data, sample_kjv_data):
+    def test_malformed_color_does_not_crash_or_inject(self, sample_bible_data):
         """A bad color left over in a dict must not 500 or break out of the style attr.
 
         Strict validation now blocks such colors at the door, but an older
@@ -209,8 +201,7 @@ class TestTransliterateChapter:
             book="Genesis",
             chapter=1,
             strongs_dict=malicious_dict,
-            strongs_data=sample_strongs_data,
-            kjv_data=sample_kjv_data,
+            bible_data=sample_bible_data,
         )
         assert isinstance(result, str)
         # The injected handler must not appear in the rendered HTML.

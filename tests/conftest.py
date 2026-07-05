@@ -108,6 +108,17 @@ def sample_kjv_data():
 
 
 @pytest.fixture
+def sample_bible_data(sample_strongs_data, sample_kjv_data):
+    """A BibleData instance built from the in-memory sample fixtures.
+
+    Lets transliteration tests exercise the real code path (which now takes a
+    BibleData) without loading the full 14 MB of on-disk data.
+    """
+    from app.data import build_bible_data
+    return build_bible_data(sample_strongs_data, sample_kjv_data)
+
+
+@pytest.fixture
 def temp_session_file():
     """Create a temporary session file for testing."""
     fd, path = tempfile.mkstemp(suffix='.json', dir='.')

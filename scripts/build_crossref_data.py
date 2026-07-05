@@ -17,7 +17,7 @@ Extraction Methods:
 4. LXX Simple: "[in LXX ... for XXX]" patterns (medium confidence)
 5. H-References: Direct H#### numbers in definition text (low confidence)
 
-Run once to generate app/static/hebrew_greek_crossref.json
+Run once to generate app/data/hebrew_greek_crossref.json
 """
 
 import json
@@ -31,7 +31,7 @@ from pathlib import Path
 # Paths
 SCRIPT_DIR = Path(__file__).parent
 DATA_DIR = SCRIPT_DIR / "data"
-OUTPUT_PATH = SCRIPT_DIR.parent / "app" / "static" / "hebrew_greek_crossref.json"
+OUTPUT_PATH = SCRIPT_DIR.parent / "app" / "data" / "hebrew_greek_crossref.json"
 
 # =============================================================================
 # Regex Patterns
@@ -620,7 +620,7 @@ def main():
     # Check for data files
     tbesg_path = DATA_DIR / "TBESG.txt"
     tbesh_path = DATA_DIR / "TBESH.txt"
-    strongs_path = SCRIPT_DIR.parent / "app" / "static" / "Strongs.json"
+    strongs_path = SCRIPT_DIR.parent / "app" / "data" / "Strongs.json"
 
     if not tbesg_path.exists():
         print(f"ERROR: Greek lexicon not found at {tbesg_path}")
