@@ -959,10 +959,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2500);
     }
 
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
     function sendDictAction(actions) {
         return fetch('/edit_dict', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
             body: JSON.stringify({ actions }),
         })
         .then(response => {

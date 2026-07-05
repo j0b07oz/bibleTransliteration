@@ -38,155 +38,12 @@ class TestEditDictRoute:
         response = client.get('/edit_dict')
         assert response.status_code == 200
 
-    def test_get_user_dict_default(self, client):
-        """Test getting default user dictionary."""
-        response = client.get('/api/user_dict')
-        assert response.status_code == 200
-        data = json.loads(response.data)
-        assert isinstance(data, dict)
 
-    def test_update_user_dict(self, client):
-        """Test updating user dictionary."""
-        test_dict = {
-            "H7225": {
-                "translations": ["beginning", "start"],
-                "color": "#FF5733"
-            }
-        }
-        response = client.post(
-            '/api/user_dict',
-            data=json.dumps(test_dict),
-            content_type='application/json'
-        )
-        assert response.status_code == 200
-
-    def test_update_user_dict_invalid_format(self, client):
-        """Test updating dictionary with invalid format."""
-        invalid_dict = {
-            "H7225": "not a dict"  # Should be a dict
-        }
-        response = client.post(
-            '/api/user_dict',
-            data=json.dumps(invalid_dict),
-            content_type='application/json'
-        )
-        assert response.status_code == 400
-
-    def test_reset_user_dict(self, client):
-        """Test resetting user dictionary to default."""
-        response = client.post('/api/reset_dict')
-        assert response.status_code == 200
-
-
-class TestDictionaryOperations:
-    """Tests for dictionary CRUD operations."""
-
-    def test_add_word(self, client):
-        """Test adding a word to the dictionary."""
-        word_data = {
-            "number": "H9999",
-            "translations": ["test", "example"]
-        }
-        response = client.post(
-            '/api/add_word',
-            data=json.dumps(word_data),
-            content_type='application/json'
-        )
-        assert response.status_code == 200
-
-    def test_add_word_missing_number(self, client):
-        """Test adding word without Strong's number."""
-        word_data = {
-            "translations": ["test"]
-        }
-        response = client.post(
-            '/api/add_word',
-            data=json.dumps(word_data),
-            content_type='application/json'
-        )
-        assert response.status_code == 400
-
-    def test_remove_word(self, client):
-        """Test removing a word from the dictionary."""
-        # First add a word
-        word_data = {
-            "number": "H9999",
-            "translations": ["test"]
-        }
-        client.post(
-            '/api/add_word',
-            data=json.dumps(word_data),
-            content_type='application/json'
-        )
-
-        # Then remove it
-        response = client.post(
-            '/api/remove_word',
-            data=json.dumps({"number": "H9999"}),
-            content_type='application/json'
-        )
-        assert response.status_code == 200
-
-    def test_update_word_translations(self, client):
-        """Test updating word translations."""
-        update_data = {
-            "number": "H7225",
-            "translations": ["beginning", "start", "first"]
-        }
-        response = client.post(
-            '/api/update_translations',
-            data=json.dumps(update_data),
-            content_type='application/json'
-        )
-        assert response.status_code == 200
-
-    def test_update_word_color(self, client):
-        """Test updating word color."""
-        color_data = {
-            "number": "H7225",
-            "color": "#FF5733"
-        }
-        response = client.post(
-            '/api/update_color',
-            data=json.dumps(color_data),
-            content_type='application/json'
-        )
-        assert response.status_code == 200
-
-
-class TestExportImport:
-    """Tests for dictionary export and import."""
-
-    def test_export_dictionary(self, client):
-        """Test exporting the dictionary."""
-        response = client.get('/export')
-        assert response.status_code == 200
-        assert response.content_type == 'application/json'
-
-    def test_import_dictionary(self, client):
-        """Test importing a dictionary."""
-        import_data = {
-            "H7225": {
-                "translations": ["beginning"],
-                "color": "#FF5733"
-            }
-        }
-        response = client.post(
-            '/import_dict',
-            data=json.dumps(import_data),
-            content_type='application/json'
-        )
-        assert response.status_code == 200
-
-    def test_import_invalid_dictionary(self, client):
-        """Test importing invalid dictionary format."""
-        invalid_data = ["not", "a", "dict"]
-        response = client.post(
-            '/import_dict',
-            data=json.dumps(invalid_data),
-            content_type='application/json'
-        )
-        assert response.status_code == 400
+# NOTE: Earlier revisions of this file tested a speculative /api/* CRUD surface
+# (/api/user_dict, /api/add_word, /export, /import_dict, ...) that the app never
+# implemented, so those tests asserted status codes on 404s and always failed.
+# They were removed; the real endpoints are covered by TestSessionArchitecture,
+# TestExportImportRoundtrip, and the dictionary edit tests below.
 
 
 class TestSessionArchitecture:
@@ -311,23 +168,35 @@ class TestSessionManagement:
             # the route works without errors
             assert True
 
-    def test_session_persistence(self, client):
-        """Test that user dictionary persists in session."""
-        with client:
-            # Set a custom dictionary
-            test_dict = {
-                "H7225": {
-                    "translations": ["beginning"],
-                    "color": "#FF5733"
-                }
-            }
-            client.post(
-                '/api/user_dict',
-                data=json.dumps(test_dict),
-                content_type='application/json'
-            )
 
-            # Retrieve it
-            response = client.get('/api/user_dict')
-            data = json.loads(response.data)
-            assert "H7225" in data
+class TestBibleDataLayer:
+    """B4: data is loaded once into a BibleData instance on app.extensions."""
+
+    def test_bible_data_registered(self, app):
+        bd = app.extensions.get('bible_data')
+        assert bd is not None
+        # Indexes are populated from the real data files under app/data/.
+        assert 'Genesis' in bd.book_chapter_count
+        assert bd.book_chapter_count['Genesis'] == 50
+        assert bd.strongs_by_number.get('H7225', {}).get('xlit')
+        assert len(bd.global_strongs_counts) > 0
+
+    def test_crossref_endpoint_still_works(self, client):
+        """enrich_strong now does an O(1) index lookup instead of a scan."""
+        response = client.get('/api/crossref/H7225')
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['strong'] == 'H7225'
+        assert 'cross_refs' in data
+
+
+class TestSecurityConfig:
+    """B5: CSRF protection and hardened session cookies are configured."""
+
+    def test_session_cookie_flags(self, app):
+        assert app.config['SESSION_COOKIE_HTTPONLY'] is True
+        assert app.config['SESSION_COOKIE_SAMESITE'] == 'Lax'
+
+    def test_csrf_protection_installed(self, app):
+        # Flask-WTF registers itself here when CSRFProtect(app) runs.
+        assert 'csrf' in app.extensions

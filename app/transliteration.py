@@ -8,8 +8,6 @@ from collections import Counter
 
 STRONGS_REGEX = re.compile(r'{([HG]\d+)}')
 HEX_COLOR_REGEX = re.compile(r'#[0-9a-fA-F]{6}')
-_global_strongs_counts = None
-_verses_by_book = None
 
 
 def is_valid_hex_color(color) -> bool:
@@ -37,22 +35,6 @@ def count_strongs_in_verses(verses, allowed=None):
     return counts
 
 
-def get_global_strongs_counts(kjv_data):
-    global _global_strongs_counts
-    if _global_strongs_counts is None:
-        _global_strongs_counts = count_strongs_in_verses(kjv_data.get('verses', []))
-    return _global_strongs_counts
-
-
-def get_verses_by_book(kjv_data):
-    global _verses_by_book
-    if _verses_by_book is None:
-        _verses_by_book = {}
-        for verse in kjv_data.get('verses', []):
-            _verses_by_book.setdefault(verse.get('book_name'), []).append(verse)
-    return _verses_by_book
-
-
 def _unit_bounds(unit: dict):
     start = unit.get('range_start', {})
     end = unit.get('range_end', {})
@@ -63,8 +45,7 @@ def _unit_bounds(unit: dict):
     return start_ch, start_v, end_ch, end_v
 
 
-def _verses_for_unit(kjv_data, book: str, unit: dict):
-    verses_by_book = get_verses_by_book(kjv_data)
+def _verses_for_unit(verses_by_book, book: str, unit: dict):
     book_verses = verses_by_book.get(book, [])
     start_ch, start_v, end_ch, end_v = _unit_bounds(unit)
     if not start_ch or not end_ch:
@@ -149,12 +130,12 @@ def generate_repeat_colors(strongs_number):
     return base_color, accent_color
 
 def transliterate_chapter(
-    book, chapter, strongs_dict, strongs_data, kjv_data, max_repeated_highlights=10, active_units=None
+    book, chapter, strongs_dict, bible_data, max_repeated_highlights=10, active_units=None
 ):
+    # bible_data is a BibleData instance (app/data): its indexes are built once
+    # at startup instead of rebuilt per request.
     replacement_mapping = {}
-    strongs_lookup = {
-        entry.get('number'): entry for entry in strongs_data if isinstance(entry, dict)
-    } if isinstance(strongs_data, list) else {}
+    strongs_lookup = bible_data.strongs_by_number
 
     stop_strongs = {
         # Common articles, conjunctions, and pronouns that add noise when highlighted
@@ -194,13 +175,14 @@ def transliterate_chapter(
             return ''
         return html.escape(str(val), quote=True)
 
+    chapter_int = int(chapter)
     chapter_data = [{
         'text': verse['text'],
         'strongs': extract_strongs_numbers(verse['text']),
         'verse': str(verse['verse'])
     }
-    for verse in kjv_data['verses']
-    if verse['book_name'] == book and verse['chapter'] == int(chapter)] #and verse['verse'] == int(verse_num)]
+    for verse in bible_data.verses_by_book.get(book, [])
+    if int(verse['chapter']) == chapter_int]
 
     for strongs_number in strongs_dict:
         strong_entry = strongs_lookup.get(strongs_number, {})
@@ -237,11 +219,11 @@ def transliterate_chapter(
         for verse in chapter_data
         for sn in verse['strongs']
     }
-    global_strongs_counts = get_global_strongs_counts(kjv_data)
+    global_strongs_counts = bible_data.global_strongs_counts
     unit_max_counts = {}
     if active_units and chapter_strongs_set:
         for unit in active_units:
-            unit_verses = _verses_for_unit(kjv_data, book, unit)
+            unit_verses = _verses_for_unit(bible_data.verses_by_book, book, unit)
             if not unit_verses:
                 continue
             counts = count_strongs_in_verses(unit_verses, allowed=chapter_strongs_set)

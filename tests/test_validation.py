@@ -90,16 +90,23 @@ class TestUserDictValidation:
         is_valid, error = _validate_user_dict(invalid_dict)
         assert is_valid is False
 
-    def test_empty_translations_list(self):
-        """Test validation rejects empty translations list."""
-        invalid_dict = {
+    def test_empty_translations_list_is_allowed(self):
+        """An empty translations list is permitted.
+
+        The edit flow can legitimately create an entry with no translations,
+        and that entry gets written to the user's file. Rejecting empty lists
+        here would make _validate_user_dict reject the whole file on the next
+        load, falling back to defaults and losing the user's data — so empty
+        lists must stay valid.
+        """
+        valid_dict = {
             "H7225": {
                 "translations": [],
                 "color": None
             }
         }
-        is_valid, error = _validate_user_dict(invalid_dict)
-        assert is_valid is False
+        is_valid, error = _validate_user_dict(valid_dict)
+        assert is_valid is True
 
     def test_invalid_color_type(self):
         """Test validation rejects non-string colors."""

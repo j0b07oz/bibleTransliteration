@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Edit Strong's Dictionary</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <style>
@@ -539,6 +540,7 @@
         <a href="{{ url_for('home') }}" class="button button--sm">Return to Main Page</a>
         <a href="{{ url_for('export_dict') }}" class="button button--sm">Export List</a>
         <form method="POST" action="{{ url_for('upload_dict') }}" enctype="multipart/form-data" class="upload-form" id="dict-upload-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="file" id="dict-file-input" name="dict_file" accept="application/json" required class="upload-form__input">
             <label for="dict-file-input" class="button button--sm" id="upload-trigger">Import List</label>
         </form>

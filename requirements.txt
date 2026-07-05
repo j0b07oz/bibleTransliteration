@@ -10,6 +10,10 @@ blinker==1.8.2
 # Production server
 gunicorn==22.0.0
 
+# CSRF protection
+Flask-WTF==1.2.1
+WTForms==3.2.2
+
 # HTML parsing (if needed)
 beautifulsoup4==4.12.3
 soupsieve==2.5

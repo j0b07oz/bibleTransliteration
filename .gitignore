@@ -7,3 +7,6 @@ logs/
 htmlcov/
 .coverage
 *.log
+
+# Runtime cleanup throttle stamp written into app/uploads/
+.last_cleanup

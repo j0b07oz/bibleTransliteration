@@ -11,9 +11,9 @@ from app import app
 from .transliteration import (
     transliterate_chapter,
     count_strongs_in_verses,
-    get_verses_by_book,
     is_valid_hex_color,
 )
+from .data import load_bible_data
 
 # Get logger
 logger = app.logger
@@ -21,7 +21,6 @@ logger = app.logger
 # Paths
 current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
-STATIC_DATA_DIR = os.path.join(current_dir, 'static')
 UPLOAD_DATA_DIR = os.path.join(current_dir, 'uploads')
 os.makedirs(UPLOAD_DATA_DIR, exist_ok=True)
 
@@ -57,8 +56,35 @@ def cleanup_old_session_files(days=30):
         # If we can't read the directory, return 0
         return 0
 
-# Run cleanup on startup (delete files older than 30 days)
-cleanup_old_session_files(days=30)
+CLEANUP_INTERVAL_SECONDS = 24 * 60 * 60
+_CLEANUP_STAMP_PATH = os.path.join(UPLOAD_DATA_DIR, '.last_cleanup')
+
+
+def _maybe_cleanup_uploads(days=30):
+    """Run cleanup at most once per 24h, guarded by a timestamp file.
+
+    cleanup_old_session_files previously ran only at import, so a long-lived
+    server never pruned the uploads directory again. Piggybacking on write
+    traffic (save_user_dict) keeps it pruning without adding a scheduler; the
+    stamp file throttles it and is written first so concurrent workers don't
+    all sweep at once. The stamp isn't a .json file, so cleanup skips it.
+    """
+    try:
+        last = os.path.getmtime(_CLEANUP_STAMP_PATH)
+    except OSError:
+        last = 0
+    if time.time() - last < CLEANUP_INTERVAL_SECONDS:
+        return
+    try:
+        with open(_CLEANUP_STAMP_PATH, 'w') as f:
+            f.write(str(time.time()))
+    except OSError:
+        pass
+    cleanup_old_session_files(days=days)
+
+
+# Prune once at startup, then again on traffic at most daily (see save_user_dict).
+_maybe_cleanup_uploads(days=30)
 
 def get_session_id():
     if 'user_id' not in session:
@@ -102,6 +128,8 @@ def save_user_dict(user_dict: dict):
     except OSError as e:
         # If persisting to disk fails, we still keep the in-request copy.
         logger.warning(f"Failed to persist user dictionary to disk: {e}")
+    # Opportunistically prune stale session files (throttled to once/day).
+    _maybe_cleanup_uploads(days=30)
 
 
 def validate_book_chapter(book, chapter):
@@ -161,49 +189,23 @@ def get_user_strongs_dict():
     g.user_strongs_dict = default_dict
     return default_dict
 
-strongs_dict_path = os.path.join(STATIC_DATA_DIR, 'strongs_dict.json')
-strongs_path = os.path.join(STATIC_DATA_DIR, 'Strongs.json')
-kjv_path = os.path.join(STATIC_DATA_DIR, 'kjv_strongs.json')
+# Load all bulk data once at startup and build the shared indexes. The data
+# files live in app/data/ (non-routable); the loader builds the per-book and
+# per-Strong's maps a single time instead of on every request.
 outlines_path = os.path.abspath(os.path.join(current_dir, '..', 'bible_bsb_book_outlines_with_ranges.json'))
+bible_data = load_bible_data(outlines_path=outlines_path, logger=logger)
+app.extensions['bible_data'] = bible_data
 
-with open(strongs_dict_path, 'r', encoding='utf-8') as f:
-    default_strongs_dict = json.load(f)
-with open(strongs_path, 'r', encoding='utf-8') as f:
-    strongs_data = json.load(f)
-with open(kjv_path, 'r', encoding='utf-8') as f:
-    kjv_data = json.load(f)
-with open(outlines_path, 'r', encoding='utf-8') as f:
-    outline_data = json.load(f)
-
-# Load Hebrew-Greek cross-reference data
-crossref_path = os.path.join(STATIC_DATA_DIR, 'hebrew_greek_crossref.json')
-if os.path.exists(crossref_path):
-    with open(crossref_path, 'r', encoding='utf-8') as f:
-        crossref_data = json.load(f)
-    hebrew_to_greek = crossref_data.get('hebrew_to_greek', {})
-    greek_to_hebrew = crossref_data.get('greek_to_hebrew', {})
-    logger.info(f"Loaded {len(hebrew_to_greek)} Hebrew→Greek and {len(greek_to_hebrew)} Greek→Hebrew cross-references")
-else:
-    hebrew_to_greek = {}
-    greek_to_hebrew = {}
-    logger.warning(f"Cross-reference data not found at {crossref_path}")
-
-# Build mappings for book order and chapter counts
-book_order = {}
-book_chapter_count = {}
-chapter_verse_counts = {}
-for verse in kjv_data.get('verses', []):
-    name = verse['book_name']
-    if name not in book_order:
-        book_order[name] = verse['book']
-    chapter = int(verse['chapter'])
-    if name not in book_chapter_count or chapter > book_chapter_count[name]:
-        book_chapter_count[name] = chapter
-    chapter_verse_counts.setdefault(name, {})
-    chapter_verse_counts[name][chapter] = max(int(verse['verse']), chapter_verse_counts[name].get(chapter, 0))
-
-# Build case-insensitive lookup for book names
-book_name_lookup = {name.lower(): name for name in book_chapter_count.keys()}
+# Read-only module-level views into the loaded data so the rest of this module
+# (and its many references to these maps) stays readable.
+default_strongs_dict = bible_data.default_strongs_dict
+outline_data = bible_data.outline_data
+hebrew_to_greek = bible_data.hebrew_to_greek
+greek_to_hebrew = bible_data.greek_to_hebrew
+book_order = bible_data.book_order
+book_chapter_count = bible_data.book_chapter_count
+chapter_verse_counts = bible_data.chapter_verse_counts
+book_name_lookup = bible_data.book_name_lookup
 
 def normalize_book_name(book_input):
     """
@@ -382,7 +384,7 @@ def home():
             else:
                 is_valid_request = True
                 user_strongs_dict = get_user_strongs_dict()
-                result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
+                result = transliterate_chapter(book, chapter, user_strongs_dict, bible_data, active_units=active_units)
                 active_unit = get_active_unit(book, chapter)
 
     # Only show book overview and progress for valid requests
@@ -438,7 +440,7 @@ def navigate():
 
     active_units = get_active_units(book, chapter)
     user_strongs_dict = get_user_strongs_dict()
-    result = transliterate_chapter(book, chapter, user_strongs_dict, strongs_data, kjv_data, active_units=active_units)
+    result = transliterate_chapter(book, chapter, user_strongs_dict, bible_data, active_units=active_units)
     active_unit = get_active_unit(book, chapter)
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
@@ -651,7 +653,7 @@ def generate_heatmap_counts(strong_number):
 
     counts = {}
     max_count = 0
-    verses_by_book = get_verses_by_book(kjv_data)
+    verses_by_book = bible_data.verses_by_book
     for book, verses in verses_by_book.items():
         chapter_groups = {}
         for verse in verses:
@@ -902,9 +904,9 @@ def api_crossref(strong_number):
 
     # Build response with metadata
     def enrich_strong(sn):
-        """Add metadata from strongs_data for a Strong's number."""
-        # Find entry in strongs_data
-        entry = next((s for s in strongs_data if s.get('number') == sn), {})
+        """Add metadata from the Strong's lexicon for a Strong's number."""
+        # O(1) lookup instead of scanning the full lexicon per cross-reference.
+        entry = bible_data.strongs_by_number.get(sn, {})
         return {
             'strong': sn,
             'lemma': entry.get('lemma', crossref.get('lemma', '')),
