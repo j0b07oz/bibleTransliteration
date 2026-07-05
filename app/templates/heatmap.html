@@ -97,7 +97,10 @@
 
     <!-- Main heatmap -->
     <div class="heatmap-wrapper">
-        <h3 class="heatmap-title">{{ strong }}</h3>
+        <h3 class="heatmap-title">
+            {{ strong }}
+            <a class="heatmap-occurrences-link" href="{{ url_for('occurrences', strong=strong) }}" title="List every verse containing {{ strong }}">All occurrences →</a>
+        </h3>
         <table class="heatmap-table{% if show_crossrefs and active_crossrefs %} heatmap-table--combined{% endif %}">
             <thead>
                 <tr>
@@ -110,7 +113,7 @@
                 {% set chapters = data.get(book) %}
                 {% if chapters %}
                 <tr data-book-row="{{ book }}">
-                    <th scope="row">{{ book }}</th>
+                    <th scope="row"><a class="heatmap-book-link" href="{{ url_for('occurrences', strong=strong) }}#book-{{ book|replace(' ', '-') }}" title="All {{ strong }} occurrences in {{ book }}">{{ book }}</a></th>
                     <td>
                         <div class="heatmap-chapters-scroll">
                             <table class="heatmap-row-table">

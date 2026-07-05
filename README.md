@@ -7,10 +7,13 @@ This repository contains a Flask application for transliterating Bible content w
 - **Chapter-by-chapter Bible viewing** with customizable transliteration overlays
 - **Phonetic literary device detection** (alliteration, assonance, paronomasia, etc.)
 - **Interactive Strong's dictionary editor** with search, filtering, and bulk operations
+- **English word lookup** — type "mercy" and get ranked Strong's candidates to add, no concordance required
+- **Concordance view** listing every verse where a word appears, linked from the word popup and heatmap
 - **Frequency heatmap visualization** showing word distribution across the entire Bible
 - **Literary unit overlays** with progress tracking through books
 - **Uncommon word highlighting** based on statistical analysis
-- **Import/export functionality** for custom dictionaries
+- **Continue reading** — the home page remembers your recent chapters
+- **Import/export and shareable links** for custom word lists
 
 ## Documentation
 

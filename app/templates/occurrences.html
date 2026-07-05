@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% if strong %}{{ strong }} · {% endif %}Occurrences</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body class="occurrences-page">
+    <h1>Word Occurrences</h1>
+
+    <form method="get" action="{{ url_for('occurrences') }}" class="heatmap-form" id="occurrences-form">
+        <label for="strong">Strong's Number:</label>
+        <input type="text" id="strong" name="strong" value="{{ strong or '' }}" placeholder="e.g. H7225">
+        <button type="submit" class="button">Find All</button>
+    </form>
+
+    {% if error %}
+    <div class="error-message">{{ error }}</div>
+    {% endif %}
+
+    {% if strong and not error %}
+    <div class="occ-header">
+        <div class="occ-word">
+            <span class="occ-strong">{{ strong }}</span>
+            {% if word_meta.lemma %}<span class="occ-lemma">{{ word_meta.lemma }}</span>{% endif %}
+            {% if word_meta.xlit %}<span class="occ-xlit">{{ word_meta.xlit }}</span>{% endif %}
+            {% if word_meta.pronounce %}<span class="occ-pronounce">({{ word_meta.pronounce }})</span>{% endif %}
+        </div>
+        {% if word_meta.description %}
+        <p class="occ-gloss">{{ word_meta.description }}</p>
+        {% endif %}
+        <div class="occ-summary">
+            <span class="occ-total"><strong>{{ total }}</strong> occurrence{{ 's' if total != 1 }}{% if books %} across <strong>{{ books|length }}</strong> book{{ 's' if books|length != 1 }}{% endif %}</span>
+            <a class="button button--sm" href="{{ url_for('heatmap', strong=strong) }}">View Heatmap</a>
+        </div>
+    </div>
+
+    {% if books %}
+    <div class="occ-books">
+        {% for book in books %}
+        <details class="occ-book" id="book-{{ book.name|replace(' ', '-') }}" {% if open_all or loop.first %}open{% endif %}>
+            <summary class="occ-book__summary">
+                <span class="occ-book__name">{{ book.name }}</span>
+                <span class="occ-book__count">{{ book.count }}</span>
+            </summary>
+            <ol class="occ-verses">
+                {% for v in book.verses %}
+                <li class="occ-verse">
+                    <a class="occ-ref" href="{{ url_for('home', book=book.name, chapter=v.chapter, focus=strong) }}" title="Open {{ book.name }} {{ v.chapter }} with {{ strong }} highlighted">{{ v.chapter }}:{{ v.verse }}</a>
+                    <span class="occ-text">{{ v.html|safe }}</span>
+                </li>
+                {% endfor %}
+            </ol>
+        </details>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="occ-empty">No occurrences of {{ strong }} were found in the text.</p>
+    {% endif %}
+    {% endif %}
+
+    {% if not strong %}
+    <p class="occ-hint">
+        Enter a Strong's number to list every verse where that word appears — or open this view
+        from a word's popup on the reading page, or from the heatmap.
+    </p>
+    {% endif %}
+
+    <a href="{{ url_for('home') }}" class="button">Return Home</a>
+
+    <script>
+        // When arriving via a #book-... anchor (e.g. from the heatmap), make
+        // sure that book's section is expanded before scrolling to it.
+        (function () {
+            if (!location.hash) return;
+            var target = document.getElementById(location.hash.slice(1));
+            if (target && target.tagName === 'DETAILS') {
+                target.open = true;
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -544,11 +544,17 @@
             <input type="file" id="dict-file-input" name="dict_file" accept="application/json" required class="upload-form__input">
             <label for="dict-file-input" class="button button--sm" id="upload-trigger">Import List</label>
         </form>
+        <button type="button" class="button button--sm" id="share-list-btn" title="Create a link that lets others preview and import your list">Share List</button>
         {% if upload_error %}
         <p class="upload-feedback upload-feedback--error">{{ upload_error }}</p>
         {% elif upload_success %}
         <p class="upload-feedback upload-feedback--success">{{ upload_success }}</p>
         {% endif %}
+        <div class="share-result" id="share-result" hidden>
+            <span class="share-result__label">Share link:</span>
+            <input type="text" class="share-result__url" id="share-result-url" readonly aria-label="Shareable link to your word list">
+            <button type="button" class="button button--sm" id="share-copy-btn">Copy</button>
+        </div>
     </div>
 
     {% if upload_error or not upload_success %}
@@ -571,6 +577,19 @@
             <input type="color" id="new-color" value="#000000" title="Highlight color">
             <button type="submit" class="button">Add Entry</button>
         </form>
+
+        <div class="word-finder">
+            <label class="word-finder__label" for="word-finder-input">
+                Don't know the number? Search by English word — e.g. "mercy" or "shepherd".
+            </label>
+            <div class="word-finder__row">
+                <input type="text" id="word-finder-input" class="word-finder__input"
+                       placeholder="Type an English word from the KJV..."
+                       autocomplete="off" spellcheck="false">
+            </div>
+            <div class="word-finder__status" id="word-finder-status" hidden></div>
+            <div class="word-finder__results" id="word-finder-results"></div>
+        </div>
     </div>
 
     <h2>Current Entries</h2>

@@ -14,6 +14,7 @@ browser — the frontend only ever talks to ``/edit_dict`` and ``/api/crossref``
 """
 import json
 import os
+import re
 from collections import Counter
 from dataclasses import dataclass
 
@@ -21,6 +22,12 @@ from ..transliteration import count_strongs_in_verses
 
 # Directory that holds the bundled JSON data files (this package's own folder).
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# An English word immediately followed by its Strong's marker, e.g.
+# "beginning{H7225}". Grammar codes like {(H8804)} have no preceding word and
+# are skipped, as are bare particles like ...{H1254}{H853} where {H853} is
+# preceded by '}' rather than a word.
+WORD_STRONGS_REGEX = re.compile(r"([A-Za-z][A-Za-z']*)\{([HG]\d+)\}")
 
 
 @dataclass
@@ -41,6 +48,9 @@ class BibleData:
     chapter_verse_counts: dict
     # lowercased book_name -> canonical book_name (case-insensitive lookup)
     book_name_lookup: dict
+    # lowercased English word -> Counter({Strong's number: occurrence count}),
+    # built from the word{H####} pairs in the KJV text (reverse lookup)
+    english_word_index: dict
     # default (raw) Strong's -> [translations] word list
     default_strongs_dict: dict
     # book_name -> list of literary-unit outline dicts
@@ -89,6 +99,20 @@ def _build_verse_indexes(kjv_data):
     return verses_by_book, book_order, book_chapter_count, chapter_verse_counts, book_name_lookup
 
 
+def _build_english_word_index(kjv_data):
+    """Map each lowercased KJV word to the Strong's numbers it translates.
+
+    Powers the "I know the word, not the number" reverse lookup: one pass over
+    the text collecting word{H####} pairs, so e.g. index['mercy'] counts how
+    often each Strong's number appears rendered as "mercy".
+    """
+    index = {}
+    for verse in kjv_data.get('verses', []):
+        for word, strong in WORD_STRONGS_REGEX.findall(verse.get('text', '')):
+            index.setdefault(word.lower(), Counter())[strong] += 1
+    return index
+
+
 def build_bible_data(
     strongs_data,
     kjv_data,
@@ -112,6 +136,7 @@ def build_bible_data(
         book_chapter_count=book_chapter_count,
         chapter_verse_counts=chapter_verse_counts,
         book_name_lookup=book_name_lookup,
+        english_word_index=_build_english_word_index(kjv_data),
         default_strongs_dict=default_strongs_dict or {},
         outline_data=outline_data or {},
         hebrew_to_greek=hebrew_to_greek or {},

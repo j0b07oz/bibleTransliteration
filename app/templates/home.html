@@ -65,6 +65,14 @@
         <button type="submit" class="button" id="go-button">Go</button>
     </form>
 
+    {% if not result %}
+    <!-- Continue reading: chips rendered from localStorage by chapter-view.js -->
+    <div class="recent-reading" id="recent-reading" hidden>
+        <div class="recent-reading__label">Continue reading</div>
+        <div class="recent-reading__chips" id="recent-reading-chips"></div>
+    </div>
+    {% endif %}
+
     <!-- Configuration for chapter-view.js -->
     <script>
         window.CONTEXT_DEFAULTS = {{ context_defaults|tojson|safe }};
@@ -72,8 +80,12 @@
         window.FOCUS_STRONG = {{ focus_strong|tojson|safe }};
         window.ACTIVE_UNITS = {{ active_units|tojson|safe }};
         window.HEATMAP_URL = "{{ url_for('heatmap') }}";
+        window.OCCURRENCES_URL = "{{ url_for('occurrences') }}";
         window.USER_STRONGS_SET = new Set({{ user_strongs_keys|default([])|tojson|safe }});
         window.BOOK_DATA = {{ book_data|default([])|tojson|safe }};
+        // Current position (null unless a chapter is rendered) for reading history.
+        window.CURRENT_BOOK = {{ (book if result else none)|tojson|safe }};
+        window.CURRENT_CHAPTER = {{ (chapter if result else none)|tojson|safe }};
     </script>
     <script src="{{ url_for('static', filename='js/chapter-view.js') }}"></script>
 
@@ -180,8 +192,9 @@
         </div>
         <div class="word-popup__actions">
             <button type="button" class="word-popup__btn word-popup__btn--primary" data-action="add">Add to My List</button>
-            <button type="button" class="word-popup__btn" data-action="heatmap">View Heatmap</button>
-            <button type="button" class="word-popup__btn" data-action="copy">Copy Strong's #</button>
+            <button type="button" class="word-popup__btn" data-action="occurrences">Occurrences</button>
+            <button type="button" class="word-popup__btn" data-action="heatmap">Heatmap</button>
+            <button type="button" class="word-popup__btn" data-action="copy">Copy #</button>
         </div>
     </div>
 </body>

@@ -442,7 +442,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const rows = Array.from(document.querySelectorAll('.verse-row'));
         if (!overlay || !shell || !rows.length || !contextOptions.units) {
             if (overlay) overlay.innerHTML = '';
-            shell.style.setProperty('--bar-offset', '16px');
+            // shell is absent on the blank home page; guard so the rest of the
+            // DOMContentLoaded initialization isn't killed by a TypeError.
+            if (shell) shell.style.setProperty('--bar-offset', '16px');
             return;
         }
         overlay.innerHTML = '';
@@ -1210,6 +1212,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = `${heatmapBase}?strong=${encodeURIComponent(currentPopupStrongs)}`;
                 break;
 
+            case 'occurrences':
+                if (!currentPopupStrongs) return;
+                window.location.href = `${window.OCCURRENCES_URL || '/occurrences'}?strong=${encodeURIComponent(currentPopupStrongs)}`;
+                break;
+
             case 'copy':
                 if (!currentPopupStrongs) return;
                 navigator.clipboard.writeText(currentPopupStrongs).then(() => {
@@ -1276,6 +1283,63 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ===== Reading History (Continue Reading) =====
+
+    const RECENT_KEY = 'bt_recent_chapters';
+    const RECENT_MAX = 5;
+
+    function readRecentChapters() {
+        try {
+            const raw = localStorage.getItem(RECENT_KEY);
+            const list = raw ? JSON.parse(raw) : [];
+            return Array.isArray(list) ? list : [];
+        } catch (err) {
+            return [];
+        }
+    }
+
+    function recordCurrentChapter() {
+        const book = window.CURRENT_BOOK;
+        const chapter = window.CURRENT_CHAPTER;
+        if (!book || !chapter) return;
+        try {
+            const list = readRecentChapters().filter(
+                (item) => !(item.book === book && item.chapter === chapter)
+            );
+            list.unshift({ book, chapter, ts: Date.now() });
+            localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
+        } catch (err) {
+            /* localStorage unavailable (private mode etc.) — history is a nicety */
+        }
+    }
+
+    function renderRecentChapters() {
+        const container = document.getElementById('recent-reading');
+        const chipsEl = document.getElementById('recent-reading-chips');
+        if (!container || !chipsEl) return;
+
+        const list = readRecentChapters();
+        if (!list.length) return;
+
+        chipsEl.innerHTML = '';
+        list.forEach((item, idx) => {
+            if (!item.book || !item.chapter) return;
+            const chip = document.createElement('a');
+            chip.className = idx === 0 ? 'recent-chip recent-chip--latest' : 'recent-chip';
+            chip.href = `/?book=${encodeURIComponent(item.book)}&chapter=${encodeURIComponent(item.chapter)}`;
+            chip.textContent = `${item.book} ${item.chapter}`;
+            if (idx === 0) {
+                const arrow = document.createElement('span');
+                arrow.className = 'recent-chip__arrow';
+                arrow.textContent = '→';
+                chip.appendChild(document.createTextNode(' '));
+                chip.appendChild(arrow);
+            }
+            chipsEl.appendChild(chip);
+        });
+        container.hidden = false;
+    }
+
     // ===== Initialization =====
 
     loadSavedOptions();
@@ -1290,4 +1354,6 @@ document.addEventListener('DOMContentLoaded', function() {
     applyHeatmapFocus();
     bindWordPopup();
     bindStrongsTokenClicks();
+    recordCurrentChapter();
+    renderRecentChapters();
 });

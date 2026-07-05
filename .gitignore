@@ -10,3 +10,6 @@ htmlcov/
 
 # Runtime cleanup throttle stamp written into app/uploads/
 .last_cleanup
+
+# Runtime shared word-list files (content-addressed, created by /share_dict)
+app/uploads/shared/

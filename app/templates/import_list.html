@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Shared Word List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body class="import-page">
+    <h1>Shared Word List</h1>
+
+    {% if entries is none %}
+    <div class="import-invalid">
+        <div class="import-invalid__icon">🔗</div>
+        <p>This shared list link is invalid or has expired.</p>
+        <p class="import-invalid__hint">Ask the sender to open their word list and share it again.</p>
+        <div class="import-actions">
+            <a href="{{ url_for('home') }}" class="button">Return Home</a>
+        </div>
+    </div>
+    {% else %}
+    <p class="import-intro">
+        Someone shared their transliteration word list with you. Look it over below, then
+        <strong>merge</strong> it into your own list — or <strong>replace</strong> your list with it.
+    </p>
+
+    <div class="import-summary">
+        <span><strong>{{ entries|length }}</strong> word{{ 's' if entries|length != 1 }}</span>
+        {% if overlap %}
+        <span class="import-summary__overlap">{{ overlap }} already in your list</span>
+        {% endif %}
+    </div>
+
+    <div class="import-grid">
+        {% for e in entries %}
+        <div class="import-entry{% if e.already %} is-known{% endif %}">
+            <span class="import-swatch"{% if e.color %} style="background-color: {{ e.color }};"{% endif %}></span>
+            <span class="import-strong">{{ e.strong }}</span>
+            <span class="import-word">
+                {% if e.lemma %}<span class="import-lemma">{{ e.lemma }}</span>{% endif %}
+                {% if e.xlit %}<span class="import-xlit">{{ e.xlit }}</span>{% endif %}
+            </span>
+            <span class="import-translations">{{ e.translations|join(', ') }}</span>
+            {% if e.already %}<span class="import-known-badge">in your list</span>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="import-actions">
+        <form method="POST" action="{{ url_for('import_list_apply') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="code" value="{{ code }}">
+            <input type="hidden" name="mode" value="merge">
+            <button type="submit" class="button">Merge into My List</button>
+        </form>
+        <form method="POST" action="{{ url_for('import_list_apply') }}"
+              onsubmit="return confirm('Replace your entire word list with this shared list? Your current list will be overwritten.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="code" value="{{ code }}">
+            <input type="hidden" name="mode" value="replace">
+            <button type="submit" class="button button--outline">Replace My List</button>
+        </form>
+        <a href="{{ url_for('home') }}" class="button button--outline">Cancel</a>
+    </div>
+    {% endif %}
+</body>
+</html>

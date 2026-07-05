@@ -592,6 +592,194 @@ function renderCrossrefBadges(strongNumber, container) {
         });
     }
 
+    // ===== Word Finder (English -> Strong's reverse lookup) =====
+
+    const finderInput = document.getElementById('word-finder-input');
+    const finderResults = document.getElementById('word-finder-results');
+    const finderStatus = document.getElementById('word-finder-status');
+    let finderTimer = null;
+    let finderRequestId = 0;
+
+    function setFinderStatus(message) {
+        if (!finderStatus) return;
+        finderStatus.hidden = !message;
+        finderStatus.textContent = message || '';
+    }
+
+    function addFromFinder(hit, button) {
+        const exists = entries.some((e) => e.dataset.strong.toUpperCase() === hit.strong);
+        if (exists) {
+            showToast(`${hit.strong} is already in your list`, 'error');
+            return;
+        }
+        const translations = [hit.word];
+        sendActions([{ action: 'add', strong_number: hit.strong, translations, color: null }]).then(async (data) => {
+            if (!data.success) return;
+            const entry = buildEntryElement(hit.strong, translations, null);
+            entries.push(entry);
+            attachEntryHandlers(entry);
+            await loadCrossrefsForEntries([hit.strong]);
+            const container = entry.querySelector('.crossref-badges');
+            if (container) renderCrossrefBadges(hit.strong, container);
+            renderEntries();
+            showToast(`${hit.strong} ("${hit.word}") added`, 'success');
+            if (button) {
+                button.textContent = '✓ Added';
+                button.disabled = true;
+            }
+        });
+    }
+
+    function renderFinderResults(data) {
+        if (!finderResults) return;
+        finderResults.innerHTML = '';
+
+        if (!data.results.length) {
+            setFinderStatus(`No KJV words ${data.exact ? 'matching' : 'starting with'} "${data.query}" were found.`);
+            return;
+        }
+        setFinderStatus(data.exact
+            ? `Original-language words rendered as "${data.query}" in the KJV:`
+            : `No exact match for "${data.query}" — showing words starting with it:`);
+
+        data.results.forEach((hit) => {
+            const row = document.createElement('div');
+            row.className = 'word-finder-hit';
+
+            const strongEl = document.createElement('span');
+            strongEl.className = 'word-finder-hit__strong';
+            strongEl.textContent = hit.strong;
+
+            const wordEl = document.createElement('span');
+            wordEl.className = 'word-finder-hit__word';
+            const lemmaEl = document.createElement('span');
+            lemmaEl.className = 'word-finder-hit__lemma';
+            lemmaEl.textContent = hit.lemma || '';
+            const xlitEl = document.createElement('span');
+            xlitEl.className = 'word-finder-hit__xlit';
+            xlitEl.textContent = hit.xlit || '';
+            wordEl.appendChild(lemmaEl);
+            wordEl.appendChild(xlitEl);
+
+            const glossEl = document.createElement('span');
+            glossEl.className = 'word-finder-hit__gloss';
+            glossEl.textContent = hit.gloss || '';
+            glossEl.title = hit.gloss || '';
+
+            const countEl = document.createElement('span');
+            countEl.className = 'word-finder-hit__count';
+            countEl.textContent = `${hit.count}× as "${hit.word}"`;
+
+            const addBtn = document.createElement('button');
+            addBtn.type = 'button';
+            addBtn.className = 'button button--sm';
+            const alreadyInList = entries.some((e) => e.dataset.strong.toUpperCase() === hit.strong);
+            if (alreadyInList) {
+                addBtn.textContent = '✓ In list';
+                addBtn.disabled = true;
+            } else {
+                addBtn.textContent = 'Add';
+                addBtn.addEventListener('click', () => addFromFinder(hit, addBtn));
+            }
+
+            row.appendChild(strongEl);
+            row.appendChild(wordEl);
+            row.appendChild(glossEl);
+            row.appendChild(countEl);
+            row.appendChild(addBtn);
+            finderResults.appendChild(row);
+        });
+    }
+
+    function runFinderLookup() {
+        const q = finderInput.value.trim();
+        if (q.length < 2) {
+            finderResults.innerHTML = '';
+            setFinderStatus(q ? 'Keep typing — at least 2 letters.' : '');
+            return;
+        }
+        const requestId = ++finderRequestId;
+        fetch(`/api/word_lookup?q=${encodeURIComponent(q)}`)
+            .then((response) => response.json())
+            .then((data) => {
+                if (requestId !== finderRequestId) return; // stale response
+                if (data.error) {
+                    finderResults.innerHTML = '';
+                    setFinderStatus(data.error);
+                    return;
+                }
+                renderFinderResults(data);
+            })
+            .catch(() => {
+                if (requestId !== finderRequestId) return;
+                setFinderStatus('Lookup failed. Please try again.');
+            });
+    }
+
+    if (finderInput) {
+        finderInput.addEventListener('input', () => {
+            clearTimeout(finderTimer);
+            finderTimer = setTimeout(runFinderLookup, 250);
+        });
+        finderInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                clearTimeout(finderTimer);
+                runFinderLookup();
+            }
+        });
+    }
+
+    // ===== Share List =====
+
+    const shareBtn = document.getElementById('share-list-btn');
+    const shareResult = document.getElementById('share-result');
+    const shareUrlInput = document.getElementById('share-result-url');
+    const shareCopyBtn = document.getElementById('share-copy-btn');
+
+    if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+            shareBtn.disabled = true;
+            fetch('/share_dict', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (!data.success) {
+                        showToast(data.error || 'Could not create a share link.', 'error');
+                        return;
+                    }
+                    const absoluteUrl = new URL(data.url, window.location.origin).href;
+                    if (shareResult && shareUrlInput) {
+                        shareUrlInput.value = absoluteUrl;
+                        shareResult.hidden = false;
+                        shareUrlInput.focus();
+                        shareUrlInput.select();
+                    }
+                    showToast('Share link created', 'success');
+                })
+                .catch(() => showToast('Could not create a share link.', 'error'))
+                .finally(() => {
+                    shareBtn.disabled = false;
+                });
+        });
+    }
+
+    if (shareCopyBtn) {
+        shareCopyBtn.addEventListener('click', () => {
+            const url = shareUrlInput?.value;
+            if (!url) return;
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Link copied to clipboard', 'success');
+            }).catch(() => {
+                shareUrlInput.focus();
+                shareUrlInput.select();
+                showToast('Press Ctrl+C to copy', 'info');
+            });
+        });
+    }
+
     // ===== Initialization =====
 
     registerEntries();

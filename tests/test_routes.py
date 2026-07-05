@@ -4,6 +4,7 @@ Tests for the Flask routes and API endpoints.
 import io
 import pytest
 import json
+import re
 from flask import session
 
 from app.routes import _validate_user_dict
@@ -167,6 +168,165 @@ class TestSessionManagement:
             # We can't directly check session in test, but we can verify
             # the route works without errors
             assert True
+
+
+class TestOccurrencesRoute:
+    """U1: the concordance ('find all occurrences') view."""
+
+    def test_blank_page_loads(self, client):
+        response = client.get('/occurrences')
+        assert response.status_code == 200
+
+    def test_valid_strong_lists_verses(self, client):
+        response = client.get('/occurrences?strong=H7225')
+        assert response.status_code == 200
+        body = response.data.decode('utf-8')
+        assert 'Genesis' in body
+        # Verse references link back into the chapter view with focus highlighting.
+        assert 'focus=H7225' in body
+        # The matched word is wrapped in a mark.
+        assert 'occ-hit' in body
+
+    def test_invalid_strong_shows_error(self, client):
+        response = client.get('/occurrences?strong=NOPE')
+        assert response.status_code == 200
+        assert b'Invalid' in response.data
+
+    def test_marker_braces_are_stripped_from_text(self, client):
+        response = client.get('/occurrences?strong=H7225')
+        body = response.data.decode('utf-8')
+        # No raw Strong's markers should leak into the rendered verse text.
+        assert '{H' not in body
+        assert '{(H' not in body
+
+
+class TestWordLookupApi:
+    """U2: English -> Strong's reverse lookup."""
+
+    def test_exact_word_finds_strongs(self, client):
+        response = client.get('/api/word_lookup?q=beginning')
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data['exact'] is True
+        strongs = [r['strong'] for r in data['results']]
+        assert 'H7225' in strongs
+
+    def test_results_are_ranked_by_count(self, client):
+        response = client.get('/api/word_lookup?q=mercy')
+        data = json.loads(response.data)
+        counts = [r['count'] for r in data['results']]
+        assert counts == sorted(counts, reverse=True)
+        # hesed should dominate "mercy" in the KJV
+        assert data['results'][0]['strong'] == 'H2617'
+
+    def test_prefix_fallback(self, client):
+        # An incomplete word still returns candidates via prefix aggregation.
+        response = client.get('/api/word_lookup?q=shepher')
+        data = json.loads(response.data)
+        assert data['exact'] is False
+        assert data['results'], 'prefix lookup should find "shepherd" words'
+
+    def test_short_query_rejected(self, client):
+        response = client.get('/api/word_lookup?q=a')
+        assert response.status_code == 400
+
+
+class TestShareImport:
+    """U3: shareable word lists via link."""
+
+    def _share(self, client):
+        return client.post('/share_dict')
+
+    def test_share_returns_link(self, client):
+        with client:
+            response = self._share(client)
+            assert response.status_code == 200
+            data = json.loads(response.data)
+            assert data['success'] is True
+            assert re.fullmatch(r'[0-9a-f]{12}', data['code'])
+            assert data['url'].endswith(f"?code={data['code']}")
+
+    def test_share_is_idempotent(self, client):
+        with client:
+            first = json.loads(self._share(client).data)
+            second = json.loads(self._share(client).data)
+            assert first['code'] == second['code']
+
+    def test_import_preview_shows_entries(self, client):
+        with client:
+            code = json.loads(self._share(client).data)['code']
+            response = client.get(f'/import?code={code}')
+            assert response.status_code == 200
+            assert b'Merge into My List' in response.data
+            assert b'Replace My List' in response.data
+
+    def test_import_invalid_code_404s(self, client):
+        response = client.get('/import?code=000000000000')
+        assert response.status_code == 404
+        assert b'invalid or has expired' in response.data
+
+    def test_merge_roundtrip(self, client):
+        # Sharer: add a distinctive word, then share.
+        with client:
+            client.post(
+                '/edit_dict',
+                data=json.dumps({"actions": [{
+                    "action": "add",
+                    "strong_number": "H9998",
+                    "translations": ["sharedword"],
+                    "color": "#336699",
+                }]}),
+                content_type='application/json',
+            )
+            code = json.loads(self._share(client).data)['code']
+
+        # Recipient: fresh session imports via merge.
+        recipient = client.application.test_client()
+        with recipient:
+            response = recipient.post('/import', data={'code': code, 'mode': 'merge'})
+            assert response.status_code == 302
+            assert 'upload_success' in response.headers['Location']
+            exported = json.loads(recipient.get('/export_dict').data)
+            assert exported.get('H9998', {}).get('translations') == ['sharedword']
+
+    def test_replace_mode(self, client):
+        with client:
+            code = json.loads(self._share(client).data)['code']
+        recipient = client.application.test_client()
+        with recipient:
+            # Recipient customizes first, then replaces with the shared list.
+            recipient.post(
+                '/edit_dict',
+                data=json.dumps({"actions": [{
+                    "action": "add",
+                    "strong_number": "H9997",
+                    "translations": ["mine"],
+                }]}),
+                content_type='application/json',
+            )
+            response = recipient.post('/import', data={'code': code, 'mode': 'replace'})
+            assert response.status_code == 302
+            exported = json.loads(recipient.get('/export_dict').data)
+            # Their custom word is gone; the list is exactly the shared one.
+            assert 'H9997' not in exported
+
+
+class TestContinueReadingMarkup:
+    """U4: the home page carries the continue-reading container and globals."""
+
+    def test_recent_reading_container_on_blank_home(self, client):
+        response = client.get('/')
+        body = response.data.decode('utf-8')
+        assert 'id="recent-reading"' in body
+        assert 'window.CURRENT_BOOK = null' in body
+
+    def test_current_position_exposed_after_render(self, client):
+        response = client.get('/?book=Genesis&chapter=2')
+        body = response.data.decode('utf-8')
+        assert 'window.CURRENT_BOOK = "Genesis"' in body
+        assert 'window.CURRENT_CHAPTER = 2' in body
+        # The chips strip is only for the landing state, not open chapters.
+        assert 'id="recent-reading"' not in body
 
 
 class TestBibleDataLayer:

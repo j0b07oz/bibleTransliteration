@@ -56,10 +56,12 @@ def redirect_to_https():
     """Redirect HTTP requests to HTTPS in production.
 
     ProxyFix (above) makes request.scheme reflect the client's original
-    protocol, so this works behind a reverse proxy. Skipped in debug/testing
-    so local HTTP development and the test client are unaffected.
+    protocol, so this works behind a reverse proxy. Gated on the same
+    SESSION_COOKIE_SECURE env flag that marks cookies Secure, so one switch
+    turns on "production HTTPS mode" and plain `python run.py` local
+    development over http keeps working.
     """
-    if app.debug or app.testing:
+    if app.debug or app.testing or not app.config.get('SESSION_COOKIE_SECURE'):
         return
     if request.scheme == 'http':
         url = request.url.replace('http://', 'https://', 1)

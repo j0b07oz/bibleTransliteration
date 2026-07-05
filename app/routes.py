@@ -1,9 +1,12 @@
 import hashlib
+import html
 import io
 import os
 import json
+import re
 import uuid
 import time
+from collections import Counter
 from datetime import datetime, timedelta
 from functools import lru_cache
 from flask import render_template, request, jsonify, session, send_file, redirect, url_for, g
@@ -23,6 +26,13 @@ current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
 UPLOAD_DATA_DIR = os.path.join(current_dir, 'uploads')
 os.makedirs(UPLOAD_DATA_DIR, exist_ok=True)
+# Shared (link-shareable) word lists live in a subfolder, content-addressed by
+# a hash of their JSON so identical lists dedupe and links are idempotent.
+SHARED_DATA_DIR = os.path.join(UPLOAD_DATA_DIR, 'shared')
+os.makedirs(SHARED_DATA_DIR, exist_ok=True)
+SHARE_CODE_REGEX = re.compile(r'[0-9a-f]{12}')
+SHARE_MAX_BYTES = 256 * 1024
+SHARED_TTL_DAYS = 90  # mtime is refreshed on access, so active links persist
 
 def cleanup_old_session_files(days=30):
     """
@@ -81,6 +91,28 @@ def _maybe_cleanup_uploads(days=30):
     except OSError:
         pass
     cleanup_old_session_files(days=days)
+    _cleanup_shared_lists(days=SHARED_TTL_DAYS)
+
+
+def _cleanup_shared_lists(days=SHARED_TTL_DAYS):
+    """Prune shared word-list files not accessed in `days` days.
+
+    Shared files get their mtime refreshed each time a share link is opened,
+    so only genuinely abandoned links expire.
+    """
+    try:
+        cutoff = time.time() - (days * 24 * 60 * 60)
+        for filename in os.listdir(SHARED_DATA_DIR):
+            if not filename.endswith('.json'):
+                continue
+            filepath = os.path.join(SHARED_DATA_DIR, filename)
+            try:
+                if os.path.isfile(filepath) and os.path.getmtime(filepath) < cutoff:
+                    os.remove(filepath)
+            except OSError:
+                continue
+    except OSError:
+        pass
 
 
 # Prune once at startup, then again on traffic at most daily (see save_user_dict).
@@ -98,6 +130,8 @@ def _validate_user_dict(data):
     for key, val in data.items():
         if not isinstance(key, str):
             return False, "Strong's numbers must be string keys (e.g., \"H7225\")."
+        if not re.fullmatch(r'[HG]\d+', key):
+            return False, f"Invalid Strong's number \"{key}\": use H#### or G#### (e.g., \"H7225\")."
         if not isinstance(val, dict):
             return False, f"Entry for {key} must be an object."
         translations = val.get("translations")
@@ -629,6 +663,116 @@ def export_dict():
         download_name='my_strongs_dict.json',
     )
 
+
+def _strong_sort_key(sn):
+    """Canonical ordering for Strong's numbers: Hebrew first, then numeric."""
+    match = re.fullmatch(r'([HG])(\d+)', sn or '')
+    if not match:
+        return (2, 0, sn or '')
+    return (0 if match.group(1) == 'H' else 1, int(match.group(2)), sn)
+
+
+@app.route('/share_dict', methods=['POST'])
+def share_dict():
+    """Publish the caller's current word list as a shareable link.
+
+    The list is written content-addressed (sha256 of its canonical JSON), so
+    sharing the same list twice yields the same link and nothing is
+    overwritten. No accounts needed: the link itself is the capability.
+    """
+    user_strongs_dict = get_user_strongs_dict()
+    if not user_strongs_dict:
+        return jsonify({'success': False, 'error': 'Your list is empty — nothing to share.'}), 400
+    valid, message = _validate_user_dict(user_strongs_dict)
+    if not valid:
+        return jsonify({'success': False, 'error': message}), 400
+
+    payload = json.dumps(user_strongs_dict, ensure_ascii=False, sort_keys=True, indent=2).encode('utf-8')
+    if len(payload) > SHARE_MAX_BYTES:
+        return jsonify({'success': False, 'error': 'This list is too large to share.'}), 400
+
+    code = hashlib.sha256(payload).hexdigest()[:12]
+    path = os.path.join(SHARED_DATA_DIR, f'{code}.json')
+    if not os.path.exists(path):
+        try:
+            with open(path, 'wb') as f:
+                f.write(payload)
+        except OSError as e:
+            logger.error(f"Failed to write shared list {code}: {e}")
+            return jsonify({'success': False, 'error': 'Could not save the shared list.'}), 500
+
+    return jsonify({'success': True, 'code': code, 'url': url_for('import_list', code=code)})
+
+
+def _load_shared_list(code):
+    """Load and validate a shared list by code; returns None if unusable."""
+    if not SHARE_CODE_REGEX.fullmatch(code or ''):
+        return None
+    path = os.path.join(SHARED_DATA_DIR, f'{code}.json')
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning(f"Failed to load shared list {code}: {e}")
+        return None
+    valid, _ = _validate_user_dict(data)
+    if not valid:
+        return None
+    try:
+        # Refresh mtime so links that are still being opened outlive the TTL.
+        os.utime(path, None)
+    except OSError:
+        pass
+    return data
+
+
+@app.route('/import')
+def import_list():
+    """Preview a shared word list before merging it into your own."""
+    code = (request.args.get('code') or '').strip().lower()
+    shared = _load_shared_list(code)
+    if shared is None:
+        return render_template('import_list.html', code=code, entries=None, overlap=0), 404
+
+    user_dict = get_user_strongs_dict()
+    entries = []
+    for sn in sorted(shared.keys(), key=_strong_sort_key):
+        item = shared[sn]
+        meta = bible_data.strongs_by_number.get(sn, {})
+        entries.append({
+            'strong': sn,
+            'translations': item.get('translations', []),
+            'color': item.get('color'),
+            'xlit': meta.get('xlit', ''),
+            'lemma': meta.get('lemma', ''),
+            'already': sn in user_dict,
+        })
+    overlap = sum(1 for e in entries if e['already'])
+    return render_template('import_list.html', code=code, entries=entries, overlap=overlap)
+
+
+@app.route('/import', methods=['POST'])
+def import_list_apply():
+    """Merge or replace the caller's list with a shared one."""
+    code = (request.form.get('code') or '').strip().lower()
+    mode = request.form.get('mode', 'merge')
+    shared = _load_shared_list(code)
+    if shared is None:
+        return redirect(url_for('edit_dict', upload_error='That shared list link is invalid or has expired.'))
+
+    if mode == 'replace':
+        new_dict = dict(shared)
+        summary = f"replaced your list with {len(shared)} shared words"
+    else:
+        new_dict = dict(get_user_strongs_dict())
+        new_dict.update(shared)
+        summary = f"merged {len(shared)} shared words into your list"
+    save_user_dict(new_dict)
+    return redirect(url_for('edit_dict', upload_success=f'Shared list imported — {summary}.'))
+
+
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -864,6 +1008,100 @@ def heatmap():
     )
 
 
+STRONG_FORMAT_REGEX = re.compile(r'[HG]\d+')
+# Any Strong's / grammar marker: {H7225}, {(H8804)}, and the {H8804)} data quirk.
+ANY_MARKER_REGEX = re.compile(r'\{\(?[HG]\d+\)?\}')
+
+
+def _render_occurrence_html(text, strong):
+    """Render a verse's raw marked-up text as clean HTML with the target word
+    wrapped in <mark>. Escapes first, so only our own tags survive."""
+    escaped = html.escape(text, quote=False)
+    marked = re.sub(
+        r"([A-Za-z][A-Za-z']*)\{" + re.escape(strong) + r'\}',
+        r'<mark class="occ-hit">\1</mark>',
+        escaped,
+    )
+    # A bare marker with no attached word (untranslated particles): drop it.
+    marked = marked.replace('{' + strong + '}', '')
+    return ANY_MARKER_REGEX.sub('', marked)
+
+
+@lru_cache(maxsize=32)
+def generate_occurrences(strong_number):
+    """Collect every verse containing a Strong's number, grouped by book.
+
+    Returns (books, total) where books is a tuple of
+    (book_name, occurrence_count, ((chapter, verse, html), ...)) in canonical
+    book order. Cached like generate_heatmap_counts: the scan walks all 31k
+    verses, repeats are instant.
+    """
+    strong = (strong_number or '').strip('{}').upper()
+    if not STRONG_FORMAT_REGEX.fullmatch(strong):
+        return (), 0
+
+    marker = '{' + strong + '}'
+    books = []
+    total = 0
+    for book, _ in sorted(book_order.items(), key=lambda x: x[1]):
+        rows = []
+        book_count = 0
+        for verse in bible_data.verses_by_book.get(book, []):
+            text = verse.get('text', '')
+            hits = text.count(marker)
+            if not hits:
+                continue
+            book_count += hits
+            rows.append((int(verse['chapter']), int(verse['verse']), _render_occurrence_html(text, strong)))
+        if rows:
+            books.append((book, book_count, tuple(rows)))
+            total += book_count
+    return tuple(books), total
+
+
+@app.route('/occurrences')
+def occurrences():
+    """Concordance view: every verse where a Strong's number occurs."""
+    strong = (request.args.get('strong') or '').strip().strip('{}').upper()
+    error = None
+    word_meta = None
+    books = []
+    total = 0
+
+    if strong:
+        if not STRONG_FORMAT_REGEX.fullmatch(strong):
+            error = "Invalid Strong's number format. Use H#### or G#### (e.g., H7225)."
+        else:
+            book_data, total = generate_occurrences(strong)
+            books = [
+                {
+                    'name': name,
+                    'count': count,
+                    'verses': [{'chapter': ch, 'verse': v, 'html': h} for ch, v, h in rows],
+                }
+                for name, count, rows in book_data
+            ]
+            entry = bible_data.strongs_by_number.get(strong, {})
+            description = entry.get('description', '') or ''
+            word_meta = {
+                'lemma': entry.get('lemma', ''),
+                'xlit': entry.get('xlit', ''),
+                'pronounce': entry.get('pronounce', ''),
+                'description': description[:220] + '…' if len(description) > 220 else description,
+            }
+
+    return render_template(
+        'occurrences.html',
+        strong=strong,
+        error=error,
+        word_meta=word_meta,
+        books=books,
+        total=total,
+        # Small result sets read best fully expanded; big ones start collapsed.
+        open_all=bool(total) and total <= 120,
+    )
+
+
 @app.route('/api/books')
 def api_books():
     """
@@ -954,3 +1192,48 @@ def api_crossref_batch():
         }
 
     return jsonify({'results': results})
+
+
+@app.route('/api/word_lookup')
+def api_word_lookup():
+    """Reverse lookup: English word -> ranked Strong's number candidates.
+
+    Backs the "find a word" box on the dictionary editor, so readers can add
+    e.g. "mercy" without knowing H2617 first. Uses the startup-built inverted
+    index over the KJV's word{H####} pairs; exact word match first, prefix
+    aggregation as a fallback.
+    """
+    q = (request.args.get('q') or '').strip().lower()
+    if len(q) < 2:
+        return jsonify({'error': 'Type at least 2 letters to search.'}), 400
+
+    index = bible_data.english_word_index
+    counts = Counter()
+    matched_word = {}  # strong -> the KJV word form that matched
+
+    exact = index.get(q)
+    if exact:
+        counts.update(exact)
+        for sn in exact:
+            matched_word[sn] = q
+    else:
+        for word, word_counts in index.items():
+            if word.startswith(q):
+                counts.update(word_counts)
+                for sn in word_counts:
+                    matched_word.setdefault(sn, word)
+
+    results = []
+    for sn, count in counts.most_common(8):
+        entry = bible_data.strongs_by_number.get(sn, {})
+        description = entry.get('description', '') or ''
+        results.append({
+            'strong': sn,
+            'count': count,
+            'word': matched_word.get(sn, q),
+            'lemma': entry.get('lemma', ''),
+            'xlit': entry.get('xlit', ''),
+            'gloss': description[:100] + '…' if len(description) > 100 else description,
+        })
+
+    return jsonify({'query': q, 'exact': bool(exact), 'results': results})
