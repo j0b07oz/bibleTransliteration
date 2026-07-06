@@ -49,18 +49,21 @@ NAME_ID_KEYWORDS = re.compile(
     r'grandson of|servant of|name of|national name|people|tribe|nation|'
     r'deity|goddess|idol|angel|giant|eunuch|officer|captain|scribe|harlot|'
     r'concubine|ancestor|descendant|spy|warrior|shepherd|herdsman|musician|'
-    r'singer|porter)\b',
+    r"singer|porter|'s (?:wife|husband|son|daughter|father|mother|brother|"
+    r'sister|servant|handmaid|steward|uncle|nephew|firstborn))\b',
     re.IGNORECASE,
 )
 
 # Segments that describe where the word comes from rather than what it means.
+# NOTE: no blanket 'see ' prefix here — that would eat real meanings like
+# Reuben's "see ye a son"; cross-references are caught by SEE_REFERENCE_REGEX.
 DERIVATION_PREFIXES = (
     'from', 'of ', 'contracted', 'the same', 'a form', 'for ', 'probably',
     'perhaps', 'apparently', 'patronymic', 'patrial', 'denominative',
     'feminine', 'masculine', 'plural', 'dual', 'compare', 'or ', 'rarely',
     'abbreviated', 'derived', 'prolonged', 'prolongation', 'irregular',
     'originally', 'intensive', 'a primitive', 'shortened', 'also ', 'used ',
-    'including', 'in the sense', 'akin', 'with ', 'see ', 'i.e.', 'by ',
+    'including', 'in the sense', 'akin', 'with ', 'i.e.', 'by ',
     'participle', 'active participle', 'passive participle', 'infinitive',
     'a variation', 'an orthographical', 'a collateral', 'second form',
     'transmuted', 'a doubtful', 'lemma', 'corrected', 'an unused', 'formed',
@@ -68,14 +71,51 @@ DERIVATION_PREFIXES = (
     'a rare form', 'a prolonged form', 'full form',
 )
 
+# "see H1234" / "see Genesis 25:25" / "see הַר" are cross-references; a
+# lowercase continuation ("see ye a son") is a meaning and is kept.
+SEE_REFERENCE_REGEX = re.compile(r'^see\s+[^a-z\s]')
 
-def extract_name_gloss(description):
+# "the same as <hebrew/greek lemma>" — the lexicon's own equivalence claim,
+# used to resolve a name's meaning one hop away (e.g. Sarah -> H8282).
+SAME_AS_REGEX = re.compile(r'^the same as\s+([^\x00-\x7f][^\s()]*)$')
+
+
+def _is_meaning_segment(seg):
+    """Shared filter: does this description segment state a meaning?"""
+    low = seg.lower()
+    # Test derivation prefixes both as-is and with a leading parenthetical
+    # (e.g. "(Aramaic) of foreign origin ..." or "(Nehemiah 12:14), from X").
+    unwrapped = re.sub(r'^\([^)]*\)[\s,]*', '', low)
+    if low.startswith(DERIVATION_PREFIXES) or unwrapped.startswith(DERIVATION_PREFIXES):
+        return False
+    if SEE_REFERENCE_REGEX.match(seg):
+        return False
+    # Lexicon bookkeeping and reference segments, not meanings.
+    if any(marker in low for marker in (
+        'name of', 'of foreign', 'of uncertain', 'of doubtful',
+        'corrected to', 'xlit ', 'as if from',
+    )):
+        return False
+    if '{' in seg or '}' in seg:
+        return False
+    # Segments that are (mostly) Hebrew/Greek script.
+    ascii_letters = len(re.findall(r'[a-zA-Z]', seg))
+    if ascii_letters < max(3, len(seg) // 4):
+        return False
+    return True
+
+
+def extract_name_gloss(description, resolve_reference=None):
     """Pull the meaning of a proper name out of a Strong's description.
 
     Returns e.g. "well of a living (One) my Seer" for H883 (Beer-lahai-roi),
     or None when the entry is not confidently a proper name with a stated
     meaning. Precision is favored over recall: a missing note is better than
     a wrong one.
+
+    When the entry is a confirmed name whose only "meaning" is the lexicon's
+    own equivalence claim ("the same as <lemma>", e.g. Sarah -> H8282),
+    resolve_reference(lemma) may supply the referenced entry's meaning.
     """
     if not description:
         return None
@@ -86,35 +126,28 @@ def extract_name_gloss(description):
         if i == 0:
             # The first segment is always derivation/headword info.
             continue
-        lead_ok = seg[:1].isupper() or seg.lower().startswith('as a name')
-        if lead_ok and NAME_ID_KEYWORDS.search(seg):
+        if '[idiom]' in seg or '[phrase]' in seg:
+            # KJV renderings list (e.g. H410's "God (god), [idiom] goodly,
+            # ... idol, might(-y one)"), never an identification.
+            continue
+        # Greek entries append renderings after ':--'; only the part before
+        # it can identify the name.
+        candidate = seg.split(':--')[0]
+        lead_ok = candidate[:1].isupper() or candidate.lower().startswith('as a name')
+        if lead_ok and NAME_ID_KEYWORDS.search(candidate):
             id_idx = i
             break
     if not id_idx:
         return None
 
-    meaning_parts = []
-    for seg in segments[:id_idx]:
-        low = seg.lower()
-        # Test derivation prefixes both as-is and with a leading parenthetical
-        # (e.g. "(Aramaic) of foreign origin ...") removed.
-        unwrapped = re.sub(r'^\([^)]*\)[\s,]*', '', low)
-        if low.startswith(DERIVATION_PREFIXES) or unwrapped.startswith(DERIVATION_PREFIXES):
-            continue
-        # Lexicon bookkeeping and reference segments, not meanings.
-        if any(marker in low for marker in (
-            'name of', 'of foreign', 'of uncertain', 'of doubtful',
-            'corrected to', 'xlit ', 'as if from',
-        )):
-            continue
-        if '{' in seg or '}' in seg:
-            continue
-        # Skip segments that are (mostly) Hebrew/Greek script.
-        ascii_letters = len(re.findall(r'[a-zA-Z]', seg))
-        if ascii_letters < max(3, len(seg) // 4):
-            continue
-        meaning_parts.append(seg)
+    meaning_parts = [seg for seg in segments[:id_idx] if _is_meaning_segment(seg)]
     if not meaning_parts:
+        # A name defined purely by reference: follow the lexicon's own
+        # "the same as <lemma>" pointer one hop, if a resolver is provided.
+        if resolve_reference:
+            ref = SAME_AS_REGEX.match(segments[0])
+            if ref:
+                return resolve_reference(ref.group(1))
         return None
 
     gloss = '; '.join(meaning_parts).strip().rstrip('.').strip()
@@ -123,10 +156,71 @@ def extract_name_gloss(description):
     return gloss
 
 
+def _first_meaning_segment(description):
+    """The first stated meaning in a (typically common-noun) description.
+
+    Used as the hop target for "the same as <lemma>" name references. The
+    final segment is the KJV renderings list, so it never qualifies.
+    """
+    if not description:
+        return None
+    segments = [s.strip() for s in description.split(';') if s.strip()]
+    for i, seg in enumerate(segments):
+        if i == 0 or i == len(segments) - 1:
+            continue
+        if not _is_meaning_segment(seg):
+            continue
+        meaning = seg.strip().rstrip('.')
+        if len(meaning) > 60:
+            # Long entries usually read "X, i.e. long elaboration" — keep
+            # the head if it stands alone, otherwise pass.
+            head = re.split(r',? i\.e\.', meaning)[0].strip()
+            if not 2 < len(head) <= 60:
+                return None
+            meaning = head
+        return meaning if 2 < len(meaning) else None
+    return None
+
+
 def _build_name_glosses(strongs_by_number):
+    # Lemma -> numbers index so "the same as <lemma>" references can be
+    # resolved to the referenced entry's meaning (Sarah -> H8282 etc.).
+    by_lemma = {}
+    for sn, entry in strongs_by_number.items():
+        lemma = entry.get('lemma')
+        if lemma:
+            by_lemma.setdefault(lemma, set()).add(sn)
+
+    def _number_value(sn):
+        try:
+            return int(sn[1:])
+        except (TypeError, ValueError):
+            return None
+
     glosses = {}
     for sn, entry in strongs_by_number.items():
-        gloss = extract_name_gloss(entry.get('description') or '')
+        def resolve(lemma, _self=sn):
+            targets = by_lemma.get(lemma, set()) - {_self}
+            if not targets:
+                return None
+            if len(targets) > 1:
+                # Same-lemma entries cluster (Strong's numbers follow the
+                # alphabet), and "the same as" points at the base entry next
+                # door — take the nearest number, but only if unambiguous.
+                self_val = _number_value(_self)
+                vals = sorted(
+                    (abs(_number_value(t) - self_val), t)
+                    for t in targets
+                    if _number_value(t) is not None and self_val is not None
+                    and t[0] == _self[0]  # same language (H vs G)
+                )
+                if len(vals) < 1 or (len(vals) > 1 and vals[0][0] == vals[1][0]):
+                    return None  # no candidate or tied distance: stay silent
+                targets = {vals[0][1]}
+            target = strongs_by_number.get(next(iter(targets)), {})
+            return _first_meaning_segment(target.get('description') or '')
+
+        gloss = extract_name_gloss(entry.get('description') or '', resolve_reference=resolve)
         if gloss:
             glosses[sn] = gloss
     return glosses
