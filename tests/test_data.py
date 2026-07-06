@@ -56,3 +56,49 @@ class TestNameGlossExtraction:
     def test_empty_and_none(self):
         assert extract_name_gloss('') is None
         assert extract_name_gloss(None) is None
+
+    # --- regressions from real-reading feedback ---
+
+    def test_see_ye_a_son_is_a_meaning_not_a_reference(self):
+        # H7205 Reuben: a blanket 'see ' filter once ate this meaning.
+        desc = ("from the imperative of X and Y; see ye a son; "
+                "Reuben, a son of Jacob; Reuben.")
+        assert extract_name_gloss(desc) == "see ye a son"
+
+    def test_see_reference_is_still_filtered(self):
+        # "see Genesis 25:25" style cross-references are not meanings.
+        desc = ("from X; see Genesis 25:25; red; "
+                "Edom, the elder twin-brother of Jacob; Edom.")
+        assert extract_name_gloss(desc) == "red"
+
+    def test_renderings_segment_never_identifies_a_name(self):
+        # H410 'el: the KJV renderings list contains 'idol'/'might' keywords
+        # and starts with a capital, but its [idiom] markers give it away.
+        desc = ("shortened from X; strength; as adjective, mighty; "
+                "especially the Almighty (but used also of any deity); "
+                "God (god), [idiom] goodly, [idiom] great, idol, "
+                "might(-y one), power, strong. Compare names in '-el.'")
+        assert extract_name_gloss(desc) is None
+
+    def test_possessive_identification(self):
+        # H8283 Sarah: identified as "Sarah, Abraham's wife".
+        desc = "the same as X; dominative; Sarah, Abraham's wife; Sarah."
+        assert extract_name_gloss(desc) == "dominative"
+
+    def test_uncertain_derivation_yields_none(self):
+        # H1904 Hagar: the lexicon offers no meaning at all.
+        desc = ("of uncertain (perhaps foreign) derivation; "
+                "Hagar, the mother of Ishmael; Hagar.")
+        assert extract_name_gloss(desc) is None
+
+    def test_same_as_reference_hop(self):
+        # A name defined only by "the same as <lemma>" takes the referenced
+        # entry's meaning when a resolver is supplied.
+        desc = "the same as שָׂרָה; Sarah, Abraham's wife; Sarah."
+
+        def resolve(lemma):
+            assert lemma == "שָׂרָה"
+            return "a mistress, i.e. female noble"
+
+        assert extract_name_gloss(desc, resolve_reference=resolve) == "a mistress, i.e. female noble"
+        assert extract_name_gloss(desc) is None
