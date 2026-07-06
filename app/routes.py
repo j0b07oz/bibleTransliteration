@@ -383,6 +383,7 @@ DEFAULT_CONTEXT_OPTIONS = {
     'overview': True,
     'units': True,
     'uncommon': True,
+    'names': True,
 }
 
 @app.route('/', methods=['GET', 'POST'])
