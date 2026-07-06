@@ -2298,3 +2298,59 @@ mark.occ-hit {
 .share-result[hidden] {
     display: none;
 }
+
+/* ===== Name Meanings (inline "that is, ..." notes) ===== */
+
+/* The dagger footnote marker after a proper name. Styled like a reference
+   Bible's margin-note marker: quiet until hovered. */
+.name-mark {
+    font-size: 0.72em;
+    line-height: 1;
+    color: #a8886a;
+    cursor: pointer;
+    padding: 0 1px;
+    user-select: none;
+    transition: color 0.15s ease;
+}
+
+.name-mark:hover,
+.name-mark:focus-visible,
+.name-mark.is-open {
+    color: #7d4b36;
+}
+
+.name-mark:focus-visible {
+    outline: 1px dotted #7d4b36;
+    outline-offset: 1px;
+}
+
+/* The revealed note reads like a translator's gloss: bracketed, italic,
+   warm brown — an editorial aside, not body text. */
+.name-note {
+    font-size: 0.85em;
+    color: #7d4b36;
+    margin-left: 3px;
+}
+
+.name-note em {
+    font-style: italic;
+}
+
+/* Literary Context toggle: hide the whole affordance when Name meanings
+   is off (notes that were open disappear along with their daggers). */
+.hide-names .name-mark,
+.hide-names .name-note {
+    display: none;
+}
+
+/* Popup line for the name meaning */
+.word-popup__name-meaning {
+    margin-top: 6px;
+    padding: 6px 8px;
+    font-size: 12.5px;
+    font-style: italic;
+    color: #7d4b36;
+    background: #f7f0e9;
+    border-left: 3px solid #d9c1ad;
+    border-radius: 4px;
+}

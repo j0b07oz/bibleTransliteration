@@ -12,6 +12,7 @@ This repository contains a Flask application for transliterating Bible content w
 - **Frequency heatmap visualization** showing word distribution across the entire Bible
 - **Literary unit overlays** with progress tracking through books
 - **Uncommon word highlighting** based on statistical analysis
+- **Name meanings** — proper names carry a footnote dagger that uncovers their original-language meaning inline ("Beerlahairoi† [that is, *well of a living One my Seer*]")
 - **Continue reading** — the home page remembers your recent chapters
 - **Import/export and shareable links** for custom word lists
 

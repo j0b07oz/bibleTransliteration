@@ -31,6 +31,10 @@
                         <span>Highlight uncommon words</span>
                     </label>
                     <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="names" checked>
+                        <span>Name meanings&nbsp;<sup>&dagger;</sup></span>
+                    </label>
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
                         <input type="checkbox" data-context-option="phonetics" checked>
                         <span>Phonetic literary devices</span>
                     </label>
@@ -175,6 +179,7 @@
         <div class="word-popup__info">
             <div class="word-popup__lemma"></div>
             <div class="word-popup__details"></div>
+            <div class="word-popup__name-meaning" id="word-popup-name-meaning" hidden></div>
         </div>
         <!-- Cross-reference section (Hebrew↔Greek LXX equivalents) -->
         <div class="word-popup__crossref" id="word-popup-crossref" style="display: none;">

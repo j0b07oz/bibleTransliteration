@@ -347,6 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.toggle('hide-phonetics', !contextOptions.phonetics);
         document.body.classList.toggle('hide-book-overview', !contextOptions.overview);
         document.body.classList.toggle('hide-literary-units', !contextOptions.units);
+        document.body.classList.toggle('hide-names', !contextOptions.names);
     }
 
     function syncMenuState() {
@@ -1048,6 +1049,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tokenData.gloss) detailParts.push(`"${tokenData.gloss}"`);
         if (detailsEl) detailsEl.textContent = detailParts.join(' · ');
 
+        // Proper-name meaning ("that is, ...") when the lexicon glosses one.
+        const nameEl = document.getElementById('word-popup-name-meaning');
+        if (nameEl) {
+            if (tokenData.nameMeaning) {
+                nameEl.textContent = `† that is, ${tokenData.nameMeaning}`;
+                nameEl.hidden = false;
+            } else {
+                nameEl.textContent = '';
+                nameEl.hidden = true;
+            }
+        }
+
         // Pre-fill input with gloss
         if (inputEl) inputEl.value = tokenData.gloss || '';
 
@@ -1142,6 +1155,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xlit: tokenEl.dataset.xliteral || tokenEl.textContent.trim(),
             pronounce: tokenEl.dataset.pronounce || '',
             gloss: tokenEl.dataset.gloss || tokenEl.dataset.original || '',
+            nameMeaning: tokenEl.dataset.nameMeaning || '',
         };
 
         if (!tokenData.strongs) return;
@@ -1283,6 +1297,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ===== Name Meanings (inline "that is, ..." notes) =====
+
+    function toggleNameNote(mark) {
+        // The note is the hidden span immediately after the dagger.
+        const note = mark.nextElementSibling;
+        if (!note || !note.classList.contains('name-note')) return;
+        note.hidden = !note.hidden;
+        mark.classList.toggle('is-open', !note.hidden);
+    }
+
+    function bindNameMarks() {
+        document.addEventListener('click', (event) => {
+            const mark = event.target.closest('.name-mark');
+            if (!mark) return;
+            event.preventDefault();
+            event.stopPropagation();
+            toggleNameNote(mark);
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            const mark = event.target.closest?.('.name-mark');
+            if (!mark) return;
+            event.preventDefault();
+            toggleNameNote(mark);
+        });
+    }
+
     // ===== Reading History (Continue Reading) =====
 
     const RECENT_KEY = 'bt_recent_chapters';
@@ -1354,6 +1395,7 @@ document.addEventListener('DOMContentLoaded', function() {
     applyHeatmapFocus();
     bindWordPopup();
     bindStrongsTokenClicks();
+    bindNameMarks();
     recordCurrentChapter();
     renderRecentChapters();
 });
