@@ -15,6 +15,7 @@ browser — the frontend only ever talks to ``/edit_dict`` and ``/api/crossref``
 import json
 import os
 import re
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass
 
@@ -40,18 +41,27 @@ WORD_STRONGS_REGEX = re.compile(r"([A-Za-z][A-Za-z']*)\{([HG]\d+)\}")
 NAME_ID_KEYWORDS = re.compile(
     r'\b(?:place|city|town|region|mountain|mount|hill|river|brook|stream|'
     r'valley|plain|desert|wilderness|island|district|province|land|country|'
-    r'spring|well|capital|Israelite|Levite|Benjamite|Ephrathite|Egyptian|'
-    r'Canaanite|Philistine|Syrian|Moabite|Ammonite|Edomite|Midianite|'
-    r'Amalekite|Assyrian|Babylonian|Persian|Chaldean|Amorite|Hittite|Hivite|'
-    r'Jebusite|patriarch|prophet|prophetess|priest|king|queen|prince|'
-    r'princess|chief|duke|lawgiver|judge|apostle|disciple|son of|sons of|'
-    r'daughter of|father of|mother of|wife of|husband of|brother of|'
-    r'grandson of|servant of|name of|national name|people|tribe|nation|'
-    r'deity|goddess|idol|angel|giant|eunuch|officer|captain|scribe|harlot|'
-    r'concubine|ancestor|descendant|spy|warrior|shepherd|herdsman|musician|'
-    r"singer|porter|'s (?:wife|husband|son|daughter|father|mother|brother|"
+    r'spring|well|pool|garden|tower|gate|fountain|capital|'
+    r'patriarch|patriach|antediluvian|prophet|prophetess|priest|king|queen|'
+    r'prince|princess|chief|chieftain|duke|lawgiver|judge|apostle|disciple|'
+    r'satrap|governor|ruler|treasurer|cupbearer|'
+    r'son of|sons of|daughter of|daughters of|son a|'
+    r'father of|mother of|wife of|husband of|brother of|twin-brother|'
+    r'grandson of|servant of|member of|one of the|epithet|surname|'
+    r'first man|name of|national name|people|tribe|nation|inhabitants|'
+    r'native|citizen|deity|goddess|idol|angel|giant|eunuch|officer|captain|'
+    r'scribe|harlot|concubine|ancestor|descendant|spy|warrior|shepherd|'
+    r'herdsman|musician|singer|porter|'
+    r"'s (?:wife|husband|son|daughter|father|mother|brother|"
     r'sister|servant|handmaid|steward|uncle|nephew|firstborn))\b',
     re.IGNORECASE,
+)
+
+# Gentilic / ethnic adjectives ("an Idumaean", "a Macedonian", "a Christian",
+# "the Caphthorim") identify names too; the leading capital keeps common
+# nouns out.
+GENTILIC_REGEX = re.compile(
+    r'\b[A-Z][a-z]+(?:ite|ites|itish|aean|ean|ian|ians|im|iote|iotes)\b'
 )
 
 # Segments that describe where the word comes from rather than what it means.
@@ -68,16 +78,47 @@ DERIVATION_PREFIXES = (
     'a variation', 'an orthographical', 'a collateral', 'second form',
     'transmuted', 'a doubtful', 'lemma', 'corrected', 'an unused', 'formed',
     'reduplicated', 'a contraction', 'contraction', 'a shorter form',
-    'a rare form', 'a prolonged form', 'full form',
+    'a rare form', 'a prolonged form', 'full form', 'another form',
+    'only in the plural', 'only in plural',
+)
+
+# Identification vocabulary that must never appear in a *meaning* gloss —
+# if it does, an identification segment leaked through a side path.
+IDENTIFICATION_LEAK_REGEX = re.compile(
+    r'palestine|israelite|a christian|the famous|asia minor|'
+    r'babylonian name|egyptian king|the berites',
+    re.IGNORECASE,
 )
 
 # "see H1234" / "see Genesis 25:25" / "see הַר" are cross-references; a
 # lowercase continuation ("see ye a son") is a meaning and is kept.
 SEE_REFERENCE_REGEX = re.compile(r'^see\s+[^a-z\s]')
 
-# "the same as <hebrew/greek lemma>" — the lexicon's own equivalence claim,
-# used to resolve a name's meaning one hop away (e.g. Sarah -> H8282).
-SAME_AS_REGEX = re.compile(r'^the same as\s+([^\x00-\x7f][^\s()]*)$')
+# Reference forms that point at another entry whose meaning applies to this
+# name: "the same as X" (Sarah -> H8282), "of Hebrew origin (X)" (Greek NT
+# names hopping to their Hebrew base, e.g. G1138 David -> H1732 "loving"),
+# and contracted/abbreviated forms. The lemma is captured as the first
+# contiguous run of non-ASCII script — robust against glued data corruption
+# like "the same as אֵלָהlemma ...".
+REFERENCE_HOP_REGEX = re.compile(
+    r'^(?:(?:probably |perhaps |apparently )?'
+    r'(?:the same(?: \([^)]*\))? as|(?:a|another) form (?:of|for)|for|'
+    r'contracted from|contraction (?:for|of)|abbreviated from|'
+    r'of Hebrew origin|of Chaldee origin))'
+    r'[\s(]+.*?([^\x00-\x7f]+)'
+)
+
+# A meaning tucked inside a derivation segment, e.g. H804 Asshur:
+# "apparently from X (in the sense of successful)".
+IN_THE_SENSE_OF_REGEX = re.compile(r'\(in the sense of ([^)]{3,50})\)')
+
+# A hedged meaning like "perhaps fortification" (H3946 Lakum) — kept with its
+# hedge, unlike hedged derivations ("probably of foreign origin").
+HEDGED_MEANING_REGEX = re.compile(r'^(perhaps|probably|apparently)\s+(.+)$')
+DERIVATION_SIGNALS = re.compile(
+    r'\b(?:from|of|origin|derivation|derivative|root|compare|unused|same as|'
+    r'for)\b'
+)
 
 
 def _is_meaning_segment(seg):
@@ -105,6 +146,70 @@ def _is_meaning_segment(seg):
     return True
 
 
+def _find_identification(segments):
+    """Index of the segment that identifies a proper name, or None.
+
+    A qualifying segment starts with a capitalized name, "as a name, ...",
+    or an article followed by a capitalized gentilic ("an Arvadite or citizen
+    of Arvad"), and contains an identification keyword. KJV renderings lists
+    (marked by [idiom]/[phrase] or after ':--') never qualify.
+    """
+    for i, seg in enumerate(segments):
+        if i == 0:
+            # The first segment is always derivation/headword info.
+            continue
+        if '[idiom]' in seg or '[phrase]' in seg:
+            continue
+        candidate = seg.split(':--')[0]
+        lead_ok = (
+            candidate[:1].isupper()
+            or candidate.lower().startswith('as a name')
+            or (re.match(r'(?:an?|the|also)\b', candidate)
+                and re.search(r'\b[A-Z][a-z]', candidate))
+        )
+        if lead_ok and (NAME_ID_KEYWORDS.search(candidate) or GENTILIC_REGEX.search(candidate)):
+            return i
+    return None
+
+
+def _hedged_meaning(segments, id_idx):
+    """Recover a hedged meaning like "perhaps fortification" (H3946)."""
+    for seg in segments[:id_idx]:
+        m = HEDGED_MEANING_REGEX.match(seg)
+        if not m:
+            continue
+        remainder = m.group(2).strip().rstrip('.')
+        if DERIVATION_SIGNALS.search(remainder.lower()):
+            continue  # "probably of foreign origin" etc.
+        if re.search(r'[^\x00-\x7f]', remainder):
+            continue
+        if 2 < len(remainder) <= 50:
+            return f"{m.group(1)} {remainder}"
+    return None
+
+
+def _gentilic_identification(description, segments, id_idx):
+    """For patrial/patronymic entries, the identification IS the meaning:
+    "an Arvadite or citizen of Arvad" -> "citizen of Arvad"."""
+    first = segments[0].lower()
+    if 'patrial' not in first and 'patronymic' not in first:
+        return None
+    ident = segments[id_idx].split(':--')[0]
+    # Prefer the explanatory half after " or "; else after the first comma.
+    if ' or ' in ident:
+        phrase = ident.split(' or ', 1)[1]
+    elif ',' in ident:
+        phrase = ident.split(',', 1)[1]
+    else:
+        return None
+    phrase = re.sub(r'\([^)]*\)', '', phrase).strip().rstrip('.').strip()
+    if re.search(r'\b(?:citizen|native|inhabitant|descendant|tribe|member)s?\b', phrase.lower()) \
+            and 5 < len(phrase) <= 60 \
+            and not IDENTIFICATION_LEAK_REGEX.search(phrase):
+        return phrase
+    return None
+
+
 def extract_name_gloss(description, resolve_reference=None):
     """Pull the meaning of a proper name out of a Strong's description.
 
@@ -113,47 +218,54 @@ def extract_name_gloss(description, resolve_reference=None):
     meaning. Precision is favored over recall: a missing note is better than
     a wrong one.
 
-    When the entry is a confirmed name whose only "meaning" is the lexicon's
-    own equivalence claim ("the same as <lemma>", e.g. Sarah -> H8282),
-    resolve_reference(lemma) may supply the referenced entry's meaning.
+    Sources, in priority order:
+    1. the description's own meaning segment(s);
+    2. a meaning tucked into the derivation: "(in the sense of successful)";
+    3. a hedged meaning: "perhaps fortification";
+    4. via resolve_reference(lemma), the meaning of the entry this name is
+       said to equal ("the same as X", "of Hebrew origin (X)", "contracted
+       from X", ...);
+    5. for patrial/patronymic gentilics, the identification itself
+       ("citizen of Arvad").
     """
     if not description:
         return None
     segments = [s.strip() for s in description.split(';') if s.strip()]
 
-    id_idx = None
-    for i, seg in enumerate(segments):
-        if i == 0:
-            # The first segment is always derivation/headword info.
-            continue
-        if '[idiom]' in seg or '[phrase]' in seg:
-            # KJV renderings list (e.g. H410's "God (god), [idiom] goodly,
-            # ... idol, might(-y one)"), never an identification.
-            continue
-        # Greek entries append renderings after ':--'; only the part before
-        # it can identify the name.
-        candidate = seg.split(':--')[0]
-        lead_ok = candidate[:1].isupper() or candidate.lower().startswith('as a name')
-        if lead_ok and NAME_ID_KEYWORDS.search(candidate):
-            id_idx = i
-            break
+    id_idx = _find_identification(segments)
     if not id_idx:
         return None
 
-    meaning_parts = [seg for seg in segments[:id_idx] if _is_meaning_segment(seg)]
-    if not meaning_parts:
-        # A name defined purely by reference: follow the lexicon's own
-        # "the same as <lemma>" pointer one hop, if a resolver is provided.
-        if resolve_reference:
-            ref = SAME_AS_REGEX.match(segments[0])
-            if ref:
-                return resolve_reference(ref.group(1))
-        return None
+    def clean(gloss):
+        if not gloss or not 2 < len(gloss) <= 100:
+            return None
+        if IDENTIFICATION_LEAK_REGEX.search(gloss):
+            return None
+        return gloss
 
-    gloss = '; '.join(meaning_parts).strip().rstrip('.').strip()
-    if not 2 < len(gloss) <= 100:
-        return None
-    return gloss
+    meaning_parts = [seg for seg in segments[:id_idx] if _is_meaning_segment(seg)]
+    if meaning_parts:
+        return clean('; '.join(meaning_parts).strip().rstrip('.').strip())
+
+    for seg in segments[:id_idx]:
+        sense = IN_THE_SENSE_OF_REGEX.search(seg)
+        if sense:
+            return clean(sense.group(1).strip())
+
+    hedged = _hedged_meaning(segments, id_idx)
+    if hedged:
+        return clean(hedged)
+
+    if resolve_reference:
+        for seg in segments[:id_idx]:
+            ref = REFERENCE_HOP_REGEX.match(seg)
+            if ref:
+                hopped = clean(resolve_reference(ref.group(1)))
+                if hopped:
+                    return hopped
+                break  # one reference pattern per entry; don't scan on
+
+    return _gentilic_identification(description, segments, id_idx)
 
 
 def _first_meaning_segment(description):
@@ -170,26 +282,39 @@ def _first_meaning_segment(description):
             continue
         if not _is_meaning_segment(seg):
             continue
+        # The hop target may itself be a name; its identification segment
+        # ("Elisha, the famous prophet") is not a meaning.
+        candidate = seg.split(':--')[0]
+        if candidate[:1].isupper() and (
+            NAME_ID_KEYWORDS.search(candidate) or GENTILIC_REGEX.search(candidate)
+        ):
+            continue
         meaning = seg.strip().rstrip('.')
         if len(meaning) > 60:
-            # Long entries usually read "X, i.e. long elaboration" — keep
-            # the head if it stands alone, otherwise pass.
-            head = re.split(r',? i\.e\.', meaning)[0].strip()
-            if not 2 < len(head) <= 60:
+            # Long entries elaborate in parentheses or after "i.e." — try
+            # the stripped/head form, otherwise pass.
+            stripped = re.sub(r'\s*\([^)]*\)', '', meaning).strip().rstrip(',')
+            head = re.split(r',? i\.e\.', stripped)[0].strip()
+            if 2 < len(stripped) <= 60:
+                meaning = stripped
+            elif 2 < len(head) <= 60:
+                meaning = head
+            else:
                 return None
-            meaning = head
         return meaning if 2 < len(meaning) else None
     return None
 
 
 def _build_name_glosses(strongs_by_number):
-    # Lemma -> numbers index so "the same as <lemma>" references can be
-    # resolved to the referenced entry's meaning (Sarah -> H8282 etc.).
+    # Lemma -> numbers index so reference hops ("the same as <lemma>",
+    # "of Hebrew origin (<lemma>)", ...) can be resolved to the referenced
+    # entry's meaning. NFC-normalized on both sides: Hebrew niqqud can be
+    # encoded with differing combining-mark orders across entries.
     by_lemma = {}
     for sn, entry in strongs_by_number.items():
         lemma = entry.get('lemma')
         if lemma:
-            by_lemma.setdefault(lemma, set()).add(sn)
+            by_lemma.setdefault(unicodedata.normalize('NFC', lemma), set()).add(sn)
 
     def _number_value(sn):
         try:
@@ -200,7 +325,7 @@ def _build_name_glosses(strongs_by_number):
     glosses = {}
     for sn, entry in strongs_by_number.items():
         def resolve(lemma, _self=sn):
-            targets = by_lemma.get(lemma, set()) - {_self}
+            targets = by_lemma.get(unicodedata.normalize('NFC', lemma), set()) - {_self}
             if not targets:
                 return None
             if len(targets) > 1:
