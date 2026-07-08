@@ -102,3 +102,73 @@ class TestNameGlossExtraction:
 
         assert extract_name_gloss(desc, resolve_reference=resolve) == "a mistress, i.e. female noble"
         assert extract_name_gloss(desc) is None
+
+    # --- recall expansion (benchmark audit against 1 Chronicles 1 etc.) ---
+
+    def test_gentilic_identification_keyword(self):
+        # H687 Ezer: "an Idumaean" must identify via the gentilic pattern.
+        desc = "from X; treasure; Etser, an Idumaean; Ezer."
+        assert extract_name_gloss(desc) == "treasure"
+
+    def test_greek_christian_identification(self):
+        # G751 Archippus: "a Christian" identifies NT names.
+        desc = "from X and Y; horse-ruler; Archippus, a Christian:--Archippus."
+        assert extract_name_gloss(desc) == "horse-ruler"
+
+    def test_in_the_sense_of_meaning(self):
+        # H804 Asshur: the meaning hides inside the derivation parenthetical.
+        desc = ("or X; apparently from Y (in the sense of successful); "
+                "Ashshur, the second son of Shem; Asshur.")
+        assert extract_name_gloss(desc) == "successful"
+
+    def test_hedged_meaning_is_kept_with_its_hedge(self):
+        # H3946 Lakum: "perhaps fortification" is a meaning, hedged.
+        desc = ("from an unused root thought to mean to stop up by a "
+                "barricade; perhaps fortification; Lakkum, a place in "
+                "Palestine; Lakum.")
+        assert extract_name_gloss(desc) == "perhaps fortification"
+
+    def test_hedged_derivation_is_still_filtered(self):
+        desc = ("probably of foreign derivation; Elishah, a son of Javan; "
+                "Elishah.")
+        assert extract_name_gloss(desc) is None
+
+    def test_hebrew_origin_hop_for_greek_names(self):
+        # G1138: Greek NT names hop to their Hebrew base meaning.
+        desc = "of Hebrew origin (דָּוִד); Dabid (i.e. David), the Israelite king:--David."
+
+        def resolve(lemma):
+            captured_ok = all(0x0590 <= ord(c) <= 0x05FF for c in lemma)
+            assert captured_ok, f"expected Hebrew run, got {lemma!r}"
+            return "loving"
+
+        assert extract_name_gloss(desc, resolve_reference=resolve) == "loving"
+
+    def test_hop_result_leaking_identification_is_rejected(self):
+        # If the hop target's "meaning" is itself an identification, drop it.
+        desc = "the same as כַלְנֵה; Kanneh, a place in Assyria; Canneh."
+
+        def resolve(lemma):
+            return "Calneh or Calno, a place in Palestine"
+
+        assert extract_name_gloss(desc, resolve_reference=resolve) is None
+
+    def test_patrial_gentilic_identification_as_gloss(self):
+        # H721 Arvadite: for tribe/citizen names the identification IS the
+        # useful note.
+        desc = "patrial from אַרְוַד; an Arvadite or citizen of Arvad; Arvadite."
+        assert extract_name_gloss(desc) == "citizen of Arvad"
+
+    def test_glued_lemma_corruption_still_hops(self):
+        # H425 Elah: glued "lemma ..." data corruption after the reference.
+        desc = ("the same as אֵלָהlemma אִלָה first vowel, corrected to אֵלָה; "
+                "Elah, the name of an Edomite, of four Israelites, and also "
+                "of a place in Palestine; Elah")
+        captured = []
+
+        def resolve(lemma):
+            captured.append(lemma)
+            return "an oak or other strong tree"
+
+        assert extract_name_gloss(desc, resolve_reference=resolve) == "an oak or other strong tree"
+        assert captured and 'lemma' not in captured[0]

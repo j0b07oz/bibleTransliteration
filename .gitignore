@@ -13,3 +13,6 @@ htmlcov/
 
 # Runtime shared word-list files (content-addressed, created by /share_dict)
 app/uploads/shared/
+
+# Per-user session dictionaries are runtime data (auto-pruned after 30 days)
+app/uploads/*.json
