@@ -360,3 +360,60 @@ class TestSecurityConfig:
     def test_csrf_protection_installed(self, app):
         # Flask-WTF registers itself here when CSRFProtect(app) runs.
         assert 'csrf' in app.extensions
+
+
+class TestPhrasesRoutes:
+    """Rare original-language phrase panel, browse, and detail views.
+
+    These run against the full loaded index (the client fixture loads real
+    data), so they also serve as the flagship end-to-end check for
+    "coat of many colours".
+    """
+
+    def test_chapter_panel_shows_coat_phrase(self, client):
+        response = client.get('/?book=Genesis&chapter=37')
+        assert response.status_code == 200
+        body = response.get_data(as_text=True)
+        assert 'Rare original-language phrases' in body
+        assert '/phrases/H3801-H6446' in body
+
+    def test_detail_flagship_two_passages_five_occurrences(self, client):
+        response = client.get('/phrases/H3801-H6446')
+        assert response.status_code == 200
+        body = response.get_data(as_text=True)
+        # Grouped into exactly the two expected passages...
+        assert 'Genesis 37' in body
+        assert '2 Samuel 13' in body
+        # ...with all five verse references present.
+        for ref in ('37:3', '37:23', '37:32', '13:18', '13:19'):
+            assert ref in body
+        # The rendered English words are highlighted precisely.
+        assert 'phrase-hit' in body
+        assert 'coat' in body and 'colours' in body
+
+    def test_detail_key_is_case_insensitive(self, client):
+        assert client.get('/phrases/h3801-h6446').status_code == 200
+
+    def test_unknown_key_returns_404(self, client):
+        assert client.get('/phrases/NOTAKEY').status_code == 404
+
+    def test_mixed_language_key_returns_404(self, client):
+        # A cross-Testament sequence is never indexed.
+        assert client.get('/phrases/H3801-G6446').status_code == 404
+
+    def test_browse_lists_chapter_echoes(self, client):
+        response = client.get('/phrases?book=Genesis&chapter=37')
+        assert response.status_code == 200
+        body = response.get_data(as_text=True)
+        assert 'echo' in body
+        assert '/phrases/H3801-H6446' in body
+
+    def test_browse_without_selection_shows_hint(self, client):
+        response = client.get('/phrases')
+        assert response.status_code == 200
+        assert 'Enter a book and chapter' in response.get_data(as_text=True)
+
+    def test_browse_invalid_chapter_reports_error(self, client):
+        response = client.get('/phrases?book=Genesis&chapter=abc')
+        assert response.status_code == 200
+        assert 'valid number' in response.get_data(as_text=True)

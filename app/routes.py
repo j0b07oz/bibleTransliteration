@@ -9,7 +9,7 @@ import time
 from collections import Counter
 from datetime import datetime, timedelta
 from functools import lru_cache
-from flask import render_template, request, jsonify, session, send_file, redirect, url_for, g
+from flask import render_template, request, jsonify, session, send_file, redirect, url_for, g, abort
 from app import app
 from .transliteration import (
     transliterate_chapter,
@@ -426,6 +426,7 @@ def home():
     total_chapters = book_chapter_count.get(book) if is_valid_request else None
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
     verses = build_verses_for_render(result, active_units) if result else []
+    chapter_phrases = get_chapter_phrases(book, chapter) if is_valid_request else []
 
     user_strongs_keys = list(user_strongs_dict.keys()) if 'user_strongs_dict' in dir() else []
     # Generate book data for autocomplete
@@ -446,6 +447,7 @@ def home():
         context_defaults=DEFAULT_CONTEXT_OPTIONS,
         user_strongs_keys=user_strongs_keys,
         book_data=book_data,
+        chapter_phrases=chapter_phrases,
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -480,6 +482,7 @@ def navigate():
     total_chapters = book_chapter_count.get(book)
     book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
     verses = build_verses_for_render(result, active_units) if result else []
+    chapter_phrases = get_chapter_phrases(book, chapter)
 
     user_strongs_keys = list(user_strongs_dict.keys())
 
@@ -502,6 +505,7 @@ def navigate():
         context_defaults=DEFAULT_CONTEXT_OPTIONS,
         user_strongs_keys=user_strongs_keys,
         book_data=book_data,
+        chapter_phrases=chapter_phrases,
     )
 
 
@@ -1012,6 +1016,12 @@ def heatmap():
 STRONG_FORMAT_REGEX = re.compile(r'[HG]\d+')
 # Any Strong's / grammar marker: {H7225}, {(H8804)}, and the {H8804)} data quirk.
 ANY_MARKER_REGEX = re.compile(r'\{\(?[HG]\d+\)?\}')
+# A single plain lexical marker (no grammar codes) — enumerated in text order,
+# its index is the lexical-token position used by the phrase index.
+PLAIN_MARKER_REGEX = re.compile(r'\{([HG]\d+)\}')
+# The rendered English word immediately preceding a marker (highlight target).
+WORD_BEFORE_MARKER_REGEX = re.compile(r"[A-Za-z][A-Za-z']*$")
+PHRASES_PER_PAGE = 25
 
 
 def _render_occurrence_html(text, strong):
@@ -1238,3 +1248,170 @@ def api_word_lookup():
         })
 
     return jsonify({'query': q, 'exact': bool(exact), 'results': results})
+
+
+# --- Rare original-language phrases ------------------------------------------
+# A phrase is an ordered run of 2–5 original-language lexical tokens (Strong's
+# numbers) taken from the KJV's own marker stream. "Echoes" recur in exactly
+# two book-chapter passages. The index is built offline (scripts/
+# build_phrase_index.py) and loaded onto BibleData at startup; these routes only
+# read it, keeping phrase identity out of the English-rendering tokenizer.
+
+@lru_cache(maxsize=None)
+def _verse_text_map(book):
+    """(chapter, verse) -> raw marked-up text for one book, built once."""
+    return {
+        (int(v['chapter']), int(v['verse'])): v.get('text', '')
+        for v in bible_data.verses_by_book.get(book, [])
+    }
+
+
+def _render_phrase_verse_html(text, highlight_positions):
+    """Render a verse as clean HTML with the phrase's rendered words in <mark>.
+
+    ``highlight_positions`` are 0-based lexical-marker indices; the English word
+    immediately before each such marker (if any) is wrapped. Markers and grammar
+    codes are stripped and text is escaped first, so only our own tags survive.
+    Tokens with no rendered word (untranslated particles) simply add no
+    highlight — the plan's "show the whole verse when alignment is ambiguous".
+    """
+    highlight = set(highlight_positions)
+    parts = []
+    cursor = 0
+    for idx, m in enumerate(PLAIN_MARKER_REGEX.finditer(text)):
+        segment = text[cursor:m.start()]
+        word_match = WORD_BEFORE_MARKER_REGEX.search(segment) if idx in highlight else None
+        if word_match:
+            parts.append(html.escape(segment[:word_match.start()], quote=False))
+            parts.append(
+                '<mark class="phrase-hit">'
+                + html.escape(segment[word_match.start():], quote=False)
+                + '</mark>'
+            )
+        else:
+            parts.append(html.escape(segment, quote=False))
+        cursor = m.end()
+    parts.append(html.escape(text[cursor:], quote=False))
+    return ANY_MARKER_REGEX.sub('', ''.join(parts))
+
+
+def _phrase_summary(record, current_passage=None):
+    """Build the display view of a phrase record for panel/browse/detail.
+
+    When ``current_passage`` (a (book, chapter) tuple) is given, ``other_passage``
+    is the echo's *other* passage, for "also 2 Samuel 13"-style captions.
+    """
+    tokens = [
+        {
+            'strong': sn,
+            'lemma': bible_data.strongs_by_number.get(sn, {}).get('lemma', ''),
+            'xlit': bible_data.strongs_by_number.get(sn, {}).get('xlit', ''),
+        }
+        for sn in record['tokens']
+    ]
+    other_passage = None
+    if current_passage is not None:
+        others = [p for p in record['passages'] if p != current_passage]
+        other_passage = others[0] if others else None
+    return {
+        'key': record['key'],
+        'lang': record['lang'],
+        'tokens': tokens,
+        'lemma_seq': ' '.join(t['lemma'] for t in tokens if t['lemma']),
+        'xlit_seq': ' '.join(t['xlit'] for t in tokens if t['xlit']),
+        'strong_seq': ' '.join(record['tokens']),
+        'passage_count': len(record['passages']),
+        'occ_count': record['occ_count'],
+        'passages': record['passages'],
+        'other_passage': other_passage,
+    }
+
+
+def get_chapter_phrases(book, chapter, limit=8):
+    """Top rare-phrase echoes for a chapter, best first, for the reading panel."""
+    keys = bible_data.phrases_by_chapter.get((book, chapter), [])
+    current = (book, chapter)
+    return [
+        _phrase_summary(bible_data.phrase_index[key], current)
+        for key in keys[:limit]
+    ]
+
+
+@app.route('/phrases')
+def phrases_browse():
+    """Browse every rare-phrase echo in a chapter, paged. Echoes only in v1."""
+    raw_book = (request.args.get('book') or '').strip()
+    book = normalize_book_name(raw_book) if raw_book else ''
+    error = None
+
+    chapter = None
+    chapter_str = (request.args.get('chapter') or '').strip()
+    if chapter_str:
+        try:
+            chapter = int(chapter_str)
+        except ValueError:
+            error = "Chapter must be a valid number"
+
+    try:
+        page = max(1, int(request.args.get('page', '1')))
+    except ValueError:
+        page = 1
+
+    phrases = []
+    total = 0
+    total_pages = 1
+    if book and chapter is not None and not error:
+        is_valid, validation_error = validate_book_chapter(book, chapter)
+        if not is_valid:
+            error = validation_error
+        else:
+            keys = bible_data.phrases_by_chapter.get((book, chapter), [])
+            total = len(keys)
+            total_pages = max(1, (total + PHRASES_PER_PAGE - 1) // PHRASES_PER_PAGE)
+            page = min(page, total_pages)
+            start = (page - 1) * PHRASES_PER_PAGE
+            current = (book, chapter)
+            phrases = [
+                _phrase_summary(bible_data.phrase_index[key], current)
+                for key in keys[start:start + PHRASES_PER_PAGE]
+            ]
+
+    return render_template(
+        'phrases_browse.html',
+        book=book,
+        chapter=chapter,
+        error=error,
+        phrases=phrases,
+        total=total,
+        page=page,
+        total_pages=total_pages,
+    )
+
+
+@app.route('/phrases/<key>')
+def phrase_detail(key):
+    """Detail for one phrase: every occurrence grouped by passage, with the
+    matched words highlighted. Unknown/malformed/mixed-language keys 404."""
+    record = bible_data.phrase_index.get((key or '').strip().upper())
+    if not record:
+        abort(404)
+
+    span = len(record['tokens'])
+    grouped = {}
+    for book, chapter, verse, start in record['occurrences']:
+        text = _verse_text_map(book).get((chapter, verse), '')
+        grouped.setdefault((book, chapter), []).append({
+            'chapter': chapter,
+            'verse': verse,
+            'html': _render_phrase_verse_html(text, range(start, start + span)),
+        })
+    passages = [
+        {'book': book, 'chapter': chapter, 'verses': grouped[(book, chapter)]}
+        for (book, chapter) in record['passages']
+    ]
+
+    return render_template(
+        'phrase_detail.html',
+        phrase=_phrase_summary(record),
+        passages=passages,
+    )

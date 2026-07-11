@@ -9,6 +9,7 @@ This repository contains a Flask application for transliterating Bible content w
 - **Interactive Strong's dictionary editor** with search, filtering, and bulk operations
 - **English word lookup** — type "mercy" and get ranked Strong's candidates to add, no concordance required
 - **Concordance view** listing every verse where a word appears, linked from the word popup and heatmap
+- **Rare original-language phrase discovery** — surfaces short Hebrew/Greek phrases (e.g. "coat of many colours") that echo in exactly one other chapter, matched on the underlying Strong's token sequence rather than English word order
 - **Frequency heatmap visualization** showing word distribution across the entire Bible
 - **Literary unit overlays** with progress tracking through books
 - **Uncommon word highlighting** based on statistical analysis
@@ -67,6 +68,25 @@ Set the `SECRET_KEY` environment variable for production:
 ```bash
 export SECRET_KEY="your-production-secret-key"
 ```
+
+## Regenerating derived data
+
+Two data files under `app/data/` are generated offline and committed so the
+server never rebuilds them at startup:
+
+```bash
+# Hebrew↔Greek (LXX) cross-references, from the STEP Bible lexicon files
+python scripts/build_crossref_data.py
+
+# Rare original-language phrase index, from app/data/kjv_strongs.json
+python scripts/build_phrase_index.py
+```
+
+The phrase index (`app/data/phrase_index.json`) is derived entirely from the
+bundled public-domain KJV Strong's text — a phrase is an ordered run of 2–5
+original-language lexical tokens, and an "echo" is a phrase that occurs in
+exactly two book-chapter passages. Rerun the script after any change to
+`kjv_strongs.json`.
 
 ## Testing
 

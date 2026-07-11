@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% if book and chapter %}{{ book }} {{ chapter }} · {% endif %}Rare phrases</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body class="phrases-page">
+    <h1>Rare original-language phrases</h1>
+
+    <form method="get" action="{{ url_for('phrases_browse') }}" class="heatmap-form" id="phrases-form">
+        <label for="book">Book:</label>
+        <input type="text" id="book" name="book" value="{{ book or '' }}" placeholder="e.g. Genesis">
+        <label for="chapter">Chapter:</label>
+        <input type="number" id="chapter" name="chapter" min="1" value="{{ chapter if chapter is not none else '' }}" placeholder="37">
+        <button type="submit" class="button">Show</button>
+    </form>
+
+    {% if error %}
+    <div class="error-message">{{ error }}</div>
+    {% endif %}
+
+    {% if book and chapter is not none and not error %}
+    <div class="occ-header">
+        <div class="occ-summary">
+            <span class="occ-total"><strong>{{ total }}</strong> echo{{ 'es' if total != 1 else '' }} in {{ book }} {{ chapter }}</span>
+        </div>
+    </div>
+
+    {% if phrases %}
+    <ul class="phrase-panel__list phrase-panel__list--browse">
+        {% for p in phrases %}
+        <li class="phrase-card">
+            <a class="phrase-card__link" href="{{ url_for('phrase_detail', key=p.key) }}">
+                {% if p.lemma_seq %}<span class="phrase-card__source" lang="{{ 'he' if p.lang == 'H' else 'el' }}" dir="{{ 'rtl' if p.lang == 'H' else 'ltr' }}">{{ p.lemma_seq }}</span>{% endif %}
+                {% if p.xlit_seq %}<span class="phrase-card__xlit">{{ p.xlit_seq }}</span>{% endif %}
+                <span class="phrase-card__strong">{{ p.strong_seq }}</span>
+            </a>
+            <div class="phrase-card__meta">
+                <span class="phrase-card__count">{{ p.passage_count }} passages · {{ p.occ_count }} occurrence{{ 's' if p.occ_count != 1 }}</span>
+                {% if p.other_passage %}<span class="phrase-card__other">also {{ p.other_passage[0] }} {{ p.other_passage[1] }}</span>{% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+
+    {% if total_pages > 1 %}
+    <nav class="phrase-pager" aria-label="Phrase pages">
+        {% if page > 1 %}<a class="button button--sm" href="{{ url_for('phrases_browse', book=book, chapter=chapter, page=page - 1) }}">← Prev</a>{% endif %}
+        <span class="phrase-pager__status">Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}<a class="button button--sm" href="{{ url_for('phrases_browse', book=book, chapter=chapter, page=page + 1) }}">Next →</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <p class="occ-empty">No rare echoes found in {{ book }} {{ chapter }}.</p>
+    {% endif %}
+    {% else %}
+    <p class="occ-hint">
+        Enter a book and chapter to list its rare two-passage phrases — original-language
+        wording that recurs in exactly one other chapter of the Bible.
+    </p>
+    {% endif %}
+
+    <a href="{{ url_for('home') }}" class="button">Return Home</a>
+</body>
+</html>

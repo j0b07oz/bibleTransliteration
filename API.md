@@ -408,6 +408,44 @@ are instant.
 
 ---
 
+### 8a. Rare Phrase Browse
+
+**Endpoint**: `GET /phrases`
+
+Lists the rare original-language phrase "echoes" for a chapter — 2–5-token
+Strong's sequences that occur in exactly two book-chapter passages — ordered
+best first (cross-book, more content tokens, longer, more occurrences) and
+paged.
+
+#### Request Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `book` | string | No | Book name (e.g., "Genesis"). Blank shows a hint. |
+| `chapter` | integer | No | Chapter number. Required together with `book`. |
+| `page` | integer | No | 1-based page (25 phrases per page). Defaults to 1. |
+
+```
+GET /phrases?book=Genesis&chapter=37
+```
+
+---
+
+### 8b. Rare Phrase Detail
+
+**Endpoint**: `GET /phrases/<key>`
+
+Detail for a single phrase, keyed by its hyphenated Strong's sequence (e.g.
+`H3801-H6446`). Groups every occurrence by passage and highlights the exact
+rendered words in each verse. Keys are case-insensitive; unknown, malformed, or
+mixed-language (cross-Testament) keys return **404**.
+
+```
+GET /phrases/H3801-H6446   # "coat of many colours" — Genesis 37 & 2 Samuel 13
+```
+
+---
+
 ### 9. English Word Lookup
 
 **Endpoint**: `GET /api/word_lookup`

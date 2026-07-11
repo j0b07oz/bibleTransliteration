@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ phrase.strong_seq }} · Rare phrase</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body class="phrases-page">
+    <h1>Rare original-language phrase</h1>
+
+    <div class="occ-header phrase-detail__header">
+        <div class="occ-word">
+            {% if phrase.lemma_seq %}<span class="phrase-detail__source" lang="{{ 'he' if phrase.lang == 'H' else 'el' }}" dir="{{ 'rtl' if phrase.lang == 'H' else 'ltr' }}">{{ phrase.lemma_seq }}</span>{% endif %}
+            {% if phrase.xlit_seq %}<span class="occ-xlit">{{ phrase.xlit_seq }}</span>{% endif %}
+            <span class="occ-strong">{{ phrase.strong_seq }}</span>
+        </div>
+        <div class="occ-summary">
+            <span class="occ-total"><strong>{{ phrase.passage_count }}</strong> passages · <strong>{{ phrase.occ_count }}</strong> occurrence{{ 's' if phrase.occ_count != 1 }}</span>
+        </div>
+        <ol class="phrase-tokens">
+            {% for t in phrase.tokens %}
+            <li class="phrase-token">
+                <a class="phrase-token__strong" href="{{ url_for('occurrences', strong=t.strong) }}">{{ t.strong }}</a>
+                {% if t.lemma %}<span class="phrase-token__lemma" lang="{{ 'he' if phrase.lang == 'H' else 'el' }}" dir="{{ 'rtl' if phrase.lang == 'H' else 'ltr' }}">{{ t.lemma }}</span>{% endif %}
+                {% if t.xlit %}<em class="phrase-token__xlit">{{ t.xlit }}</em>{% endif %}
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <div class="occ-books">
+        {% for p in passages %}
+        <details class="occ-book" open>
+            <summary class="occ-book__summary">
+                <span class="occ-book__name">{{ p.book }} {{ p.chapter }}</span>
+                <span class="occ-book__count">{{ p.verses|length }}</span>
+            </summary>
+            <ol class="occ-verses">
+                {% for v in p.verses %}
+                <li class="occ-verse">
+                    <a class="occ-ref" href="{{ url_for('home', book=p.book, chapter=v.chapter) }}" title="Open {{ p.book }} {{ v.chapter }}">{{ v.chapter }}:{{ v.verse }}</a>
+                    <span class="occ-text">{{ v.html|safe }}</span>
+                </li>
+                {% endfor %}
+            </ol>
+        </details>
+        {% endfor %}
+    </div>
+
+    <div class="phrase-actions">
+        <a href="{{ url_for('phrases_browse', book=passages[0].book, chapter=passages[0].chapter) }}" class="button">Browse this chapter</a>
+        <a href="{{ url_for('home') }}" class="button">Return Home</a>
+    </div>
+</body>
+</html>
