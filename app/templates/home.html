@@ -155,6 +155,29 @@
             {% endif %}
         </div>
         
+        {% if chapter_phrases %}
+        <section class="phrase-panel" aria-labelledby="phrase-panel-title">
+            <h3 id="phrase-panel-title" class="phrase-panel__title">Rare original-language phrases</h3>
+            <p class="phrase-panel__subtitle">The same Hebrew/Greek wording as {{ book }} {{ chapter }}, echoed in exactly one other chapter.</p>
+            <ul class="phrase-panel__list">
+                {% for p in chapter_phrases %}
+                <li class="phrase-card">
+                    <a class="phrase-card__link" href="{{ url_for('phrase_detail', key=p.key) }}">
+                        {% if p.lemma_seq %}<span class="phrase-card__source" lang="{{ 'he' if p.lang == 'H' else 'el' }}" dir="{{ 'rtl' if p.lang == 'H' else 'ltr' }}">{{ p.lemma_seq }}</span>{% endif %}
+                        {% if p.xlit_seq %}<span class="phrase-card__xlit">{{ p.xlit_seq }}</span>{% endif %}
+                        <span class="phrase-card__strong">{{ p.strong_seq }}</span>
+                    </a>
+                    <div class="phrase-card__meta">
+                        <span class="phrase-card__count">{{ p.passage_count }} passages · {{ p.occ_count }} occurrence{{ 's' if p.occ_count != 1 }}</span>
+                        {% if p.other_passage %}<span class="phrase-card__other">also {{ p.other_passage[0] }} {{ p.other_passage[1] }}</span>{% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            <a class="phrase-panel__more" href="{{ url_for('phrases_browse', book=book, chapter=chapter) }}">Browse all phrases in {{ book }} {{ chapter }} →</a>
+        </section>
+        {% endif %}
+
         <div class="navigation">
             <form method="POST" action="{{ url_for('navigate') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -172,3 +172,115 @@ class TestNameGlossExtraction:
 
         assert extract_name_gloss(desc, resolve_reference=resolve) == "an oak or other strong tree"
         assert captured and 'lemma' not in captured[0]
+
+
+class TestPhraseIndexBuild:
+    """Build-script primitives: lexical-token extraction and n-gram windows."""
+
+    def _module(self):
+        import importlib.util
+        import os
+        path = os.path.join(
+            os.path.dirname(__file__), '..', 'scripts', 'build_phrase_index.py'
+        )
+        spec = importlib.util.spec_from_file_location('build_phrase_index', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_grammar_codes_are_not_lexical_tokens(self):
+        # "made{H6213}{(H8804)}" -> only H6213; the {(H8804)} morphology code
+        # and the malformed {H8804)} shape never enter the sequence.
+        mod = self._module()
+        seq = mod.PLAIN_MARKER_REGEX.findall(
+            "he made{H6213}{(H8804)} him a coat{H3801} of many colours{H6446}."
+        )
+        assert seq == ['H6213', 'H3801', 'H6446']
+
+    def test_one_word_two_lexemes_is_a_valid_two_token_phrase(self):
+        # A single English word backed by two markers ("created{H1254}{H853}")
+        # yields a two-token phrase H1254-H853.
+        mod = self._module()
+        seqs = [('Genesis', 1, 1, ['H1254', 'H853', 'H430'])]
+        occ = mod.build_ngram_occurrences(seqs)
+        assert 'H1254-H853' in occ
+
+    def test_ngrams_never_cross_verses(self):
+        mod = self._module()
+        seqs = [
+            ('Genesis', 1, 1, ['H1', 'H2']),
+            ('Genesis', 1, 2, ['H3', 'H4']),
+        ]
+        occ = mod.build_ngram_occurrences(seqs)
+        # In-verse pairs exist; the cross-verse pair H2-H3 must not.
+        assert 'H1-H2' in occ and 'H3-H4' in occ
+        assert 'H2-H3' not in occ
+
+    def test_ngram_length_bounds_and_positions(self):
+        mod = self._module()
+        seqs = [('Genesis', 1, 1, ['H1', 'H2', 'H3'])]
+        occ = mod.build_ngram_occurrences(seqs)
+        # 2- and 3-grams only (MIN_LEN=2, MAX_LEN=5); positions are token index.
+        assert occ['H1-H2'] == [['Genesis', 1, 1, 0]]
+        assert occ['H2-H3'] == [['Genesis', 1, 1, 1]]
+        assert occ['H1-H2-H3'] == [['Genesis', 1, 1, 0]]
+        assert 'H1' not in occ  # single tokens are never phrases
+
+
+class TestPhraseIndexLoad:
+    """_build_phrase_index derives records and per-chapter ordering."""
+
+    def _bible(self):
+        from app.data import build_bible_data
+        strongs = [
+            {'number': 'H3801', 'lemma': 'כְּתֹנֶת', 'xlit': 'kᵉthôneth'},
+            {'number': 'H6446', 'lemma': 'פַּס', 'xlit': 'paç'},
+            {'number': 'H853', 'lemma': 'אֵת', 'xlit': "'êth"},
+        ]
+        kjv = {'verses': [
+            {'book': 1, 'book_name': 'Genesis', 'chapter': 37, 'verse': 3,
+             'text': 'a coat{H3801} of many colours{H6446}.'},
+        ]}
+        phrase_data = {
+            'meta': {'schema_version': 1, 'stopwords': ['H853']},
+            'phrases': {
+                'H3801-H6446': [
+                    ['2 Samuel', 13, 18, 6],
+                    ['Genesis', 37, 3, 7],
+                ],
+            },
+        }
+        return build_bible_data(strongs, kjv, phrase_data=phrase_data)
+
+    def test_record_fields_and_canonical_passage_order(self):
+        bd = self._bible()
+        rec = bd.phrase_index['H3801-H6446']
+        assert rec['tokens'] == ['H3801', 'H6446']
+        assert rec['lang'] == 'H'
+        assert rec['occ_count'] == 2
+        assert rec['content_count'] == 2  # neither token is a stopword
+        assert rec['cross_book'] is True
+        # Genesis (book 1) sorts before 2 Samuel despite input order.
+        assert rec['passages'][0] == ('Genesis', 37)
+
+    def test_stopwords_reduce_content_count(self):
+        from app.data import build_bible_data
+        kjv = {'verses': []}
+        phrase_data = {
+            'meta': {'stopwords': ['H853']},
+            'phrases': {'H853-H3801': [['Genesis', 1, 1, 0], ['Exodus', 2, 2, 0]]},
+        }
+        bd = build_bible_data([], kjv, phrase_data=phrase_data)
+        rec = bd.phrase_index['H853-H3801']
+        assert rec['content_count'] == 1  # H853 is a stopword, H3801 is not
+
+    def test_by_chapter_lookup_registers_both_passages(self):
+        bd = self._bible()
+        assert 'H3801-H6446' in bd.phrases_by_chapter[('Genesis', 37)]
+        assert 'H3801-H6446' in bd.phrases_by_chapter[('2 Samuel', 13)]
+
+    def test_absent_phrase_data_yields_empty_structures(self):
+        from app.data import build_bible_data
+        bd = build_bible_data([], {'verses': []})
+        assert bd.phrase_index == {}
+        assert bd.phrases_by_chapter == {}

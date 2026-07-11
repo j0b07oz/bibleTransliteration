@@ -383,6 +383,11 @@ class BibleData:
     hebrew_to_greek: dict
     # Greek Strong's -> {'primary','secondary',...} Hebrew cross-references
     greek_to_hebrew: dict
+    # phrase key (e.g. 'H3801-H6446') -> rare-phrase record (tokens, passages,
+    # occurrences, counts); see _build_phrase_index for the record shape
+    phrase_index: dict
+    # (book_name, chapter) -> [phrase keys], best echoes first, for the panel
+    phrases_by_chapter: dict
 
 
 def _build_strongs_index(strongs_data):
@@ -437,6 +442,69 @@ def _build_english_word_index(kjv_data):
     return index
 
 
+def _build_phrase_index(phrase_data, book_order):
+    """Assemble the rare-phrase lookup structures from the generated index.
+
+    ``phrase_data`` is the parsed ``phrase_index.json`` (``{'meta', 'phrases'}``)
+    or None. Returns ``(phrases, phrases_by_chapter)`` where:
+
+    - ``phrases``: key -> record with tokens, language, occurrences (canonical
+      book order), passages, occurrence/content counts, and a cross-book flag.
+      Occurrences are ``[book_name, chapter, verse, start_index]`` where
+      start_index is the phrase's first token position among the verse's
+      lexical markers.
+    - ``phrases_by_chapter``: (book_name, chapter) -> [keys], ordered best
+      first (cross-book, more content tokens, longer, more occurrences) for the
+      chapter panel and browse page.
+
+    Content-token counts reuse the stopword set recorded in the index's meta so
+    they match exactly what the build script used for its all-stopword filter.
+    """
+    if not phrase_data:
+        return {}, {}
+
+    meta = phrase_data.get('meta', {})
+    stopwords = set(meta.get('stopwords', []))
+    raw_phrases = phrase_data.get('phrases', {})
+
+    def book_rank(name):
+        return book_order.get(name, 1 << 30)
+
+    phrases = {}
+    by_chapter = {}
+    for key, occ in raw_phrases.items():
+        tokens = key.split('-')
+        occ_sorted = sorted(occ, key=lambda o: (book_rank(o[0]), o[1], o[2], o[3]))
+        passages = sorted(
+            {(o[0], o[1]) for o in occ_sorted},
+            key=lambda p: (book_rank(p[0]), p[1]),
+        )
+        record = {
+            'key': key,
+            'tokens': tokens,
+            'lang': key[:1],
+            'length': len(tokens),
+            'occurrences': occ_sorted,
+            'passages': passages,
+            'occ_count': len(occ_sorted),
+            'content_count': sum(1 for t in tokens if t not in stopwords),
+            'cross_book': len({p[0] for p in passages}) > 1,
+        }
+        phrases[key] = record
+        for passage in passages:
+            by_chapter.setdefault(passage, []).append(key)
+
+    def sort_key(key):
+        r = phrases[key]
+        return (not r['cross_book'], -r['content_count'], -r['length'],
+                -r['occ_count'], key)
+
+    for keys in by_chapter.values():
+        keys.sort(key=sort_key)
+
+    return phrases, by_chapter
+
+
 def build_bible_data(
     strongs_data,
     kjv_data,
@@ -444,6 +512,7 @@ def build_bible_data(
     outline_data=None,
     hebrew_to_greek=None,
     greek_to_hebrew=None,
+    phrase_data=None,
 ) -> BibleData:
     """Assemble a BibleData from already-parsed structures.
 
@@ -453,6 +522,7 @@ def build_bible_data(
         _build_verse_indexes(kjv_data)
     )
     strongs_by_number = _build_strongs_index(strongs_data)
+    phrase_index, phrases_by_chapter = _build_phrase_index(phrase_data, book_order)
     return BibleData(
         strongs_by_number=strongs_by_number,
         verses_by_book=verses_by_book,
@@ -467,6 +537,8 @@ def build_bible_data(
         outline_data=outline_data or {},
         hebrew_to_greek=hebrew_to_greek or {},
         greek_to_hebrew=greek_to_hebrew or {},
+        phrase_index=phrase_index,
+        phrases_by_chapter=phrases_by_chapter,
     )
 
 
@@ -508,6 +580,18 @@ def load_bible_data(data_dir=DATA_DIR, outlines_path=None, logger=None) -> Bible
     elif logger:
         logger.warning(f"Cross-reference data not found at {crossref_path}")
 
+    phrase_data = None
+    phrase_path = os.path.join(data_dir, 'phrase_index.json')
+    if os.path.exists(phrase_path):
+        phrase_data = _load_json(phrase_path)
+        if logger:
+            logger.info(
+                f"Loaded {len(phrase_data.get('phrases', {}))} rare "
+                f"original-language phrases"
+            )
+    elif logger:
+        logger.warning(f"Phrase index not found at {phrase_path}")
+
     return build_bible_data(
         strongs_data,
         kjv_data,
@@ -515,4 +599,5 @@ def load_bible_data(data_dir=DATA_DIR, outlines_path=None, logger=None) -> Bible
         outline_data=outline_data,
         hebrew_to_greek=hebrew_to_greek,
         greek_to_hebrew=greek_to_hebrew,
+        phrase_data=phrase_data,
     )
