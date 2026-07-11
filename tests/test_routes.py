@@ -417,3 +417,29 @@ class TestPhrasesRoutes:
         response = client.get('/phrases?book=Genesis&chapter=abc')
         assert response.status_code == 200
         assert 'valid number' in response.get_data(as_text=True)
+
+    def test_panel_card_shows_english_and_verse_ref(self, client):
+        # The card leads with the English rendering + verse reference, so a
+        # reader who can't read Hebrew/Greek knows what the phrase is.
+        response = client.get('/?book=Genesis&chapter=37')
+        body = response.get_data(as_text=True)
+        assert 'coat of many colours' in body
+        assert 'Genesis 37:3' in body
+        assert 'phrase-card__english' in body
+
+    def test_browse_card_shows_english_rendering(self, client):
+        response = client.get('/phrases?book=Genesis&chapter=37')
+        body = response.get_data(as_text=True)
+        assert 'coat of many colours' in body
+        assert 'phrase-card__english' in body
+
+    def test_detail_keeps_original_language_and_adds_english(self, client):
+        # Detail retains the Hebrew/Greek view but now also shows the English.
+        response = client.get('/phrases/H3801-H6446')
+        body = response.get_data(as_text=True)
+        assert 'coat of many colours' in body          # English added
+        assert 'כְּתֹנֶת' in body  # כְּתֹנֶת lemma retained
+
+    def test_chapter_view_exposes_phrases_toggle(self, client):
+        response = client.get('/?book=Genesis&chapter=37')
+        assert 'data-context-option="phrases"' in response.get_data(as_text=True)

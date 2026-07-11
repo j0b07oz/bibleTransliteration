@@ -46,6 +46,10 @@
                         <input type="checkbox" data-context-option="units" checked>
                         <span>Active literary units and side lines</span>
                     </label>
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="phrases" checked>
+                        <span>Rare original-language phrases</span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -163,11 +167,11 @@
                 {% for p in chapter_phrases %}
                 <li class="phrase-card">
                     <a class="phrase-card__link" href="{{ url_for('phrase_detail', key=p.key) }}">
-                        {% if p.lemma_seq %}<span class="phrase-card__source" lang="{{ 'he' if p.lang == 'H' else 'el' }}" dir="{{ 'rtl' if p.lang == 'H' else 'ltr' }}">{{ p.lemma_seq }}</span>{% endif %}
-                        {% if p.xlit_seq %}<span class="phrase-card__xlit">{{ p.xlit_seq }}</span>{% endif %}
-                        <span class="phrase-card__strong">{{ p.strong_seq }}</span>
+                        <span class="phrase-card__english">{{ p.english or p.strong_seq }}</span>
+                        {% if p.verse_ref %}<span class="phrase-card__ref">{{ book }} {{ p.verse_ref }}</span>{% endif %}
                     </a>
                     <div class="phrase-card__meta">
+                        <span class="phrase-card__strong">{{ p.strong_seq }}</span>
                         <span class="phrase-card__count">{{ p.passage_count }} passages · {{ p.occ_count }} occurrence{{ 's' if p.occ_count != 1 }}</span>
                         {% if p.other_passage %}<span class="phrase-card__other">also {{ p.other_passage[0] }} {{ p.other_passage[1] }}</span>{% endif %}
                     </div>

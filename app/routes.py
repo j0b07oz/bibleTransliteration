@@ -384,6 +384,7 @@ DEFAULT_CONTEXT_OPTIONS = {
     'units': True,
     'uncommon': True,
     'names': True,
+    'phrases': True,
 }
 
 @app.route('/', methods=['GET', 'POST'])
@@ -1295,11 +1296,45 @@ def _render_phrase_verse_html(text, highlight_positions):
     return ANY_MARKER_REGEX.sub('', ''.join(parts))
 
 
+def _phrase_english_span(text, start, span):
+    """The KJV English rendering of a phrase occurrence.
+
+    Returns the marker-free text from the first phrase-token's rendered word
+    through the last (e.g. "coat of many colours" for H3801-H6446 in Gen 37:3),
+    so readers see the phrase in English without opening the detail page. Empty
+    if none of the phrase's tokens rendered a word (untranslated particles).
+    """
+    last = start + span - 1
+    cleaned_parts = []
+    length = 0          # running length of the cleaned (marker-free) text
+    first_start = None
+    last_end = None
+    cursor = 0
+    for idx, m in enumerate(PLAIN_MARKER_REGEX.finditer(text)):
+        segment = ANY_MARKER_REGEX.sub('', text[cursor:m.start()])
+        if start <= idx <= last:
+            word = WORD_BEFORE_MARKER_REGEX.search(segment)
+            if word:
+                if first_start is None:
+                    first_start = length + word.start()
+                last_end = length + len(segment)
+        cleaned_parts.append(segment)
+        length += len(segment)
+        cursor = m.end()
+    cleaned_parts.append(ANY_MARKER_REGEX.sub('', text[cursor:]))
+    if first_start is None or last_end is None:
+        return ''
+    return ''.join(cleaned_parts)[first_start:last_end].strip()
+
+
 def _phrase_summary(record, current_passage=None):
     """Build the display view of a phrase record for panel/browse/detail.
 
-    When ``current_passage`` (a (book, chapter) tuple) is given, ``other_passage``
-    is the echo's *other* passage, for "also 2 Samuel 13"-style captions.
+    ``english`` and ``verse_ref`` describe how/where the phrase reads in the
+    current chapter (or, for the detail page where ``current_passage`` is None,
+    its first occurrence overall) so a reader can recognize the phrase before
+    navigating. When ``current_passage`` (a (book, chapter) tuple) is given,
+    ``other_passage`` is the echo's *other* passage, for "also 2 Samuel 13".
     """
     tokens = [
         {
@@ -1313,10 +1348,29 @@ def _phrase_summary(record, current_passage=None):
     if current_passage is not None:
         others = [p for p in record['passages'] if p != current_passage]
         other_passage = others[0] if others else None
+
+    # English rendering + verse references, from the occurrences in the current
+    # chapter (panel/browse) or the first occurrence overall (detail header).
+    if current_passage is not None:
+        here = [o for o in record['occurrences'] if (o[0], o[1]) == current_passage]
+    else:
+        here = record['occurrences'][:1]
+    english = ''
+    verse_ref = ''
+    if here:
+        book, chapter, verse, start = here[0]
+        english = _phrase_english_span(
+            _verse_text_map(book).get((chapter, verse), ''), start, len(record['tokens'])
+        )
+        verses = sorted({o[2] for o in here})
+        verse_ref = f"{chapter}:" + ', '.join(str(v) for v in verses)
+
     return {
         'key': record['key'],
         'lang': record['lang'],
         'tokens': tokens,
+        'english': english,
+        'verse_ref': verse_ref,
         'lemma_seq': ' '.join(t['lemma'] for t in tokens if t['lemma']),
         'xlit_seq': ' '.join(t['xlit'] for t in tokens if t['xlit']),
         'strong_seq': ' '.join(record['tokens']),
