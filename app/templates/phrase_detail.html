@@ -12,6 +12,7 @@
 
     <div class="occ-header phrase-detail__header">
         <div class="occ-word">
+            {% if phrase.english %}<span class="phrase-detail__english">{{ phrase.english }}</span>{% endif %}
             {% if phrase.lemma_seq %}<span class="phrase-detail__source" lang="{{ 'he' if phrase.lang == 'H' else 'el' }}" dir="{{ 'rtl' if phrase.lang == 'H' else 'ltr' }}">{{ phrase.lemma_seq }}</span>{% endif %}
             {% if phrase.xlit_seq %}<span class="occ-xlit">{{ phrase.xlit_seq }}</span>{% endif %}
             <span class="occ-strong">{{ phrase.strong_seq }}</span>
