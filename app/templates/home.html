@@ -7,7 +7,7 @@
     <title>The King James Bible</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
-<body>
+<body{% if illustration_scene %} class="has-illustration"{% endif %}>
     <h1>The King James Bible</h1>
     <h2>With select transliteration</h2>
     <div class="button-container">
@@ -50,6 +50,12 @@
                         <input type="checkbox" data-context-option="phrases" checked>
                         <span>Rare original-language phrases</span>
                     </label>
+                    {% if illustration_scene %}
+                    <label class="context-option" role="menuitemcheckbox" aria-checked="true">
+                        <input type="checkbox" data-context-option="illustrations" checked>
+                        <span>Visual guide illustration</span>
+                    </label>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -94,10 +100,70 @@
         // Current position (null unless a chapter is rendered) for reading history.
         window.CURRENT_BOOK = {{ (book if result else none)|tojson|safe }};
         window.CURRENT_CHAPTER = {{ (chapter if result else none)|tojson|safe }};
+        // Visual-guide scene for this chapter (null unless one is configured).
+        window.ILLUSTRATION_SCENE = {{ illustration_scene|default(none)|tojson|safe }};
     </script>
     <script src="{{ url_for('static', filename='js/chapter-view.js') }}"></script>
+    {% if illustration_scene %}
+    <script src="{{ url_for('static', filename='js/illustration-panel.js') }}"></script>
+    {% endif %}
 
     {% if result %}
+    <div class="chapter-layout">
+        {% if illustration_scene %}
+        <aside class="illustration-panel" id="illustration-panel"
+               aria-label="Visual guide: {{ illustration_scene.title }}"
+               data-scene-id="{{ illustration_scene.id }}">
+            <figure class="illustration-figure">
+                <div class="illustration-stage" id="illustration-stage"
+                     style="--ill-w: {{ illustration_scene.image.width }}; --ill-h: {{ illustration_scene.image.height }};">
+                    <picture>
+                        {% for source in illustration_scene.image.sources %}
+                        <source type="{{ source.type }}"
+                                sizes="(min-width: 1100px) 400px, 100vw"
+                                srcset="{% for c in source.srcset %}{{ url_for('static', filename=c.path) }} {{ c.width }}w{% if not loop.last %}, {% endif %}{% endfor %}">
+                        {% endfor %}
+                        <img id="illustration-image"
+                             src="{{ url_for('static', filename=illustration_scene.image.fallback) }}"
+                             width="{{ illustration_scene.image.width }}"
+                             height="{{ illustration_scene.image.height }}"
+                             alt="{{ illustration_scene.image.alt }}"
+                             loading="lazy" decoding="async">
+                    </picture>
+                </div>
+                <figcaption class="illustration-caption">
+                    <div class="illustration-active-step" id="illustration-active-step" aria-live="polite">
+                        <span class="illustration-active-step__title">{{ illustration_scene.title }}</span>
+                    </div>
+                    {% if illustration_scene.image.credit %}
+                    <span class="illustration-credit">{{ illustration_scene.image.credit }}</span>
+                    {% endif %}
+                </figcaption>
+            </figure>
+            <div class="illustration-controls" id="illustration-controls" hidden>
+                <button type="button" class="button button--sm illustration-nav" id="illustration-prev" aria-label="Previous detail">&larr;</button>
+                <span class="illustration-step-count" id="illustration-step-count" aria-live="polite"></span>
+                <button type="button" class="button button--sm illustration-nav" id="illustration-next" aria-label="Next detail">&rarr;</button>
+            </div>
+            <ol class="illustration-steps" id="illustration-steps">
+                {% for step in illustration_scene.steps %}
+                <li class="illustration-step" data-step-id="{{ step.id }}"
+                    data-start-verse="{{ step.start_verse }}" data-end-verse="{{ step.end_verse }}">
+                    <button type="button" class="illustration-step__button">
+                        <span class="illustration-step__ref">{{ step.ref }}</span>
+                        <span class="illustration-step__word">
+                            <span class="illustration-step__hebrew" lang="he" dir="rtl">{{ step.hebrew }}</span>
+                            <span class="illustration-step__translit">{{ step.translit }}</span>
+                        </span>
+                        <span class="illustration-step__gloss">{{ step.gloss }}</span>
+                        {% if step.note %}<span class="illustration-step__note">{{ step.note }}</span>{% endif %}
+                    </button>
+                </li>
+                {% endfor %}
+            </ol>
+        </aside>
+        {% endif %}
+        <div class="chapter-main">
         <h2 id="currentPassage">{{ book }} {{ chapter }}</h2>
 
         <div id="literary-context">
@@ -191,6 +257,8 @@
                 <button type="submit" name="direction" value="next" class="button">Next Chapter</button>
             </form>
         </div>
+        </div><!-- /.chapter-main -->
+    </div><!-- /.chapter-layout -->
     {% endif %}
 
     <!-- Toast notifications container -->

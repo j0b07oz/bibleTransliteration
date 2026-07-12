@@ -385,7 +385,19 @@ DEFAULT_CONTEXT_OPTIONS = {
     'uncommon': True,
     'names': True,
     'phrases': True,
+    'illustrations': True,
 }
+
+
+def get_illustration_scene(book, chapter):
+    """Return the chapter-localized visual-guide scene payload, or None.
+
+    Reads the precomputed (book, chapter) -> scene index built at startup; the
+    payload's steps are already filtered and clamped to this chapter.
+    """
+    if not book or not chapter:
+        return None
+    return bible_data.illustrations_by_chapter.get((book, chapter))
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -407,7 +419,6 @@ def home():
 
     active_units = get_active_units(book, chapter) if book and chapter else []
     result = ""
-    active_unit = None
     is_valid_request = False
     if request.method == 'POST' or (book and chapter):
         if book and chapter:
@@ -421,34 +432,17 @@ def home():
                 is_valid_request = True
                 user_strongs_dict = get_user_strongs_dict()
                 result = transliterate_chapter(book, chapter, user_strongs_dict, bible_data, active_units=active_units)
-                active_unit = get_active_unit(book, chapter)
 
-    # Only show book overview and progress for valid requests
-    total_chapters = book_chapter_count.get(book) if is_valid_request else None
-    book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
-    verses = build_verses_for_render(result, active_units) if result else []
-    chapter_phrases = get_chapter_phrases(book, chapter) if is_valid_request else []
-
-    user_strongs_keys = list(user_strongs_dict.keys()) if 'user_strongs_dict' in dir() else []
-    # Generate book data for autocomplete
-    ordered_books = sorted(book_order.items(), key=lambda x: x[1])
-    book_data = [{'name': name, 'chapters': book_chapter_count.get(name, 0)} for name, _ in ordered_books]
     return render_template(
         'home.html',
-        result=result,
-        book=book,
-        chapter=chapter,
-        active_unit=active_unit,
-        active_units=active_units,
-        total_chapters=total_chapters,
-        book_progress=book_progress,
-        verses=verses,
-        focus_strong=focus_strong,
-        from_heatmap=from_heatmap,
-        context_defaults=DEFAULT_CONTEXT_OPTIONS,
-        user_strongs_keys=user_strongs_keys,
-        book_data=book_data,
-        chapter_phrases=chapter_phrases,
+        **build_home_context(
+            book, chapter,
+            result=result,
+            active_units=active_units,
+            is_valid_request=is_valid_request,
+            focus_strong=focus_strong,
+            from_heatmap=from_heatmap,
+        ),
     )
 
 @app.route('/navigate', methods=['POST'])
@@ -479,34 +473,15 @@ def navigate():
     active_units = get_active_units(book, chapter)
     user_strongs_dict = get_user_strongs_dict()
     result = transliterate_chapter(book, chapter, user_strongs_dict, bible_data, active_units=active_units)
-    active_unit = get_active_unit(book, chapter)
-    total_chapters = book_chapter_count.get(book)
-    book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
-    verses = build_verses_for_render(result, active_units) if result else []
-    chapter_phrases = get_chapter_phrases(book, chapter)
-
-    user_strongs_keys = list(user_strongs_dict.keys())
-
-    # Generate book data for autocomplete (same as home route)
-    ordered_books = sorted(book_order.items(), key=lambda x: x[1])
-    book_data = [{'name': name, 'chapters': book_chapter_count.get(name, 0)} for name, _ in ordered_books]
 
     return render_template(
         'home.html',
-        result=result,
-        book=book,
-        chapter=chapter,
-        active_unit=active_unit,
-        active_units=active_units,
-        total_chapters=total_chapters,
-        book_progress=book_progress,
-        verses=verses,
-        focus_strong='',
-        from_heatmap=False,
-        context_defaults=DEFAULT_CONTEXT_OPTIONS,
-        user_strongs_keys=user_strongs_keys,
-        book_data=book_data,
-        chapter_phrases=chapter_phrases,
+        **build_home_context(
+            book, chapter,
+            result=result,
+            active_units=active_units,
+            is_valid_request=True,
+        ),
     )
 
 
@@ -540,6 +515,48 @@ def build_verses_for_render(result_html: str, active_units: list):
         ]
         verses.append({'num': num, 'html': text_html, 'bars': bars})
     return verses
+
+
+def build_home_context(book, chapter, *, result='', active_units=None,
+                       is_valid_request=False, focus_strong='', from_heatmap=False):
+    """Assemble the full home.html render context shared by home() and navigate().
+
+    Both routes render the same template with an identical context; keeping the
+    assembly here keeps them from drifting. Values gated on ``is_valid_request``
+    stay empty/None for blank, invalid, or error responses, matching the
+    original per-route logic. ``get_user_strongs_dict`` is only invoked on valid
+    requests so a blank home page never creates a session file; on the valid
+    path it returns the flask.g-cached dict the route already loaded.
+    """
+    active_units = active_units if active_units is not None else []
+    active_unit = get_active_unit(book, chapter) if is_valid_request else None
+    total_chapters = book_chapter_count.get(book) if is_valid_request else None
+    book_progress = (chapter / total_chapters * 100) if total_chapters and chapter else None
+    verses = build_verses_for_render(result, active_units) if result else []
+    chapter_phrases = get_chapter_phrases(book, chapter) if is_valid_request else []
+    user_strongs_keys = list(get_user_strongs_dict().keys()) if is_valid_request else []
+    illustration_scene = get_illustration_scene(book, chapter) if is_valid_request else None
+    ordered_books = sorted(book_order.items(), key=lambda x: x[1])
+    book_data = [{'name': name, 'chapters': book_chapter_count.get(name, 0)}
+                 for name, _ in ordered_books]
+    return {
+        'result': result,
+        'book': book,
+        'chapter': chapter,
+        'active_unit': active_unit,
+        'active_units': active_units,
+        'total_chapters': total_chapters,
+        'book_progress': book_progress,
+        'verses': verses,
+        'focus_strong': focus_strong,
+        'from_heatmap': from_heatmap,
+        'context_defaults': DEFAULT_CONTEXT_OPTIONS,
+        'user_strongs_keys': user_strongs_keys,
+        'book_data': book_data,
+        'chapter_phrases': chapter_phrases,
+        'illustration_scene': illustration_scene,
+    }
+
 
 # Route for handling the user's strongs_dict
 @app.route('/edit_dict', methods=['GET', 'POST'])

@@ -14,6 +14,7 @@ This repository contains a Flask application for transliterating Bible content w
 - **Literary unit overlays** with progress tracking through books
 - **Uncommon word highlighting** based on statistical analysis
 - **Name meanings** — proper names carry a footnote dagger that uncovers their original-language meaning inline ("Beerlahairoi† [that is, *well of a living One my Seer*]")
+- **Visual guide illustrations** — on specification-heavy passages (seeded with Exodus 25, the Ark of the Covenant) a sticky side panel shows an annotated illustration whose spotlight follows the reader down the verses, surfacing each part's Hebrew word and meaning; see **[ILLUSTRATIONS.md](ILLUSTRATIONS.md)** to add new scenes
 - **Continue reading** — the home page remembers your recent chapters
 - **Import/export and shareable links** for custom word lists
 

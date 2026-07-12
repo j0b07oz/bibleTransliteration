@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Illustration Region Editor</title>
+<!--
+  Standalone authoring tool for the Bible visual-guide illustration panel.
+  Open this file directly in a browser (File > Open, or double-click) — it has
+  no server dependency. Load an illustration, draw rectangle/ellipse regions
+  over each labelled part, tag them with a step id, and copy catalog-ready JSON
+  into app/data/illustrations.json. Coordinates are emitted as percentages of
+  the image (0-100), matching the runtime spotlight, so a region survives the
+  image being displayed at any size.
+-->
+<style>
+  :root { --bg:#1c1613; --panel:#2a211d; --ink:#f3ece2; --muted:#b9a893; --gold:#c9a227; --line:#453a33; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, sans-serif; background:var(--bg); color:var(--ink); display:flex; height:100vh; overflow:hidden; }
+  #stage-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:16px; overflow:auto; }
+  #stage { position:relative; line-height:0; box-shadow:0 8px 40px rgba(0,0,0,0.6); max-width:100%; max-height:100%; }
+  #stage img { display:block; max-width:100%; max-height:calc(100vh - 32px); }
+  #overlay { position:absolute; inset:0; cursor:crosshair; }
+  aside { width:340px; background:var(--panel); border-left:1px solid var(--line); display:flex; flex-direction:column; overflow:hidden; }
+  aside h1 { font-size:15px; margin:0; padding:14px 16px; border-bottom:1px solid var(--line); color:var(--gold); letter-spacing:0.04em; }
+  .controls { padding:12px 16px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:10px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  label { font-size:12px; color:var(--muted); }
+  input[type=text], input[type=number] { background:#15100d; border:1px solid var(--line); color:var(--ink); border-radius:5px; padding:6px 8px; font:inherit; font-size:13px; }
+  input#stepId { flex:1; min-width:120px; }
+  input[type=number] { width:70px; }
+  button { background:#3a2f28; color:var(--ink); border:1px solid var(--line); border-radius:5px; padding:7px 10px; font:inherit; font-size:13px; cursor:pointer; }
+  button:hover { background:#483a31; }
+  button.primary { background:var(--gold); color:#221a06; border-color:var(--gold); font-weight:600; }
+  button.active { outline:2px solid var(--gold); }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:5px; overflow:hidden; }
+  .seg button { border:0; border-radius:0; }
+  #list { flex:1; overflow:auto; padding:8px 0; }
+  .region-item { padding:8px 16px; border-bottom:1px solid var(--line); font-size:12px; display:flex; justify-content:space-between; gap:8px; cursor:pointer; }
+  .region-item:hover { background:#33231b; }
+  .region-item.sel { background:#3d2c1e; }
+  .region-item code { color:var(--muted); font-size:11px; }
+  .region-item .del { color:#e0846b; }
+  textarea { width:100%; height:150px; background:#15100d; color:var(--ink); border:0; border-top:1px solid var(--line); padding:12px 16px; font-family:ui-monospace, monospace; font-size:11.5px; resize:none; }
+  .hint { font-size:11px; color:var(--muted); padding:0 16px 10px; line-height:1.5; }
+  svg .region { fill: rgba(201,162,39,0.20); stroke: var(--gold); stroke-width:2; vector-effect: non-scaling-stroke; }
+  svg .region.sel { fill: rgba(201,162,39,0.38); stroke:#fff; }
+  svg .handle { fill:#fff; stroke:var(--gold); stroke-width:1.5; vector-effect: non-scaling-stroke; cursor:nwse-resize; }
+</style>
+</head>
+<body>
+  <div id="stage-wrap">
+    <div id="stage">
+      <div class="hint" id="drop-hint" style="color:var(--muted);padding:60px;text-align:center;">
+        Load an illustration to begin →
+      </div>
+      <img id="img" alt="" hidden>
+      <svg id="overlay" hidden xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <aside>
+    <h1>Illustration Region Editor</h1>
+    <div class="controls">
+      <div class="row">
+        <input type="file" id="file" accept="image/*">
+      </div>
+      <div class="row">
+        <label>Shape:</label>
+        <span class="seg">
+          <button id="mode-rect" class="active">Rectangle</button>
+          <button id="mode-ellipse">Ellipse</button>
+        </span>
+      </div>
+      <div class="row">
+        <label for="stepId">Step id:</label>
+        <input type="text" id="stepId" value="step-1" placeholder="e.g. keruvim">
+      </div>
+      <div class="row">
+        <label for="dim">Dim:</label>
+        <input type="number" id="dim" value="0.6" min="0.05" max="1" step="0.01">
+        <button id="btn-delete">Delete selected</button>
+      </div>
+    </div>
+    <div id="list"></div>
+    <div class="row" style="padding:10px 16px; gap:8px;">
+      <button id="btn-copy" class="primary">Copy steps JSON</button>
+      <button id="btn-import">Paste JSON…</button>
+    </div>
+    <div class="hint">
+      Draw over each part, one <b>step id</b> per named element. Regions with the
+      same step id group together (e.g. the four rings). Coordinates are % of the
+      image. Image size is emitted for the <code>image</code> block.
+    </div>
+    <textarea id="out" readonly placeholder="Catalog JSON appears here…"></textarea>
+  </aside>
+
+<script>
+(function () {
+  'use strict';
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var img = document.getElementById('img');
+  var overlay = document.getElementById('overlay');
+  var out = document.getElementById('out');
+  var listEl = document.getElementById('list');
+  var stepIdInput = document.getElementById('stepId');
+  var dimInput = document.getElementById('dim');
+  var dropHint = document.getElementById('drop-hint');
+
+  var mode = 'rect';
+  var regions = [];   // {kind, x,y,w,h | cx,cy,rx,ry, stepId}
+  var selected = -1;
+  var natW = 0, natH = 0;
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mode-rect').classList.toggle('active', m === 'rect');
+    document.getElementById('mode-ellipse').classList.toggle('active', m === 'ellipse');
+  }
+  document.getElementById('mode-rect').onclick = function () { setMode('rect'); };
+  document.getElementById('mode-ellipse').onclick = function () { setMode('ellipse'); };
+
+  document.getElementById('file').onchange = function (e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    img.onload = function () {
+      natW = img.naturalWidth; natH = img.naturalHeight;
+      img.hidden = false; overlay.hidden = false; dropHint.hidden = true;
+      overlay.setAttribute('viewBox', '0 0 100 100');
+      overlay.setAttribute('preserveAspectRatio', 'none');
+      sizeOverlay();
+      render();
+    };
+    img.src = URL.createObjectURL(f);
+  };
+
+  function sizeOverlay() {
+    overlay.style.width = img.clientWidth + 'px';
+    overlay.style.height = img.clientHeight + 'px';
+  }
+  window.addEventListener('resize', sizeOverlay);
+
+  // --- pointer → percentage coords ---
+  function pct(e) {
+    var r = overlay.getBoundingClientRect();
+    return {
+      x: Math.min(100, Math.max(0, (e.clientX - r.left) / r.width * 100)),
+      y: Math.min(100, Math.max(0, (e.clientY - r.top) / r.height * 100))
+    };
+  }
+
+  var draft = null, dragStart = null, dragKind = null;
+
+  overlay.addEventListener('pointerdown', function (e) {
+    overlay.setPointerCapture(e.pointerId);
+    var p = pct(e);
+    var hit = e.target.getAttribute && e.target.getAttribute('data-idx');
+    if (hit !== null && hit !== undefined) {
+      selected = parseInt(hit, 10);
+      dragKind = e.target.classList.contains('handle') ? 'resize' : 'move';
+      dragStart = { p: p, region: JSON.parse(JSON.stringify(regions[selected])) };
+      render();
+      return;
+    }
+    // start a new region
+    dragKind = 'draw';
+    dragStart = { p: p };
+    draft = mode === 'rect'
+      ? { kind: 'rect', x: p.x, y: p.y, w: 0, h: 0, stepId: stepIdInput.value.trim() }
+      : { kind: 'ellipse', cx: p.x, cy: p.y, rx: 0, ry: 0, stepId: stepIdInput.value.trim() };
+  });
+
+  overlay.addEventListener('pointermove', function (e) {
+    if (!dragStart) return;
+    var p = pct(e);
+    if (dragKind === 'draw') {
+      if (draft.kind === 'rect') {
+        draft.x = Math.min(p.x, dragStart.p.x); draft.y = Math.min(p.y, dragStart.p.y);
+        draft.w = Math.abs(p.x - dragStart.p.x); draft.h = Math.abs(p.y - dragStart.p.y);
+      } else {
+        draft.cx = (p.x + dragStart.p.x) / 2; draft.cy = (p.y + dragStart.p.y) / 2;
+        draft.rx = Math.abs(p.x - dragStart.p.x) / 2; draft.ry = Math.abs(p.y - dragStart.p.y) / 2;
+      }
+      render(draft);
+    } else if (dragKind === 'move') {
+      var dx = p.x - dragStart.p.x, dy = p.y - dragStart.p.y;
+      var r0 = dragStart.region, r = regions[selected];
+      if (r.kind === 'rect') { r.x = clamp(r0.x + dx, 0, 100 - r.w); r.y = clamp(r0.y + dy, 0, 100 - r.h); }
+      else { r.cx = clamp(r0.cx + dx, r.rx, 100 - r.rx); r.cy = clamp(r0.cy + dy, r.ry, 100 - r.ry); }
+      render();
+    } else if (dragKind === 'resize') {
+      var r = regions[selected];
+      if (r.kind === 'rect') { r.w = clamp(p.x - r.x, 1, 100 - r.x); r.h = clamp(p.y - r.y, 1, 100 - r.y); }
+      else { r.rx = clamp(Math.abs(p.x - r.cx), 1, Math.min(r.cx, 100 - r.cx)); r.ry = clamp(Math.abs(p.y - r.cy), 1, Math.min(r.cy, 100 - r.cy)); }
+      render();
+    }
+  });
+
+  overlay.addEventListener('pointerup', function () {
+    if (dragKind === 'draw' && draft) {
+      var big = draft.kind === 'rect' ? (draft.w > 1 && draft.h > 1) : (draft.rx > 0.5 && draft.ry > 0.5);
+      if (big) { regions.push(round(draft)); selected = regions.length - 1; }
+    }
+    draft = null; dragStart = null; dragKind = null;
+    emit();
+  });
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+  function r1(v) { return Math.round(v * 10) / 10; }
+  function round(r) {
+    if (r.kind === 'rect') { r.x = r1(r.x); r.y = r1(r.y); r.w = r1(r.w); r.h = r1(r.h); }
+    else { r.cx = r1(r.cx); r.cy = r1(r.cy); r.rx = r1(r.rx); r.ry = r1(r.ry); }
+    return r;
+  }
+
+  document.getElementById('btn-delete').onclick = function () {
+    if (selected >= 0) { regions.splice(selected, 1); selected = -1; render(); emit(); }
+  };
+
+  // --- render ---
+  function render(preview) {
+    while (overlay.firstChild) overlay.removeChild(overlay.firstChild);
+    var all = regions.slice();
+    if (preview) all.push(preview);
+    all.forEach(function (r, i) {
+      var shape = shapeEl(r);
+      shape.setAttribute('class', 'region' + (i === selected ? ' sel' : ''));
+      if (i < regions.length) shape.setAttribute('data-idx', i);
+      overlay.appendChild(shape);
+      if (i === selected && i < regions.length) {
+        var h = document.createElementNS(SVGNS, 'circle');
+        var hx = r.kind === 'rect' ? r.x + r.w : r.cx + r.rx;
+        var hy = r.kind === 'rect' ? r.y + r.h : r.cy + r.ry;
+        h.setAttribute('cx', hx); h.setAttribute('cy', hy); h.setAttribute('r', 1.4);
+        h.setAttribute('class', 'handle'); h.setAttribute('data-idx', i);
+        overlay.appendChild(h);
+      }
+    });
+    renderList();
+  }
+  function shapeEl(r) {
+    if (r.kind === 'rect') {
+      var el = document.createElementNS(SVGNS, 'rect');
+      el.setAttribute('x', r.x); el.setAttribute('y', r.y);
+      el.setAttribute('width', r.w); el.setAttribute('height', r.h);
+      return el;
+    }
+    var e2 = document.createElementNS(SVGNS, 'ellipse');
+    e2.setAttribute('cx', r.cx); e2.setAttribute('cy', r.cy);
+    e2.setAttribute('rx', r.rx); e2.setAttribute('ry', r.ry);
+    return e2;
+  }
+  function renderList() {
+    listEl.innerHTML = '';
+    regions.forEach(function (r, i) {
+      var div = document.createElement('div');
+      div.className = 'region-item' + (i === selected ? ' sel' : '');
+      var coords = r.kind === 'rect'
+        ? 'rect ' + r.x + ',' + r.y + ' ' + r.w + '×' + r.h
+        : 'ellipse ' + r.cx + ',' + r.cy + ' r' + r.rx + ',' + r.ry;
+      div.innerHTML = '<span><b>' + escapeHtml(r.stepId || '(no id)') + '</b><br><code>' + coords + '</code></span><span class="del">✕</span>';
+      div.onclick = function (ev) {
+        if (ev.target.classList.contains('del')) { regions.splice(i, 1); selected = -1; }
+        else { selected = i; }
+        render(); emit();
+      };
+      listEl.appendChild(div);
+    });
+  }
+  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
+
+  // --- emit catalog JSON grouped by step id ---
+  function emit() {
+    var byStep = {};
+    var order = [];
+    regions.forEach(function (r) {
+      var id = r.stepId || 'step';
+      if (!byStep[id]) { byStep[id] = []; order.push(id); }
+      var clean = { kind: r.kind };
+      if (r.kind === 'rect') { clean.x = r.x; clean.y = r.y; clean.w = r.w; clean.h = r.h; }
+      else { clean.cx = r.cx; clean.cy = r.cy; clean.rx = r.rx; clean.ry = r.ry; }
+      byStep[id].push(clean);
+    });
+    var steps = order.map(function (id) {
+      return { id: id, dim: parseFloat(dimInput.value) || 0.6, regions: byStep[id] };
+    });
+    var payload = { image: { width: natW, height: natH }, steps: steps };
+    out.value = JSON.stringify(payload, null, 2);
+  }
+
+  document.getElementById('btn-copy').onclick = function () {
+    out.select();
+    try { navigator.clipboard.writeText(out.value); } catch (e) { document.execCommand('copy'); }
+    this.textContent = 'Copied!';
+    var self = this; setTimeout(function () { self.textContent = 'Copy steps JSON'; }, 1200);
+  };
+
+  document.getElementById('btn-import').onclick = function () {
+    var txt = prompt('Paste a steps array or {steps:[...]} to re-edit its regions:');
+    if (!txt) return;
+    try {
+      var data = JSON.parse(txt);
+      var steps = Array.isArray(data) ? data : data.steps;
+      regions = [];
+      steps.forEach(function (s) {
+        (s.regions || []).forEach(function (r) {
+          var reg = Object.assign({}, r, { stepId: s.id });
+          regions.push(reg);
+        });
+      });
+      selected = -1; render(); emit();
+    } catch (e) { alert('Could not parse JSON: ' + e.message); }
+  };
+
+  setMode('rect');
+})();
+</script>
+</body>
+</html>

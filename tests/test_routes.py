@@ -443,3 +443,58 @@ class TestPhrasesRoutes:
     def test_chapter_view_exposes_phrases_toggle(self, client):
         response = client.get('/?book=Genesis&chapter=37')
         assert 'data-context-option="phrases"' in response.get_data(as_text=True)
+
+
+class TestIllustrationPanel:
+    """The visual-guide panel renders only on illustrated chapters (Exodus 25/37)."""
+
+    def test_scene_injected_on_exodus_25(self, client):
+        body = client.get('/?book=Exodus&chapter=25').get_data(as_text=True)
+        assert 'window.ILLUSTRATION_SCENE = {' in body
+        assert '"ark-of-the-covenant"' in body
+        assert 'id="illustration-panel"' in body
+        assert 'js/illustration-panel.js' in body
+
+    def test_scene_null_on_non_illustrated_chapter(self, client):
+        body = client.get('/?book=Genesis&chapter=1').get_data(as_text=True)
+        assert 'window.ILLUSTRATION_SCENE = null' in body
+        assert 'id="illustration-panel"' not in body
+        assert 'js/illustration-panel.js' not in body
+
+    def test_toggle_checkbox_only_when_scene_exists(self, client):
+        assert 'data-context-option="illustrations"' in \
+            client.get('/?book=Exodus&chapter=25').get_data(as_text=True)
+        assert 'data-context-option="illustrations"' not in \
+            client.get('/?book=Genesis&chapter=1').get_data(as_text=True)
+        assert 'data-context-option="illustrations"' not in \
+            client.get('/').get_data(as_text=True)
+
+    def test_body_class_gates_layout(self, client):
+        assert 'class="has-illustration"' in \
+            client.get('/?book=Exodus&chapter=25').get_data(as_text=True)
+        assert 'class="has-illustration"' not in \
+            client.get('/?book=Genesis&chapter=1').get_data(as_text=True)
+
+    def test_panel_has_noscript_content(self, client):
+        """Image alt text and step glosses render server-side (readable without JS)."""
+        body = client.get('/?book=Exodus&chapter=25').get_data(as_text=True)
+        assert 'Ark of the Covenant' in body        # image alt
+        assert 'mercy seat' in body                  # a step gloss (kapporet)
+        assert 'data-start-verse="13" data-end-verse="15"' in body  # baddim range
+
+    def test_construction_chapter_shares_scene(self, client):
+        """Exodus 37 reuses the same scene with 37: refs and without Exodus-25-only steps."""
+        body = client.get('/?book=Exodus&chapter=37').get_data(as_text=True)
+        assert '"ark-of-the-covenant"' in body
+        assert 'id="illustration-panel"' in body
+        assert '37:1' in body                        # aron localized to Exodus 37
+        # 'edut' (testimony) only appears in Exodus 25, so its ref 25:16 is absent.
+        assert 'data-step-id="edut"' not in body
+
+    def test_navigate_supplies_scene(self, client):
+        """POST /navigate flows through the shared context helper and renders the panel."""
+        response = client.post('/navigate', data={
+            'book': 'Exodus', 'chapter': '24', 'direction': 'next'})
+        body = response.get_data(as_text=True)
+        assert 'id="illustration-panel"' in body        # navigated into Exodus 25
+        assert '"ark-of-the-covenant"' in body

@@ -349,6 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.toggle('hide-literary-units', !contextOptions.units);
         document.body.classList.toggle('hide-names', !contextOptions.names);
         document.body.classList.toggle('hide-phrases', !contextOptions.phrases);
+        document.body.classList.toggle('hide-illustrations', !contextOptions.illustrations);
     }
 
     function syncMenuState() {
