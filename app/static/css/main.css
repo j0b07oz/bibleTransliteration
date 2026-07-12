@@ -2536,3 +2536,321 @@ mark.phrase-hit {
     border-left: 3px solid #d9c1ad;
     border-radius: 4px;
 }
+
+/* ============================================================
+   Visual guide illustration panel (scrollytelling)
+   A sticky annotated illustration whose spotlight follows the
+   reader down complicated passages (e.g. the Ark, Exodus 25).
+   All layout rules are triple-gated on `body.has-illustration`
+   (only emitted on illustrated chapters), `:not(.hide-illustrations)`
+   (the Literary Context toggle), and a viewport media query, so
+   every other page keeps the plain 800px column untouched.
+   ============================================================ */
+
+/* Literary Context toggle-off, matching the .hide-<option> pattern. */
+.hide-illustrations .illustration-panel {
+    display: none !important;
+}
+
+/* --- Base / no-JS / mobile: an inline annotated card above the text --- */
+.illustration-panel {
+    margin: 20px 0 8px;
+    border: 1px solid #e5d5c3;
+    border-radius: 10px;
+    background: #fbf6ef;
+    overflow: hidden;
+}
+
+.illustration-figure {
+    margin: 0;
+}
+
+.illustration-stage {
+    position: relative;      /* anchors the absolutely-positioned SVG overlay */
+    background: #1c1613;
+    line-height: 0;
+}
+
+.illustration-stage img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* Injected by illustration-panel.js; the dark mask that dims everything
+   outside the active region. pointer-events:none so it never blocks clicks. */
+.illustration-spotlight {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.illustration-dim {
+    transition: opacity 260ms ease;
+}
+
+.illustration-caption {
+    padding: 14px 16px;
+    border-top: 1px solid #ecdecc;
+}
+
+/* The "big display" for the active step: reference, Hebrew word, gloss, note.
+   JS rewrites its contents on each step; without JS it shows the scene title. */
+.illustration-active-step__title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #4b3a34;
+}
+
+.illustration-active-step__ref {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #a9791f;
+    margin-bottom: 6px;
+}
+
+.illustration-active-step__word {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.illustration-active-step__hebrew {
+    font-size: 26px;
+    line-height: 1.1;
+    color: #241715;
+}
+
+.illustration-active-step__translit {
+    font-size: 14px;
+    font-style: italic;
+    color: #7d6a5f;
+}
+
+.illustration-active-step__gloss {
+    font-size: 14px;
+    color: #4b3a34;
+}
+
+.illustration-active-step__note {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #6b5a50;
+}
+
+.illustration-credit {
+    display: block;
+    margin-top: 10px;
+    font-size: 11px;
+    color: #a99;
+}
+
+/* Manual step controls (revealed by JS). */
+.illustration-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 16px;
+    border-top: 1px solid #ecdecc;
+}
+
+.illustration-nav.button {
+    line-height: 1;
+    min-width: 44px;
+    min-height: 34px;
+}
+
+.illustration-nav[disabled] {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.illustration-step-count {
+    font-size: 12px;
+    color: #7d6a5f;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The full annotated index of steps. Without JS this is the whole readable
+   guide; with JS it becomes a clickable, scroll-synced list. */
+.illustration-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;   /* so each step's offsetTop is list-relative (scroll sync) */
+}
+
+.illustration-step + .illustration-step {
+    border-top: 1px solid #efe3d5;
+}
+
+.illustration-step__button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-left: 3px solid transparent;
+    padding: 12px 16px;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.illustration-step__button:hover {
+    background: #f4ebe0;
+}
+
+.illustration-step.is-active .illustration-step__button {
+    background: #f3e8d8;
+    border-left-color: #a9791f;
+}
+
+.illustration-step__ref {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #a9791f;
+    margin-bottom: 4px;
+}
+
+.illustration-step__word {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.illustration-step__hebrew {
+    font-size: 20px;
+    line-height: 1.1;
+    color: #241715;
+}
+
+.illustration-step__translit {
+    font-size: 13px;
+    font-style: italic;
+    color: #7d6a5f;
+}
+
+.illustration-step__gloss {
+    display: block;
+    margin-top: 2px;
+    font-size: 13.5px;
+    color: #4b3a34;
+}
+
+.illustration-step__note {
+    display: block;
+    margin-top: 6px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #6b5a50;
+}
+
+/* When JS enhances the panel it shows the active step in the caption, so the
+   caption's static title is redundant — hide it. */
+.illustration-panel.is-enhanced .illustration-active-step__title {
+    display: none;
+}
+
+/* --- Below the desktop breakpoint: a compact sticky strip (JS-enhanced).
+   The un-enhanced (no-JS) panel stays the inline card above. --- */
+@media (max-width: 1099.98px) {
+    body.has-illustration:not(.hide-illustrations) .illustration-panel.is-enhanced {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        margin: 0 0 16px;
+        border-radius: 0 0 10px 10px;
+        border-top: 0;
+        box-shadow: 0 4px 14px rgba(28, 22, 19, 0.18);
+    }
+
+    /* Strip mode shows only the image + active caption; the full list and the
+       manual controls collapse to keep the strip short. */
+    .illustration-panel.is-enhanced .illustration-steps,
+    .illustration-panel.is-enhanced .illustration-controls {
+        display: none;
+    }
+
+    /* Shrink the whole stage (image + SVG together) so its height ~= 30vh,
+       using the image's own aspect ratio (--ill-w / --ill-h set on the stage).
+       Capping WIDTH — not height — keeps the img at width:100% of the stage so
+       the absolutely-positioned SVG overlay stays pixel-aligned with it. */
+    .illustration-panel.is-enhanced .illustration-stage {
+        max-width: calc(30vh * var(--ill-w) / var(--ill-h));
+        margin: 0 auto;
+    }
+
+    .illustration-panel.is-enhanced .illustration-caption {
+        padding: 10px 14px;
+    }
+}
+
+/* --- Desktop: two-column grid with a sticky illustration aside.
+   Only illustrated chapters with the toggle on widen the body. --- */
+@media (min-width: 1100px) {
+    body.has-illustration:not(.hide-illustrations) {
+        max-width: 1240px;
+    }
+
+    body.has-illustration:not(.hide-illustrations) .chapter-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 800px) minmax(320px, 400px);
+        gap: 32px;
+        align-items: start;
+    }
+
+    body.has-illustration:not(.hide-illustrations) .chapter-layout > .chapter-main {
+        grid-column: 1;
+        grid-row: 1;
+        min-width: 0;   /* let the text column shrink instead of overflowing */
+    }
+
+    /* The aside is first in DOM (so it sits above the text on small screens);
+       on desktop the grid explicitly places it in the right column. */
+    body.has-illustration:not(.hide-illustrations) .chapter-layout > .illustration-panel {
+        grid-column: 2;
+        grid-row: 1;
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;   /* image+caption pinned, steps list scrolls */
+        margin: 0;
+    }
+
+    /* Keep the image, caption, and controls fixed; only the step index scrolls,
+       so the illustration itself never scrolls out of view. */
+    body.has-illustration:not(.hide-illustrations) .illustration-figure,
+    body.has-illustration:not(.hide-illustrations) .illustration-controls {
+        flex: 0 0 auto;
+    }
+
+    body.has-illustration:not(.hide-illustrations) .illustration-steps {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+    }
+}
+
+/* First reduced-motion guard in this codebase: no crossfade, no smooth
+   scrolling driven by the panel (JS also swaps scroll behavior to 'auto'). */
+@media (prefers-reduced-motion: reduce) {
+    .illustration-dim,
+    .illustration-step__button {
+        transition: none;
+    }
+}

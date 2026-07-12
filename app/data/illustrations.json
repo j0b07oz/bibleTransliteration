@@ -1,0 +1,438 @@
+{
+  "version": 1,
+  "scenes": [
+    {
+      "id": "ark-of-the-covenant",
+      "title": "The Ark of the Covenant",
+      "image": {
+        "alt": "Illustration of the Ark of the Covenant: a rectangular acacia-wood chest overlaid with gold, a crown molding around its upper rim, four gold rings at its feet holding two carrying poles, and a solid-gold cover bearing two facing cherubim whose wings spread over it.",
+        "credit": "AI-generated illustration",
+        "width": 1200,
+        "height": 900,
+        "fallback": "img/illustrations/ark-of-the-covenant/ark-1200.jpg",
+        "sources": [
+          {
+            "type": "image/webp",
+            "srcset": [
+              {
+                "path": "img/illustrations/ark-of-the-covenant/ark-1200.webp",
+                "width": 1200
+              },
+              {
+                "path": "img/illustrations/ark-of-the-covenant/ark-800.webp",
+                "width": 800
+              }
+            ]
+          }
+        ]
+      },
+      "steps": [
+        {
+          "id": "aron",
+          "hebrew": "אֲרוֹן",
+          "translit": "aron",
+          "gloss": "chest, ark",
+          "note": "The whole design begins as a plain box of acacia (shittim) wood — roughly 45 inches long and 27 inches wide and high.",
+          "dim": 0.62,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 10
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 10
+              }
+            },
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 37,
+                "verse": 1
+              },
+              "end": {
+                "chapter": 37,
+                "verse": 1
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "rect",
+              "x": 20,
+              "y": 42,
+              "w": 62,
+              "h": 46,
+              "rx": 3
+            }
+          ]
+        },
+        {
+          "id": "zer",
+          "hebrew": "זֵר זָהָב",
+          "translit": "zer zahav",
+          "gloss": "crown of gold",
+          "note": "Gold covers the wood inside and out, and an ornamental crown molding — the zer — runs around the upper rim.",
+          "dim": 0.66,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 11
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 11
+              }
+            },
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 37,
+                "verse": 2
+              },
+              "end": {
+                "chapter": 37,
+                "verse": 2
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "rect",
+              "x": 21.5,
+              "y": 33,
+              "w": 61,
+              "h": 11.5,
+              "rx": 3
+            }
+          ]
+        },
+        {
+          "id": "tabbaot",
+          "hebrew": "טַבָּעֹת",
+          "translit": "tabbaot",
+          "gloss": "rings",
+          "note": "Four cast rings sit at the four feet — the Hebrew word can mean feet or corners — two on each side, fitted to receive the carrying poles.",
+          "dim": 0.72,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 12
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 12
+              }
+            },
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 37,
+                "verse": 3
+              },
+              "end": {
+                "chapter": 37,
+                "verse": 3
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "ellipse",
+              "cx": 43.5,
+              "cy": 72,
+              "rx": 5.5,
+              "ry": 5.5
+            },
+            {
+              "kind": "ellipse",
+              "cx": 77,
+              "cy": 64.5,
+              "rx": 5.5,
+              "ry": 5.5
+            },
+            {
+              "kind": "ellipse",
+              "cx": 28.5,
+              "cy": 84.5,
+              "rx": 4.5,
+              "ry": 5.5
+            },
+            {
+              "kind": "ellipse",
+              "cx": 43.5,
+              "cy": 87.5,
+              "rx": 4.5,
+              "ry": 5.5
+            },
+            {
+              "kind": "ellipse",
+              "cx": 74.5,
+              "cy": 82,
+              "rx": 4.5,
+              "ry": 5.5
+            }
+          ]
+        },
+        {
+          "id": "baddim",
+          "hebrew": "בַּדִּים",
+          "translit": "baddim",
+          "gloss": "staves, poles",
+          "note": "The same recipe — acacia sheathed in gold — makes the poles. They are never removed: the Ark stays permanently ready to be carried, and is never handled directly.",
+          "dim": 0.68,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 13
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 15
+              }
+            },
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 37,
+                "verse": 4
+              },
+              "end": {
+                "chapter": 37,
+                "verse": 5
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "rect",
+              "x": 0,
+              "y": 61,
+              "w": 28,
+              "h": 18,
+              "rx": 4
+            },
+            {
+              "kind": "rect",
+              "x": 26,
+              "y": 61.5,
+              "w": 49,
+              "h": 14,
+              "rx": 4
+            },
+            {
+              "kind": "rect",
+              "x": 73,
+              "y": 55.5,
+              "w": 27,
+              "h": 15,
+              "rx": 4
+            }
+          ]
+        },
+        {
+          "id": "edut",
+          "hebrew": "עֵדֻת",
+          "translit": "edut",
+          "gloss": "testimony",
+          "note": "The chest exists to hold one thing: the testimony — the tablets of the covenant — placed within.",
+          "dim": 0.7,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 16
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 16
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "ellipse",
+              "cx": 59,
+              "cy": 64,
+              "rx": 18,
+              "ry": 15
+            }
+          ]
+        },
+        {
+          "id": "kapporet",
+          "hebrew": "כַּפֹּרֶת",
+          "translit": "kapporet",
+          "gloss": "mercy seat, cover",
+          "note": "The lid is different: no wood core at all, but solid pure gold — the kapporet — matching the footprint of the chest exactly.",
+          "dim": 0.68,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 17
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 17
+              }
+            },
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 37,
+                "verse": 6
+              },
+              "end": {
+                "chapter": 37,
+                "verse": 6
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "rect",
+              "x": 20.5,
+              "y": 33.5,
+              "w": 62.5,
+              "h": 16,
+              "rx": 3
+            }
+          ]
+        },
+        {
+          "id": "keruvim",
+          "hebrew": "כְּרֻבִים",
+          "translit": "keruvim",
+          "gloss": "cherubim",
+          "note": "",
+          "dim": 0.7,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 18
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 19
+              }
+            },
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 37,
+                "verse": 7
+              },
+              "end": {
+                "chapter": 37,
+                "verse": 8
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "rect",
+              "x": 29.5,
+              "y": 6.5,
+              "w": 24,
+              "h": 32,
+              "rx": 6
+            },
+            {
+              "kind": "rect",
+              "x": 53,
+              "y": 7.5,
+              "w": 21,
+              "h": 31,
+              "rx": 6
+            }
+          ]
+        },
+        {
+          "id": "wings",
+          "hebrew": "פֹּרְשֵׂי כְנָפַיִם",
+          "translit": "porsei khenafayim",
+          "gloss": "spreading wings",
+          "note": "Their wings stretch upward to overshadow the cover, and their faces turn toward each other, gazing down toward the mercy seat between them.",
+          "dim": 0.66,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 20
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 20
+              }
+            },
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 37,
+                "verse": 9
+              },
+              "end": {
+                "chapter": 37,
+                "verse": 9
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "rect",
+              "x": 28,
+              "y": 5.5,
+              "w": 47,
+              "h": 34.5,
+              "rx": 8
+            }
+          ]
+        },
+        {
+          "id": "meeting",
+          "hebrew": "וְנוֹעַדְתִּי לְךָ",
+          "translit": "ve-noadti lekha",
+          "gloss": "I will meet with thee",
+          "note": "The instructions end not on an object but on an empty space: above the cover, between the cherubim — the place where God says he will meet and speak with Moses.",
+          "dim": 0.74,
+          "passages": [
+            {
+              "book": "Exodus",
+              "start": {
+                "chapter": 25,
+                "verse": 21
+              },
+              "end": {
+                "chapter": 25,
+                "verse": 22
+              }
+            }
+          ],
+          "regions": [
+            {
+              "kind": "ellipse",
+              "cx": 52,
+              "cy": 21.5,
+              "rx": 13,
+              "ry": 15
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

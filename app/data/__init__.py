@@ -13,6 +13,7 @@ directory) rather than under ``app/static/`` so they are never served to the
 browser — the frontend only ever talks to ``/edit_dict`` and ``/api/crossref``.
 """
 import json
+import logging
 import os
 import re
 import unicodedata
@@ -388,6 +389,10 @@ class BibleData:
     phrase_index: dict
     # (book_name, chapter) -> [phrase keys], best echoes first, for the panel
     phrases_by_chapter: dict
+    # (book_name, chapter) -> illustration scene payload for the visual-guide
+    # panel, with steps filtered/clamped to that chapter (see
+    # _build_illustration_index); {} when no catalog is present
+    illustrations_by_chapter: dict
 
 
 def _build_strongs_index(strongs_data):
@@ -505,6 +510,282 @@ def _build_phrase_index(phrase_data, book_order):
     return phrases, by_chapter
 
 
+# Default dim (dark-overlay opacity outside the spotlight) when a step omits it.
+DEFAULT_ILLUSTRATION_DIM = 0.55
+
+# Required numeric keys per region kind. Coordinates are percentages (0-100) of
+# the image's own pixel space, so a region survives the image being reused at
+# any display size.
+_ILLUSTRATION_REGION_KEYS = {
+    'rect': ('x', 'y', 'w', 'h'),
+    'ellipse': ('cx', 'cy', 'rx', 'ry'),
+}
+
+
+def _is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _validate_illustration_region(region):
+    """Return (ok, reason) for one region dict (percent coords, 0-100)."""
+    if not isinstance(region, dict):
+        return False, 'region is not an object'
+    kind = region.get('kind')
+    required = _ILLUSTRATION_REGION_KEYS.get(kind)
+    if not required:
+        return False, f'unknown region kind {kind!r}'
+    for key in required:
+        if not _is_number(region.get(key)):
+            return False, f'{kind} region missing numeric {key!r}'
+    if kind == 'rect':
+        x, y, w, h = region['x'], region['y'], region['w'], region['h']
+        if w <= 0 or h <= 0:
+            return False, 'rect has non-positive size'
+        if x < 0 or y < 0 or x + w > 100 or y + h > 100:
+            return False, 'rect out of 0-100 bounds'
+    else:  # ellipse
+        cx, cy, rx, ry = region['cx'], region['cy'], region['rx'], region['ry']
+        if rx <= 0 or ry <= 0:
+            return False, 'ellipse has non-positive radius'
+        if cx - rx < 0 or cy - ry < 0 or cx + rx > 100 or cy + ry > 100:
+            return False, 'ellipse out of 0-100 bounds'
+    return True, None
+
+
+def _validate_illustration_image(image):
+    """Return (ok, reason) for a scene's image block (structure only).
+
+    File existence is intentionally NOT checked here — the lenient loader has no
+    handle on the static directory. tests/test_illustration_catalog.py performs
+    the on-disk check against the shipped catalog so CI fails on a missing file.
+    """
+    if not isinstance(image, dict):
+        return False, 'missing image object'
+    if not isinstance(image.get('alt'), str) or not image['alt'].strip():
+        return False, 'image missing alt text'
+    if not isinstance(image.get('fallback'), str) or not image['fallback']:
+        return False, 'image missing fallback path'
+    for key in ('width', 'height'):
+        value = image.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            return False, f'image missing positive {key}'
+    sources = image.get('sources')
+    if not isinstance(sources, list) or not sources:
+        return False, 'image missing sources'
+    for source in sources:
+        if not isinstance(source, dict) or not source.get('type'):
+            return False, 'image source missing type'
+        srcset = source.get('srcset')
+        if not isinstance(srcset, list) or not srcset:
+            return False, 'image source missing srcset'
+        for cand in srcset:
+            if (not isinstance(cand, dict) or not cand.get('path')
+                    or not isinstance(cand.get('width'), int) or isinstance(cand.get('width'), bool)):
+                return False, 'image srcset candidate missing path/width'
+    return True, None
+
+
+def _clamp_illustration_verse(verse, max_verse):
+    if max_verse <= 0:
+        return int(verse)
+    return max(1, min(int(verse), max_verse))
+
+
+def _resolve_illustration_passage(passage, book_name_lookup, chapter_verse_counts):
+    """Expand one passage into {(book, chapter): (start_verse, end_verse)}.
+
+    Multi-chapter passages are split per chapter and clamped to each chapter's
+    verse count, mirroring _unit_bounds_for_chapter in routes.py. Returns
+    (ok, reason, mapping).
+    """
+    if not isinstance(passage, dict):
+        return False, 'passage is not an object', {}
+    raw_book = passage.get('book')
+    if not isinstance(raw_book, str) or not raw_book:
+        return False, 'passage missing book', {}
+    book = book_name_lookup.get(raw_book.lower())
+    if not book:
+        return False, f'unknown book {raw_book!r}', {}
+
+    start = passage.get('start') or {}
+    end = passage.get('end') or start
+    try:
+        start_ch = int(start['chapter'])
+        start_v = int(start['verse'])
+        end_ch = int(end.get('chapter', start_ch))
+        end_v = int(end.get('verse', start_v))
+    except (KeyError, TypeError, ValueError):
+        return False, 'passage missing/invalid chapter or verse', {}
+
+    if start_ch > end_ch or (start_ch == end_ch and start_v > end_v):
+        return False, 'passage start after end', {}
+
+    chapter_counts = chapter_verse_counts.get(book, {})
+    resolved = {}
+    for chapter in range(start_ch, end_ch + 1):
+        max_verse = chapter_counts.get(chapter, 0)
+        if max_verse <= 0:
+            return False, f'{book} has no chapter {chapter}', {}
+        sv = start_v if chapter == start_ch else 1
+        ev = end_v if chapter == end_ch else max_verse
+        sv = _clamp_illustration_verse(sv, max_verse)
+        ev = max(sv, _clamp_illustration_verse(ev, max_verse))
+        resolved[(book, chapter)] = (sv, ev)
+    return True, None, resolved
+
+
+def _prepare_illustration_step(step, book_name_lookup, chapter_verse_counts):
+    """Validate a step; return (ok, reason, {(book, chapter): (start_v, end_v)})."""
+    if not isinstance(step, dict):
+        return False, 'step is not an object', {}
+    if not isinstance(step.get('id'), str) or not step['id']:
+        return False, 'missing string id', {}
+
+    regions = step.get('regions')
+    if not isinstance(regions, list) or not regions:
+        return False, 'missing regions', {}
+    for region in regions:
+        ok, reason = _validate_illustration_region(region)
+        if not ok:
+            return False, reason, {}
+
+    dim = step.get('dim', DEFAULT_ILLUSTRATION_DIM)
+    if not _is_number(dim) or not (0 < dim <= 1):
+        return False, f'dim {dim!r} out of range (0, 1]', {}
+
+    passages = step.get('passages')
+    if not isinstance(passages, list) or not passages:
+        return False, 'missing passages', {}
+
+    ranges = {}
+    for passage in passages:
+        ok, reason, resolved = _resolve_illustration_passage(
+            passage, book_name_lookup, chapter_verse_counts)
+        if not ok:
+            return False, reason, {}
+        for key, (sv, ev) in resolved.items():
+            if key in ranges:
+                prev_sv, prev_ev = ranges[key]
+                ranges[key] = (min(prev_sv, sv), max(prev_ev, ev))
+            else:
+                ranges[key] = (sv, ev)
+    return True, None, ranges
+
+
+def _render_illustration_step(step, chapter, start_verse, end_verse):
+    """Reduce a raw step to the render-ready payload for a single chapter."""
+    if step.get('label'):
+        ref = step['label']
+    elif start_verse == end_verse:
+        ref = f'{chapter}:{start_verse}'
+    else:
+        ref = f'{chapter}:{start_verse}–{end_verse}'  # en dash
+    return {
+        'id': step['id'],
+        'ref': ref,
+        'hebrew': step.get('hebrew', ''),
+        'translit': step.get('translit', ''),
+        'gloss': step.get('gloss', ''),
+        'note': step.get('note', ''),
+        'regions': step['regions'],
+        'dim': step.get('dim', DEFAULT_ILLUSTRATION_DIM),
+        'start_verse': start_verse,
+        'end_verse': end_verse,
+    }
+
+
+def _prepare_illustration_scene(scene, book_name_lookup, chapter_verse_counts):
+    """Validate a raw scene; return (ok, reason, {(book, chapter): payload}).
+
+    The scene is accepted or rejected as a whole so a half-valid scene never
+    renders. Each payload is {id, title, image, steps} where steps are only the
+    steps that touch that chapter, sorted by start verse.
+    """
+    if not isinstance(scene, dict):
+        return False, 'scene is not an object', {}
+    scene_id = scene.get('id')
+    if not isinstance(scene_id, str) or not scene_id:
+        return False, 'missing string id', {}
+
+    image = scene.get('image')
+    ok, reason = _validate_illustration_image(image)
+    if not ok:
+        return False, reason, {}
+
+    steps = scene.get('steps')
+    if not isinstance(steps, list) or not steps:
+        return False, 'missing steps', {}
+
+    prepared_steps = []
+    touched = set()
+    for step in steps:
+        ok, reason, ranges = _prepare_illustration_step(
+            step, book_name_lookup, chapter_verse_counts)
+        if not ok:
+            sid = step.get('id') if isinstance(step, dict) else None
+            return False, f'step {sid!r}: {reason}', {}
+        prepared_steps.append((step, ranges))
+        touched.update(ranges.keys())
+
+    if not touched:
+        return False, 'no resolvable passages', {}
+
+    title = scene.get('title') or scene_id
+    payloads = {}
+    for (book, chapter) in touched:
+        chapter_steps = []
+        for step, ranges in prepared_steps:
+            if (book, chapter) not in ranges:
+                continue
+            sv, ev = ranges[(book, chapter)]
+            chapter_steps.append(_render_illustration_step(step, chapter, sv, ev))
+        chapter_steps.sort(key=lambda s: (s['start_verse'], s['end_verse']))
+        payloads[(book, chapter)] = {
+            'id': scene_id,
+            'title': title,
+            'image': image,
+            'steps': chapter_steps,
+        }
+    return True, None, payloads
+
+
+def _build_illustration_index(illustration_data, book_name_lookup, chapter_verse_counts):
+    """(book_name, chapter) -> chapter-localized illustration scene payload.
+
+    Lenient by design: a structurally invalid scene is logged and skipped so a
+    bad catalog entry can never take down startup (matching the optional-file
+    convention used elsewhere in this module). Strict, build-failing validation
+    of the shipped catalog lives in tests/test_illustration_catalog.py.
+    """
+    log = logging.getLogger(__name__)
+    if not illustration_data:
+        return {}
+
+    scenes = illustration_data.get('scenes', []) if isinstance(illustration_data, dict) else None
+    if not isinstance(scenes, list):
+        log.warning('Illustration catalog has no scenes list; ignoring')
+        return {}
+
+    index = {}
+    claimed = {}  # (book, chapter) -> scene_id, for collision reporting
+    for scene in scenes:
+        scene_id = scene.get('id') if isinstance(scene, dict) else None
+        ok, reason, payloads = _prepare_illustration_scene(
+            scene, book_name_lookup, chapter_verse_counts)
+        if not ok:
+            log.warning('Skipping illustration scene %r: %s', scene_id, reason)
+            continue
+        for key, payload in payloads.items():
+            if key in claimed:
+                log.warning(
+                    'Illustration scene %r skips %s %s: already claimed by %r',
+                    scene_id, key[0], key[1], claimed[key])
+                continue
+            index[key] = payload
+            claimed[key] = scene_id
+    return index
+
+
 def build_bible_data(
     strongs_data,
     kjv_data,
@@ -513,6 +794,7 @@ def build_bible_data(
     hebrew_to_greek=None,
     greek_to_hebrew=None,
     phrase_data=None,
+    illustration_data=None,
 ) -> BibleData:
     """Assemble a BibleData from already-parsed structures.
 
@@ -523,6 +805,8 @@ def build_bible_data(
     )
     strongs_by_number = _build_strongs_index(strongs_data)
     phrase_index, phrases_by_chapter = _build_phrase_index(phrase_data, book_order)
+    illustrations_by_chapter = _build_illustration_index(
+        illustration_data, book_name_lookup, chapter_verse_counts)
     return BibleData(
         strongs_by_number=strongs_by_number,
         verses_by_book=verses_by_book,
@@ -539,6 +823,7 @@ def build_bible_data(
         greek_to_hebrew=greek_to_hebrew or {},
         phrase_index=phrase_index,
         phrases_by_chapter=phrases_by_chapter,
+        illustrations_by_chapter=illustrations_by_chapter,
     )
 
 
@@ -592,6 +877,16 @@ def load_bible_data(data_dir=DATA_DIR, outlines_path=None, logger=None) -> Bible
     elif logger:
         logger.warning(f"Phrase index not found at {phrase_path}")
 
+    illustration_data = None
+    illustrations_path = os.path.join(data_dir, 'illustrations.json')
+    if os.path.exists(illustrations_path):
+        illustration_data = _load_json(illustrations_path)
+        if logger:
+            scene_count = len(illustration_data.get('scenes', [])) if isinstance(illustration_data, dict) else 0
+            logger.info(f"Loaded {scene_count} illustration scene(s)")
+    elif logger:
+        logger.warning(f"Illustration catalog not found at {illustrations_path}")
+
     return build_bible_data(
         strongs_data,
         kjv_data,
@@ -600,4 +895,5 @@ def load_bible_data(data_dir=DATA_DIR, outlines_path=None, logger=None) -> Bible
         hebrew_to_greek=hebrew_to_greek,
         greek_to_hebrew=greek_to_hebrew,
         phrase_data=phrase_data,
+        illustration_data=illustration_data,
     )

@@ -284,3 +284,131 @@ class TestPhraseIndexLoad:
         bd = build_bible_data([], {'verses': []})
         assert bd.phrase_index == {}
         assert bd.phrases_by_chapter == {}
+
+
+class TestIllustrationIndex:
+    """_build_illustration_index maps (book, chapter) -> chapter-localized scene."""
+
+    def _kjv(self):
+        # Two chapters with known verse counts so range clamping is testable:
+        # Genesis 1 has 5 verses, Genesis 2 has 3 verses.
+        verses = []
+        for v in range(1, 6):
+            verses.append({'book': 1, 'book_name': 'Genesis', 'chapter': 1,
+                           'verse': v, 'text': f'Verse {v}.'})
+        for v in range(1, 4):
+            verses.append({'book': 1, 'book_name': 'Genesis', 'chapter': 2,
+                           'verse': v, 'text': f'Verse {v}.'})
+        return {'verses': verses}
+
+    def _image(self):
+        return {
+            'alt': 'A test illustration.',
+            'width': 1200, 'height': 900,
+            'fallback': 'img/x/x.jpg',
+            'sources': [{'type': 'image/webp',
+                         'srcset': [{'path': 'img/x/x.webp', 'width': 1200}]}],
+        }
+
+    def _bible(self, scenes):
+        from app.data import build_bible_data
+        return build_bible_data([], self._kjv(),
+                                illustration_data={'version': 1, 'scenes': scenes})
+
+    def _scene(self, steps, scene_id='scene-a', title='Scene A'):
+        return {'id': scene_id, 'title': title, 'image': self._image(), 'steps': steps}
+
+    def test_scene_indexed_for_every_touched_chapter(self):
+        step = {'id': 's1', 'regions': [{'kind': 'rect', 'x': 10, 'y': 10, 'w': 20, 'h': 20}],
+                'passages': [{'book': 'Genesis', 'start': {'chapter': 1, 'verse': 1},
+                              'end': {'chapter': 2, 'verse': 2}}]}
+        bd = self._bible([self._scene([step])])
+        assert ('Genesis', 1) in bd.illustrations_by_chapter
+        assert ('Genesis', 2) in bd.illustrations_by_chapter
+
+    def test_steps_filtered_to_chapter(self):
+        ch1_only = {'id': 'ch1', 'regions': [{'kind': 'ellipse', 'cx': 50, 'cy': 50, 'rx': 5, 'ry': 5}],
+                    'passages': [{'book': 'Genesis', 'start': {'chapter': 1, 'verse': 1},
+                                  'end': {'chapter': 1, 'verse': 2}}]}
+        ch2_only = {'id': 'ch2', 'regions': [{'kind': 'ellipse', 'cx': 40, 'cy': 40, 'rx': 5, 'ry': 5}],
+                    'passages': [{'book': 'Genesis', 'start': {'chapter': 2, 'verse': 1},
+                                  'end': {'chapter': 2, 'verse': 1}}]}
+        bd = self._bible([self._scene([ch1_only, ch2_only])])
+        ch1_ids = [s['id'] for s in bd.illustrations_by_chapter[('Genesis', 1)]['steps']]
+        ch2_ids = [s['id'] for s in bd.illustrations_by_chapter[('Genesis', 2)]['steps']]
+        assert ch1_ids == ['ch1']
+        assert ch2_ids == ['ch2']
+
+    def test_multi_passage_step_localized_per_chapter(self):
+        step = {'id': 'shared', 'label': None,
+                'regions': [{'kind': 'rect', 'x': 0, 'y': 0, 'w': 10, 'h': 10}],
+                'passages': [
+                    {'book': 'Genesis', 'start': {'chapter': 1, 'verse': 3}, 'end': {'chapter': 1, 'verse': 4}},
+                    {'book': 'Genesis', 'start': {'chapter': 2, 'verse': 1}, 'end': {'chapter': 2, 'verse': 1}},
+                ]}
+        bd = self._bible([self._scene([step])])
+        s1 = bd.illustrations_by_chapter[('Genesis', 1)]['steps'][0]
+        s2 = bd.illustrations_by_chapter[('Genesis', 2)]['steps'][0]
+        assert (s1['start_verse'], s1['end_verse']) == (3, 4)
+        assert s1['ref'] == '1:3–4'   # en dash for a range
+        assert (s2['start_verse'], s2['end_verse']) == (1, 1)
+        assert s2['ref'] == '2:1'          # single verse, no dash
+
+    def test_verse_bounds_clamped_to_chapter(self):
+        # End verse 99 exceeds Genesis 1's 5 verses -> clamps to 5.
+        step = {'id': 's', 'regions': [{'kind': 'rect', 'x': 0, 'y': 0, 'w': 10, 'h': 10}],
+                'passages': [{'book': 'Genesis', 'start': {'chapter': 1, 'verse': 1},
+                              'end': {'chapter': 1, 'verse': 99}}]}
+        bd = self._bible([self._scene([step])])
+        s = bd.illustrations_by_chapter[('Genesis', 1)]['steps'][0]
+        assert s['end_verse'] == 5
+
+    def test_book_name_normalized(self):
+        step = {'id': 's', 'regions': [{'kind': 'rect', 'x': 0, 'y': 0, 'w': 10, 'h': 10}],
+                'passages': [{'book': 'genesis', 'start': {'chapter': 1, 'verse': 1},
+                              'end': {'chapter': 1, 'verse': 1}}]}
+        bd = self._bible([self._scene([step])])
+        assert ('Genesis', 1) in bd.illustrations_by_chapter
+
+    def test_steps_sorted_by_start_verse(self):
+        late = {'id': 'late', 'regions': [{'kind': 'rect', 'x': 0, 'y': 0, 'w': 5, 'h': 5}],
+                'passages': [{'book': 'Genesis', 'start': {'chapter': 1, 'verse': 4}, 'end': {'chapter': 1, 'verse': 4}}]}
+        early = {'id': 'early', 'regions': [{'kind': 'rect', 'x': 0, 'y': 0, 'w': 5, 'h': 5}],
+                 'passages': [{'book': 'Genesis', 'start': {'chapter': 1, 'verse': 1}, 'end': {'chapter': 1, 'verse': 1}}]}
+        bd = self._bible([self._scene([late, early])])
+        ids = [s['id'] for s in bd.illustrations_by_chapter[('Genesis', 1)]['steps']]
+        assert ids == ['early', 'late']
+
+    def test_malformed_scene_skipped_valid_sibling_kept(self, caplog):
+        import logging
+        bad_unknown_book = {'id': 'bad', 'regions': [{'kind': 'rect', 'x': 0, 'y': 0, 'w': 5, 'h': 5}],
+                            'passages': [{'book': 'Narnia', 'start': {'chapter': 1, 'verse': 1},
+                                          'end': {'chapter': 1, 'verse': 1}}]}
+        good = {'id': 'ok', 'regions': [{'kind': 'rect', 'x': 0, 'y': 0, 'w': 5, 'h': 5}],
+                'passages': [{'book': 'Genesis', 'start': {'chapter': 1, 'verse': 1},
+                              'end': {'chapter': 1, 'verse': 1}}]}
+        with caplog.at_level(logging.WARNING):
+            bd = self._bible([self._scene([bad_unknown_book], scene_id='bad-scene'),
+                              self._scene([good], scene_id='good-scene')])
+        # The good scene still indexes; the bad one is dropped with a warning.
+        assert bd.illustrations_by_chapter[('Genesis', 1)]['id'] == 'good-scene'
+        assert any('bad-scene' in r.message for r in caplog.records)
+
+    def test_bad_region_kind_skips_scene(self):
+        step = {'id': 's', 'regions': [{'kind': 'triangle', 'x': 0, 'y': 0}],
+                'passages': [{'book': 'Genesis', 'start': {'chapter': 1, 'verse': 1},
+                              'end': {'chapter': 1, 'verse': 1}}]}
+        bd = self._bible([self._scene([step])])
+        assert bd.illustrations_by_chapter == {}
+
+    def test_out_of_bounds_region_skips_scene(self):
+        step = {'id': 's', 'regions': [{'kind': 'rect', 'x': 90, 'y': 10, 'w': 30, 'h': 10}],
+                'passages': [{'book': 'Genesis', 'start': {'chapter': 1, 'verse': 1},
+                              'end': {'chapter': 1, 'verse': 1}}]}
+        bd = self._bible([self._scene([step])])  # x+w = 120 > 100
+        assert bd.illustrations_by_chapter == {}
+
+    def test_absent_catalog_yields_empty_index(self):
+        from app.data import build_bible_data
+        bd = build_bible_data([], self._kjv())
+        assert bd.illustrations_by_chapter == {}
